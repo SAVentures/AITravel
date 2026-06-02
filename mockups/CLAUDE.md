@@ -75,13 +75,26 @@ mockups/
 Every screen lives inside the iOS shell, so the mockups must render it — otherwise the SwiftUI
 `ScreenScaffold`, tab bar, and `ActionBar` have nothing to lay out against. Treat the chrome as
 first-class **components**, and have `screen-shell.css` place them on the iPhone frame so every
-`screens/*.html` shows the bars in position. The shell pieces (mirroring `05-components.md` /
-`06-screens.md §2`):
+`screens/*.html` shows the bars in position.
 
-- **Tab bar** (bottom) — the top-level switcher; floats above content.
-- **Top bar** (nav bar) — large title at a root, inline title + back chevron on a detail.
-- **Action bar** (bottom thumb zone) — a screen's primary CTA.
-- **Sheet handle** — the grabber on a presented sheet.
+**The shell is not one fixed frame — it's set by the screen's chrome intent** (the SwiftUI
+`ScreenScaffold(.root / .detail / .immersive / .custom)`, `06-screens.md §2`). `screen-shell.css`
+provides the variants (e.g. a body class `chrome-root` / `chrome-detail` / `chrome-immersive` /
+`chrome-custom` / `chrome-sheet`); **each `screens/<name>.html` declares the one matching the screen it
+will become**:
+
+| Chrome intent | Top bar | Tab bar | Used for |
+|---|---|---|---|
+| `.root` (a tab's home) | large title, no back | visible | the landing screen of a tab |
+| `.detail` (pushed) | inline title + back | visible (persists on push) | a drilled-in detail |
+| `.immersive` (takeover) | inline / minimal | **hidden** | reader, capture, onboarding |
+| `.custom` | none — screen draws its own header | per case | rare; must supply its own back |
+| sheet (presented) | grabber, no nav bar | covered by the sheet | a side task over content |
+
+- The **Action bar** (bottom thumb-zone CTA) is *independent of the chrome intent* — render it on any
+  screen that has a primary action; omit it on screens that don't.
+- A mockup's chrome must match the intent its SwiftUI screen will declare — large-vs-inline title, tab
+  bar present/hidden, back chevron — because that's exactly what the fidelity-reviewer checks.
 
 **Glass is an approximation here, not Liquid Glass fidelity.** HTML/CSS cannot reproduce Liquid Glass's
 real-time lensing, specular response, or refraction — and it shouldn't try. Render the chrome as a
