@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+
+# Xcode / build
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcuserdatad/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# sourcekit-lsp / build-server (per-checkout, generated)
+buildServer.json
+.warm-build.log
+
+# Claude Code workflow artifacts
+.claude/worktrees/
+.claude/.lsp-refresh.log
+.claude/.lsp-refresh.stamp
+.claude/.lsp-refresh.lock.d/
+.claude/scheduled_tasks.lock
+
+# Generated token file is COMMITTED on purpose (it is the design-system contract) —
+# do not ignore ios/AppTemplate/DesignSystem/Tokens/Primitive.generated.swift
