@@ -51,7 +51,7 @@ mockups/
     components.css
     components.html           ← the component inventory + states
   screens/
-    screen-shell.css          ← the iPhone frame (safe areas, target device)
+    screen-shell.css          ← the iPhone frame + shell chrome stand-ins (safe areas, tab/top/action bars)
     <screen-name>.html        ← one screen per file (e.g. book-list.html)
     screenshots/
       <screen-name>.png       ← the committed fidelity target for that screen
@@ -67,6 +67,34 @@ mockups/
   builder` AUDIT mode catches these).
 - **Commit a screenshot** to `screens/screenshots/` whenever a screen is authored or changes — it's the
   pixel fidelity target the reviewer and the SwiftUI port compare against.
+
+---
+
+## The iOS shell — render the chrome (a glass *approximation*)
+
+Every screen lives inside the iOS shell, so the mockups must render it — otherwise the SwiftUI
+`ScreenScaffold`, tab bar, and `ActionBar` have nothing to lay out against. Treat the chrome as
+first-class **components**, and have `screen-shell.css` place them on the iPhone frame so every
+`screens/*.html` shows the bars in position. The shell pieces (mirroring `05-components.md` /
+`06-screens.md §2`):
+
+- **Tab bar** (bottom) — the top-level switcher; floats above content.
+- **Top bar** (nav bar) — large title at a root, inline title + back chevron on a detail.
+- **Action bar** (bottom thumb zone) — a screen's primary CTA.
+- **Sheet handle** — the grabber on a presented sheet.
+
+**Glass is an approximation here, not Liquid Glass fidelity.** HTML/CSS cannot reproduce Liquid Glass's
+real-time lensing, specular response, or refraction — and it shouldn't try. Render the chrome as a
+**static frosted-glass** stand-in: a translucent fill + `backdrop-filter: blur()` + a hairline edge —
+enough to read as "floating glass chrome" and to get placement, translucency, and layering right. The
+*real* Liquid Glass is the system's job, rendered natively in SwiftUI (the system material —
+`05-design-system.md §6`); the mockup only approximates it.
+
+So the **fidelity-reviewer compares chrome *structure, placement, and composition*** — is the tab bar
+present, is the title large-vs-inline correct, is the CTA in the thumb zone — and treats the glass
+*material* difference (the mockup's CSS frost vs SwiftUI's Liquid Glass) as a **substrate difference,
+not drift** (`fidelity-reviewer`, `06-screens.md §9`). Get the *layout* faithful; don't chase the glass
+pixels.
 
 ---
 
