@@ -178,8 +178,30 @@ func loadSeed(_ seed: SampleSeed) {
     loadState = .loaded
 }
 ```
-A `#Preview`/test builds `AppStore(api: .mock())`, calls `loadSeed(SampleData.library())`, and is fully
-deterministic — the same state the render snapshot locks (`07-testing.md`).
+This is the synchronous, no-network path: the graph is set directly from a `SampleData` factory
+(`02-models.md §5`), so the screen renders deterministically — the same state the render snapshot locks
+(`07-testing.md`). (The *network* path, `loadLibrary()`, is what UI/E2E tests exercise — there the
+`MockProvider` scenario supplies the seed.)
+
+### The `preview` factory (DRY the boilerplate)
+
+Every `#Preview` would otherwise repeat "make a mock store, seed it, return it." Collapse that into one
+factory — a **fresh instance each call** (not a shared singleton), so previews stay isolated:
+
+```swift
+extension AppStore {
+    @MainActor
+    static func preview(_ seed: SampleSeed = SampleData.library()) -> AppStore {
+        let store = AppStore(api: .mock())
+        store.loadSeed(seed)
+        return store
+    }
+}
+```
+
+Previews then read `.environment(AppStore.preview())` or `.environment(AppStore.preview(SampleData
+.emptyLibrary()))` (`06-screens.md §8`). Tests that want the same convenience use it too; tests that need
+to drive the network use `AppStore(api: .mock(...))` and `await loadLibrary()` instead.
 
 ---
 

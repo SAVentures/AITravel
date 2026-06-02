@@ -201,9 +201,11 @@ is what catches a field added to the model but not the DTO. **Only the DTOs and 
 
 ---
 
-## 5. SampleData seeding
+## 5. SampleData — the single source of all mock data
 
-`SampleData.library()` is a static factory that builds the canonical prototype state and returns a
+**`SampleData` is the one place mock data is defined.** Everything that needs fake data — Xcode
+previews, unit/integration tests, and the `MockProvider` the running app talks to — gets it from here.
+There is no inline-constructed data anywhere else (that's how fixtures drift). Each factory returns a
 `SampleSeed`:
 
 ```swift
@@ -214,12 +216,34 @@ struct SampleSeed {
 }
 ```
 
-`library()` builds the **domain reference graph** — its `library` field is a live `Library`/`Book`
+### Named seed factories (one canonical + edge-state variants)
+
+```swift
+extension SampleData {
+    static func library()      -> SampleSeed   // canonical, populated — the default everywhere
+    static func emptyLibrary() -> SampleSeed   // 0 books — the empty state
+    static func allBorrowed()  -> SampleSeed   // every book borrowed — the zero-available edge
+}
+```
+
+Add a variant whenever a screen has a state worth previewing/testing. **These names are also the
+`MockScenario` cases** (`04-networking.md §7`): `MockScenario.emptyLibrary` builds its `MockSeed` from
+`SampleData.emptyLibrary().toDTO()`. One set of factories, used three ways:
+
+| Consumer | How it gets the seed |
+|---|---|
+| **Xcode `#Preview`** | `AppStore.preview(SampleData.library())` — a fresh store seeded directly, no network (`03-store.md §4`, `06-screens.md §8`) |
+| **Unit / integration tests** | `AppStore(api: .mock())` + `store.loadSeed(seed)` (`07-testing.md §3`) |
+| **UI / E2E tests** | a `MockScenario` injected at launch → the real app boots, `loadLibrary()` hits `MockProvider`, which serves that variant's `MockSeed` (`07-testing.md §7`) |
+
+### How the domain graph and the wire seed stay in lock-step
+
+Each factory builds the **domain reference graph** — its `library` field is a live `Library`/`Book`
 object tree — so it is `@MainActor` (it constructs `@MainActor` reference models). It performs no I/O
 and is cheap to rebuild, so previews and tests call it freely from their `@MainActor` contexts. The
 mock backend needs the same data as **DTOs**: the stateless `MockProvider` holds an immutable seed
-snapshot built by snapshotting a `library()` graph through `.toDTO()` — one seed, two representations,
-kept in lock-step (`04-networking.md`).
+snapshot built by snapshotting the matching factory's graph through `.toDTO()` — one seed, two
+representations, kept in lock-step (`04-networking.md`).
 
 All seed `id`s are literals (`"book-dune"`, `"author-herbert"`) so screens and tests hard-link to
 fixtures without the random `UUID()` path. `simulatedNow` is pinned to a fixed instant so

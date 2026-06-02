@@ -290,27 +290,33 @@ walking the production graph. Each feature registers its entries in
 
 ---
 
-## 8. Previews
+## 8. Previews — how a screen gets its mock data
 
-Every screen ships at least one `#Preview` that pins a **locally-constructed** `AppStore` seeded from
-`SampleData` (no `.shared` — `03-store.md`), wrapped in a `NavigationStack` when it expects nav
-context. The preview *is* the state the render snapshot locks, so they must match.
+Mock data is defined once, in `SampleData` (`02-models.md §5`). A `#Preview` consumes it through the
+**`AppStore.preview(_:)`** factory (`03-store.md §4`) — a fresh, locally-constructed, seeded store (no
+`.shared`), wrapped in a `NavigationStack` when the screen expects nav context. The preview *is* the
+state the render snapshot locks, so they must match.
 
 ```swift
 #Preview("BookList — standard") {
-    let store = AppStore(api: .mock())
-    store.loadSeed(SampleData.library())          // seeds domain + fixed simulatedNow
-    return NavigationStack { BookListView() }.environment(store)
+    NavigationStack { BookListView() }
+        .environment(AppStore.preview())                            // SampleData.library() by default
 }
 
 #Preview("BookList — empty") {
-    let store = AppStore(api: .mock(scenario: .emptyLibrary))
-    store.loadSeed(SampleData.emptyLibrary())
-    return NavigationStack { BookListView() }.environment(store)
+    NavigationStack { BookListView() }
+        .environment(AppStore.preview(SampleData.emptyLibrary()))   // an edge-state variant
 }
 ```
-Ship one `#Preview` per interesting state (standard, empty, all-borrowed) so each is reviewable and
-snapshot-lockable.
+
+- **Pick the state by choosing the seed factory** — `library()` / `emptyLibrary()` / `allBorrowed()`
+  (`02-models.md §5`); add a variant when a screen has a state worth showing.
+- **Ship one `#Preview` per interesting state** (standard, empty, all-borrowed, error) — each is
+  reviewable and becomes a render-snapshot baseline (`07-testing.md §6`).
+- A detail screen takes its id from the seed: `AppStore.preview()` then
+  `BookDetailView(bookID: "book-dune")` (the literal ids are stable, `02-models.md §5`).
+- Previews never hit the network — `preview(_:)` seeds the store directly. The *networked* path
+  (`loadLibrary()` → `MockProvider` scenario) is what UI/E2E tests drive (`07-testing.md §7`).
 
 ---
 

@@ -39,8 +39,10 @@ identifiers, the **exemplar to mirror**, and the **Done-when acceptance criteria
   registered with `.navigationDestination(for:)`; push via `store.push(…)` (per-tab path; never local).
 - **A catalog entry** in `Screens/Catalog/CatalogSection+<X>.swift` (a brand-new section is the only case
   that edits core `ScreenCatalogView.swift` — flag it as a serial edit).
-- **A `#Preview`** that pins a **locally-constructed** `AppStore` (`AppStore(api: .mock())` +
-  `store.loadSeed(SampleData.library())`) — **no `.shared`**; one preview per interesting state.
+- **A `#Preview`** per interesting state, seeded via the **`AppStore.preview(_:)`** factory
+  (`.environment(AppStore.preview())` / `.environment(AppStore.preview(SampleData.emptyLibrary()))`) —
+  **no `.shared`**. Mock data comes only from `SampleData` factories (`02-models.md §5`); pick the state
+  by choosing the factory.
 - **Dot-namespaced accessibility identifiers** (`bookrow.<id>`, `book.borrowButton`, `writeError.banner`)
   on state-bearing elements, per `06-screens.md §10`, so snapshots/XCUITest can assert them.
 
