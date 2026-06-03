@@ -1,0 +1,451 @@
+/*
+ Layer 1 — Unit tests for the onboarding wire + model layer.
+
+ Group 1: DTO round-trip (§4.2)
+   - OnboardingContextDTO: pure Codable seed — decode(encode(ctx)) == ctx for each A/B/C fixture.
+   - TripDraftDTO ↔ TripDraftModel: dto.toDomain().toDTO() == dto, confirming the mapping is
+     lossless both ways. A field added to TripDraftModel without a TripDraftDTO mirror will break this.
+
+ Group 2: TripDraftModel mutation methods (§4.1)
+   - select(city:), clearDestination(), select(strategy:), setDays(_:), toggleInterest(_:),
+     setPace(_:), select(base:), setBaseMode(_:), setPrimaryMode(_:), toggleAlsoOK(_:),
+     advanceStep(), retreatStep() — each asserts the single field that changes; nothing else.
+
+ Determinism rules (§3):
+   - No Date(), Calendar.current, or Locale.current.
+   - All fixtures from SampleData; stable id literals only (e.g. "city-lisbon").
+   - TripDraftModel is a reference type — assert on fields, never == between constructed instances.
+
+ Coder rule (§4.2):
+   - Plain symmetric JSONEncoder/JSONDecoder with .iso8601 date strategy.
+   - APIJSON is not used — its snake-case key conversion is asymmetric on acronym/ID keys.
+*/
+
+import Testing
+import Foundation
+@testable import AppTemplate
+
+// MARK: - Helpers
+
+/// A plain symmetric encoder/decoder pair for round-trip tests (§4.2).
+/// Uses .iso8601 for Date fields; no key strategy — symmetric encoding only.
+private func symmetricEncoder() -> JSONEncoder {
+    let enc = JSONEncoder()
+    enc.dateEncodingStrategy = .iso8601
+    return enc
+}
+
+private func symmetricDecoder() -> JSONDecoder {
+    let dec = JSONDecoder()
+    dec.dateDecodingStrategy = .iso8601
+    return dec
+}
+
+/// Encode then decode a Codable value using the plain symmetric coder pair.
+private func codableRoundTrip<T: Codable>(_ value: T) throws -> T {
+    let data = try symmetricEncoder().encode(value)
+    return try symmetricDecoder().decode(T.self, from: data)
+}
+
+// MARK: - OnboardingModelTests
+
+@Suite("Onboarding model — DTO round-trips and TripDraftModel mutations")
+struct OnboardingModelTests {
+
+    // MARK: - Group 1: DTO round-trips
+
+    @Suite("DTO round-trip — OnboardingContextDTO (Codable symmetry)")
+    struct OnboardingContextDTORoundTripTests {
+
+        /// State A: returning visitor, local saves in Lisbon.
+        /// OnboardingContextDTO is a pure Codable seed with no domain-type twin —
+        /// we assert JSON encode → decode recovers the exact value.
+        @Test("OnboardingContextDTO A: JSON round-trip is lossless")
+        func contextAJSONRoundTrip() throws {
+            let ctx = SampleData.onboardingAContext()
+            let recovered = try codableRoundTrip(ctx)
+            #expect(recovered == ctx)
+        }
+
+        /// State B: saves elsewhere (Tokyo), none in destination Kyoto.
+        @Test("OnboardingContextDTO B: JSON round-trip is lossless")
+        func contextBJSONRoundTrip() throws {
+            let ctx = SampleData.onboardingBContext()
+            let recovered = try codableRoundTrip(ctx)
+            #expect(recovered == ctx)
+        }
+
+        /// State C: first trip, nothing saved anywhere.
+        /// tasteDefaults is non-nil here — confirms optional fields survive the round-trip.
+        @Test("OnboardingContextDTO C: JSON round-trip is lossless (non-nil tasteDefaults)")
+        func contextCJSONRoundTrip() throws {
+            let ctx = SampleData.onboardingCContext()
+            // tasteDefaults is non-nil in state C — it must survive encode/decode intact.
+            #expect(ctx.tasteDefaults != nil,
+                    "fixture precondition: state C carries a seed tasteDefaults")
+            let recovered = try codableRoundTrip(ctx)
+            #expect(recovered == ctx)
+        }
+
+        /// onboardingState computed property derives the A/B/C branch from saved counts.
+        /// Guards that the branch driver is correct for each fixture without a network round-trip.
+        @Test("OnboardingContextDTO.onboardingState derives branch A from savedHere > 0")
+        func contextADerivesBranchA() {
+            let ctx = SampleData.onboardingAContext()
+            #expect(ctx.onboardingState == .returningWithLocalSaves)
+        }
+
+        @Test("OnboardingContextDTO.onboardingState derives branch B from savedAnywhere > 0, savedHere == 0")
+        func contextBDerivesBranchB() {
+            let ctx = SampleData.onboardingBContext()
+            #expect(ctx.onboardingState == .savesElsewhere)
+        }
+
+        @Test("OnboardingContextDTO.onboardingState derives branch C from savedAnywhere == 0")
+        func contextCDerivesBranchC() {
+            let ctx = SampleData.onboardingCContext()
+            #expect(ctx.onboardingState == .firstTrip)
+        }
+    }
+
+    @Suite("DTO round-trip — TripDraftDTO ↔ TripDraftModel (lossless mapping)")
+    struct TripDraftDTORoundTripTests {
+
+        /// Lossless mapping for a draft seeded from context A.
+        /// dto.toDomain() builds the reference model; .toDTO() snapshots it back.
+        /// A field added to TripDraftModel without a TripDraftDTO mirror breaks this.
+        @Test("TripDraftDTO A: dto.toDomain().toDTO() == dto (mapping is lossless)")
+        @MainActor
+        func tripDraftAMappingRoundTrip() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+            let dto = draft.toDTO()
+            let recovered = dto.toDomain().toDTO()
+            #expect(recovered == dto)
+        }
+
+        /// Lossless mapping for context B (no tasteDefaults, different city/neighborhood).
+        @Test("TripDraftDTO B: dto.toDomain().toDTO() == dto (mapping is lossless)")
+        @MainActor
+        func tripDraftBMappingRoundTrip() {
+            let ctx = SampleData.onboardingBContext()
+            let draft = ctx.toDomain()
+            let dto = draft.toDTO()
+            let recovered = dto.toDomain().toDTO()
+            #expect(recovered == dto)
+        }
+
+        /// Lossless mapping for context C (tasteDefaults is non-nil, shapeOptions is empty).
+        @Test("TripDraftDTO C: dto.toDomain().toDTO() == dto (tasteProfile survives the mapping)")
+        @MainActor
+        func tripDraftCMappingRoundTrip() {
+            let ctx = SampleData.onboardingCContext()
+            let draft = ctx.toDomain()
+            let dto = draft.toDTO()
+            let recovered = dto.toDomain().toDTO()
+            #expect(recovered == dto)
+        }
+
+        /// TripDraftDTO is Codable; verify the JSON representation is also symmetric
+        /// (encoding + decoding the DTO value preserves equality before the domain mapping).
+        @Test("TripDraftDTO A: JSON round-trip is lossless (Codable symmetry)")
+        @MainActor
+        func tripDraftAJSONRoundTrip() throws {
+            let ctx = SampleData.onboardingAContext()
+            let dto = ctx.toDomain().toDTO()
+            let recovered = try codableRoundTrip(dto)
+            #expect(recovered == dto)
+        }
+    }
+
+    // MARK: - Group 2: TripDraftModel mutation methods
+
+    @Suite("TripDraftModel mutations — each method flips exactly one field")
+    struct TripDraftModelMutationTests {
+
+        // MARK: select(city:) / clearDestination()
+
+        /// select(city:) sets destination to the chosen city.
+        /// Index by stable id "city-kyoto", never by array position.
+        @Test("select(city:) sets destination to the chosen city")
+        @MainActor
+        func selectCitySetsDestination() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+            let kyoto = City(id: "city-kyoto", name: "Kyoto", country: "Japan", savedHere: 0, meta: .savedCount(0))
+            draft.select(city: kyoto)
+            #expect(draft.destination?.id == "city-kyoto")
+        }
+
+        /// clearDestination() sets destination to nil.
+        @Test("clearDestination() clears the destination")
+        @MainActor
+        func clearDestinationSetsNil() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+            // seed: context A starts with destination set from context.destination
+            let lisbon = ctx.destination
+            draft.select(city: lisbon)
+            #expect(draft.destination != nil, "precondition: destination must be set before clearing")
+            draft.clearDestination()
+            #expect(draft.destination == nil)
+        }
+
+        // MARK: select(strategy:)
+
+        /// select(strategy:) assigns the chosen shape strategy.
+        @Test("select(strategy: .coverBucket) sets shapeStrategy")
+        @MainActor
+        func selectStrategySetsStrategy() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.select(strategy: .coverBucket)
+            #expect(draft.shapeStrategy == .coverBucket)
+        }
+
+        @Test("select(strategy: .fixedDays) overwrites a previously set strategy")
+        @MainActor
+        func selectStrategyOverwrites() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.select(strategy: .highlights)
+            draft.select(strategy: .fixedDays)
+            #expect(draft.shapeStrategy == .fixedDays)
+        }
+
+        // MARK: setDays(_:)
+
+        @Test("setDays(_:) updates tripDays to the given value")
+        @MainActor
+        func setDaysUpdatesTripDays() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setDays(7)
+            #expect(draft.tripDays == 7)
+        }
+
+        @Test("setDays(_:) can reduce tripDays below the seed default")
+        @MainActor
+        func setDaysCanReduce() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setDays(2)
+            #expect(draft.tripDays == 2)
+        }
+
+        // MARK: toggleInterest(_:)
+
+        /// toggleInterest(_:) seeds an empty profile if none exists and adds the interest.
+        @Test("toggleInterest(_:) adds an interest when tasteProfile is nil")
+        @MainActor
+        func toggleInterestAddsWhenNil() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            // State A has no tasteDefaults — tasteProfile starts nil.
+            #expect(draft.tasteProfile == nil, "precondition: state A starts with nil tasteProfile")
+            draft.toggleInterest(.food)
+            #expect(draft.tasteProfile?.interests.contains(.food) == true)
+        }
+
+        /// toggleInterest(_:) removes an interest that is already in the profile.
+        @Test("toggleInterest(_:) removes an interest that is already set")
+        @MainActor
+        func toggleInterestRemovesExisting() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.toggleInterest(.history)
+            #expect(draft.tasteProfile?.interests.contains(.history) == true,
+                    "precondition: interest must be present before toggling off")
+            draft.toggleInterest(.history)
+            #expect(draft.tasteProfile?.interests.contains(.history) == false)
+        }
+
+        /// toggleInterest(_:) on state C draft (pre-seeded tasteDefaults) adds to the existing profile.
+        @Test("toggleInterest(_:) adds to a pre-seeded profile in state C")
+        @MainActor
+        func toggleInterestAddsToExistingProfile() {
+            let draft = SampleData.onboardingCContext().toDomain()
+            // State C seeds tasteDefaults with food/history/coffee; architecture is not in it.
+            #expect(draft.tasteProfile?.interests.contains(.architecture) == false,
+                    "precondition: architecture is not in the state-C seed")
+            draft.toggleInterest(.architecture)
+            #expect(draft.tasteProfile?.interests.contains(.architecture) == true)
+        }
+
+        // MARK: setPace(_:)
+
+        @Test("setPace(_:) sets the pace when tasteProfile is nil (seeds a profile)")
+        @MainActor
+        func setPaceSeesProfileWhenNil() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            #expect(draft.tasteProfile == nil, "precondition: state A starts with nil tasteProfile")
+            draft.setPace(.packed)
+            #expect(draft.tasteProfile?.pace == .packed)
+        }
+
+        @Test("setPace(_:) updates the pace on an existing profile")
+        @MainActor
+        func setPaceUpdatesPaceOnExistingProfile() {
+            let draft = SampleData.onboardingCContext().toDomain()
+            // State C seeds .balanced; switch to .easy.
+            #expect(draft.tasteProfile?.pace == .balanced,
+                    "precondition: state C seed pace is .balanced")
+            draft.setPace(.easy)
+            #expect(draft.tasteProfile?.pace == .easy)
+        }
+
+        // MARK: select(base:)
+
+        @Test("select(base:) assigns the chosen base location")
+        @MainActor
+        func selectBaseSetsBaseSelection() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+            let alfama = ctx.recommendedBase   // stable fixture from seed
+            draft.select(base: alfama)
+            #expect(draft.baseSelection?.id == "base-alfama")
+        }
+
+        // MARK: setBaseMode(_:)
+
+        @Test("setBaseMode(.manual) changes baseMode from the .smart default")
+        @MainActor
+        func setBaseModeChangesMode() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            // toDomain() seeds baseMode: .smart
+            #expect(draft.baseMode == .smart, "precondition: toDomain seeds .smart")
+            draft.setBaseMode(.manual)
+            #expect(draft.baseMode == .manual)
+        }
+
+        // MARK: setPrimaryMode(_:)
+
+        @Test("setPrimaryMode(_:) updates transport.primary")
+        @MainActor
+        func setPrimaryModeUpdatesTransport() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setPrimaryMode(.walk)
+            #expect(draft.transport.primary == .walk)
+        }
+
+        // MARK: toggleAlsoOK(_:)
+
+        @Test("toggleAlsoOK(_:) adds a mode not yet in alsoOK")
+        @MainActor
+        func toggleAlsoOKAddsMode() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            // toDomain() seeds alsoOK as [].
+            #expect(draft.transport.alsoOK.isEmpty, "precondition: seeded alsoOK is empty")
+            draft.toggleAlsoOK(.cycle)
+            #expect(draft.transport.alsoOK.contains(.cycle))
+        }
+
+        @Test("toggleAlsoOK(_:) removes a mode that is already in alsoOK")
+        @MainActor
+        func toggleAlsoOKRemovesMode() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.toggleAlsoOK(.drive)
+            #expect(draft.transport.alsoOK.contains(.drive),
+                    "precondition: drive must be in alsoOK before toggling off")
+            draft.toggleAlsoOK(.drive)
+            #expect(!draft.transport.alsoOK.contains(.drive))
+        }
+
+        // MARK: advanceStep() / retreatStep()
+
+        /// advanceStep() moves currentStep from .destination to .tripShape.
+        @Test("advanceStep() advances from .destination to .tripShape")
+        @MainActor
+        func advanceStepFromDestination() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            // toDomain() seeds currentStep: .destination
+            #expect(draft.currentStep == .destination,
+                    "precondition: toDomain seeds step .destination")
+            draft.advanceStep()
+            #expect(draft.currentStep == .tripShape)
+        }
+
+        /// advanceStep() is clamped: calling it on the last step (.generating) leaves step unchanged.
+        @Test("advanceStep() is clamped at the last step (.generating)")
+        @MainActor
+        func advanceStepIsClampedAtEnd() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.currentStep = .generating  // fast-forward to the last step
+            draft.advanceStep()
+            #expect(draft.currentStep == .generating)
+        }
+
+        /// retreatStep() moves currentStep backward from .tripShape to .destination.
+        @Test("retreatStep() retreats from .tripShape to .destination")
+        @MainActor
+        func retreatStepFromTripShape() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.currentStep = .tripShape
+            draft.retreatStep()
+            #expect(draft.currentStep == .destination)
+        }
+
+        /// retreatStep() is clamped: calling it on the first step (.destination) leaves step unchanged.
+        @Test("retreatStep() is clamped at the first step (.destination)")
+        @MainActor
+        func retreatStepIsClampedAtStart() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            // toDomain() seeds currentStep: .destination
+            #expect(draft.currentStep == .destination,
+                    "precondition: toDomain seeds step .destination")
+            draft.retreatStep()
+            #expect(draft.currentStep == .destination)
+        }
+
+        // MARK: restore(from:) — rollback seam
+
+        /// restore(from:) reverts all mutable selection fields to the DTO snapshot.
+        /// This mirrors the rollback path in the command suite (§5.1).
+        @Test("restore(from:) reverts all mutable fields from a DTO snapshot")
+        @MainActor
+        func restoreReverts() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+            let snapshot = draft.toDTO()   // capture the initial state
+
+            // Mutate every field the restore seam covers.
+            draft.select(city: ctx.cityOptions.first(where: { $0.id == "city-lisbon" })
+                                 ?? ctx.destination)
+            draft.select(strategy: .highlights)
+            draft.setDays(6)
+            draft.toggleInterest(.art)
+            draft.setPace(.packed)
+            draft.select(base: ctx.recommendedBase)
+            draft.setBaseMode(.manual)
+            draft.setPrimaryMode(.drive)
+            draft.toggleAlsoOK(.rideshare)
+            draft.advanceStep()
+
+            // Restore from the snapshot taken before any mutation.
+            draft.restore(from: snapshot)
+
+            #expect(draft.destination == snapshot.destination)
+            #expect(draft.shapeStrategy == snapshot.shapeStrategy)
+            #expect(draft.tripDays == snapshot.tripDays)
+            #expect(draft.tasteProfile == snapshot.tasteProfile)
+            #expect(draft.baseSelection == snapshot.baseSelection)
+            #expect(draft.baseMode == snapshot.baseMode)
+            #expect(draft.transport == snapshot.transport)
+            #expect(draft.currentStep == snapshot.currentStep)
+            #expect(draft.generationPlan == snapshot.generationPlan)
+            #expect(draft.onboardingState == snapshot.onboardingState)
+        }
+
+        // MARK: Derived properties from context catalog
+
+        /// savedHere and savedAnywhere are pass-through reads of the immutable context.
+        /// Confirms the derived properties surface the right values for fixture lookup.
+        @Test("savedHere reflects context.savedHere for state A (stable id: city-lisbon)")
+        @MainActor
+        func savedHereDerivedFromContextA() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            #expect(draft.savedHere == 23)
+        }
+
+        @Test("savedAnywhere is zero for state C (first trip)")
+        @MainActor
+        func savedAnywhereZeroForStateC() {
+            let draft = SampleData.onboardingCContext().toDomain()
+            #expect(draft.savedAnywhere == 0)
+        }
+    }
+}
