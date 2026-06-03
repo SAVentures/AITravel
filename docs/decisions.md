@@ -174,3 +174,51 @@ Everything else hard-fails. **Supersedes** the two prior same-date audit entries
 `for:` type-scoping): the `for:`-exclude was Apple's anti-pattern; whole-type suppression here is deliberate
 and compensated, not blanket. Open at task #10: add the AX5 snapshot; decide if `textSecondary`/`textTertiary`
 need re-toning vs. accepting the iOS `.secondary`/`.tertiary` convention.
+
+---
+
+## 2026-06-03 — L4 UITests: static map on map screens; combined-container content is covered at L1/L3, not L4
+
+**Decision.** Two rules for XCUITesting onboarding screens, learned building the four-layer gate:
+
+1. **Map screens run UITests with the static map** (`UITEST_STATIC_MAP=1` → `\.mapSnapshotMode`, injected at
+   the app root). The live MapKit `Map` adds its own `Legal` attribution link, `VKPointFeature` pins, and
+   rendered place-name text to the a11y tree — none of which we own — tripping the audit (`.hitRegion` on
+   "Legal", "potentially inaccessible text" on map labels) and cluttering element queries. L4 tests *our*
+   screen, not Apple's MapKit, so the static placeholder is the correct surface.
+2. **Content inside a combined-accessibility container is not individually L4-queryable, and that's fine.**
+   `baselocation.reach.*` rows live inside the `baselocation.rec` card whose subtree collapses to one
+   accessibility element, so the row ids never reach the XCUITest tree (scrolling can't help). The same
+   applies to deep `generation.step.*` rows. That *data* is already locked by **L1 presenter tests** (it
+   derives correctly) + **L3 render snapshots** (it renders). L4's contract is "screen reachable per
+   scenario + one real interaction + audit passes" — so these UITests assert the CTA + a top-level
+   container + the primary above-fold interaction, and do NOT assert combined-child ids.
+
+---
+
+## 2026-06-03 — L3 glass snapshots + L4 onTapGesture: known gaps (the four-layer gate, accepted)
+
+**Decision (option B).** Closing the onboarding four-layer gate with two documented framework gaps rather
+than blocking on them:
+
+1. **iOS 26 Liquid Glass renders BLANK in swift-snapshot-testing's offscreen host.** Any glass-bearing
+   snapshot recorded blank (the `OnboardingActionFloor`, `LeadingGlyph`, and — because the glass action
+   floor in `safeAreaInset` mis-sizes there — all 5 full-screen snapshots, incl. the AX5 control). Blank
+   "passing" baselines are false confidence, so those suites were **deleted**. Kept: the 9 NON-glass
+   component snapshots (verified rendering: SegmentedSelector, DayStepper, etc.). **Screen-level L3 is
+   covered instead by L1 (193 presenter/model tests) + L4 (XCUITest across A/B/C).** Fix-forward: rewrite
+   `assertDesignSnapshot` to a key-window `drawHierarchy(afterScreenUpdates:)` path where glass renders,
+   then restore the screen + AX5 snapshots.
+
+2. **The `.dynamicType` audit's AX5 compensating control is gone** (it was a screen snapshot). DT scaling
+   is instead assured at the foundation: every `Typography` role is `Font.custom(size:relativeTo:)` /
+   `Font.system(.style)` bound to a Dynamic Type style with zero `fixedSize` (codegen-locked). Restore the
+   AX5 snapshot lock once #1 is fixed.
+
+3. **XCUITest coordinate `.tap()` doesn't reliably drive SwiftUI `.onTapGesture`** (non-`Button`
+   affordances like `TripShapeCard`). L4 exercises the tap (exists + hittable + tap + CTA persists) but
+   does NOT assert the post-tap selection trait; the `select(strategy:)` result is proven at L1, and the
+   card's VoiceOver activatability is fixed via `.accessibilityAction` on `SelectAction`.
+
+4. **Map screens:** L4 runs with `UITEST_STATIC_MAP=1`; a decorative static-placeholder element (no id,
+   no label) trips `.elementDetection` and is suppressed narrowly. The map is one labeled a11y element.
