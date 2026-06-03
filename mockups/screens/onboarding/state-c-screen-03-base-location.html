@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Onboarding · C · 03 · Base location (first trip)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<link rel="stylesheet" href="screen-shell.css" />
+<style>
+/* ── Step 3 · Base location ───────────────────────────────────────────── */
+/* two-path segmented (ink-pill selected, never the accent) */
+.seg { margin: 22px 22px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--fill-tertiary); border-radius: var(--r-pill); padding: 3px; }
+.seg button { border: none; background: transparent; padding: 10px 12px; border-radius: var(--r-pill); cursor: pointer; font-family: var(--font-ui); font-size: 13.5px; font-weight: 600; color: var(--ink-600); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.seg button.on { background: var(--ink-900); color: var(--paper-0); }
+.seg button svg { width: 14px; height: 14px; }
+
+/* recommendation card — white, rest shadow, NO colored edge */
+.rec { margin: 16px 22px 0; background: var(--surface-grouped); border-radius: var(--r-card); box-shadow: var(--shadow-rest); overflow: hidden; }
+
+/* mini-map */
+.map { position: relative; height: 184px; background: var(--paper-100); overflow: hidden; border-bottom: 1px solid var(--separator); }
+.map .streets { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map .zone { position: absolute; width: 168px; height: 124px; left: 34%; top: 26%; border-radius: 50%; border: 1px dashed var(--ink-300); background: var(--fill-quaternary); }
+.map .zlab { position: absolute; left: 50%; top: 20%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-600); background: var(--paper-0); padding: 3px 8px; border-radius: var(--r-pill); box-shadow: var(--shadow-rest); }
+.map .pin { position: absolute; width: 8px; height: 8px; border-radius: 999px; background: var(--ink-700); border: 1.5px solid var(--paper-0); box-shadow: 0 1px 2px oklch(0.30 0.02 245 / 0.22); }
+.map .pin.out { background: var(--ink-300); }
+.map .home { position: absolute; width: 30px; height: 30px; border-radius: 999px; background: var(--ink-900); display: grid; place-items: center; color: var(--paper-0); box-shadow: 0 0 0 5px oklch(0.30 0.02 245 / 0.10), var(--shadow-rest); transform: translate(-50%, -50%); }
+.map .home svg { width: 14px; height: 14px; }
+
+/* card body */
+.rec .body { padding: 16px; }
+.rec .why { margin-top: 12px; }
+.rec .reach { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--separator); display: flex; flex-direction: column; gap: 10px; }
+.rec .reach .r { display: grid; grid-template-columns: 20px 1fr auto; gap: 11px; align-items: center; }
+.rec .reach .r .ic { color: var(--ink-600); display: grid; place-items: center; }
+.rec .reach .r .ic svg { width: 17px; height: 17px; }
+.rec .reach .r .t { font-size: 13.5px; color: var(--ink-900); font-weight: 500; }
+.rec .reach .r .t span { color: var(--text-secondary); font-weight: 400; }
+.rec .reach .r .m { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-700); }
+.rec .reach .r .m b { color: var(--ink-900); font-weight: 600; }
+
+/* tentative note — the contract that base stays fuzzy/movable */
+.tent { margin: 14px 22px 0; display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.tent::before, .tent::after { content: ""; flex: 1; height: 1px; background: var(--separator); }
+
+/* alternatives the model weighed */
+.alt-head { padding: 0 22px; margin: 22px 0 10px; font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.alts { display: flex; gap: 8px; padding: 0 22px 2px; overflow-x: auto; scrollbar-width: none; }
+.alts::-webkit-scrollbar { display: none; }
+.alt { flex: 0 0 auto; min-width: 134px; background: var(--paper-100); border-radius: var(--r-row); padding: 11px 13px; }
+.alt .nm { font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: -0.015em; color: var(--ink-700); }
+.alt .m { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.02em; color: var(--ink-500); margin-top: 3px; }
+.alt .m b { color: var(--ink-700); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen">
+    <div class="island"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-icons">
+        <svg width="18" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx=".7" fill="currentColor"/><rect x="4.8" y="5" width="3.2" height="7" rx=".7" fill="currentColor"/><rect x="9.6" y="2.5" width="3.2" height="9.5" rx=".7" fill="currentColor"/><rect x="14.4" y="0" width="3.2" height="12" rx=".7" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 17 12"><path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/><path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/><circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/></svg>
+        <svg width="25" height="12" viewBox="0 0 27 13"><rect x="0.5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="24.5" y="4" width="1.6" height="5" rx=".8" fill="currentColor" opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="viewport">
+      <div class="scroll">
+
+        <header class="ob-header">
+          <div class="ob-topbar">
+            <button class="ob-iconbtn" aria-label="Back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <span></span>
+            <span class="ob-counter"><b>03</b> / 05</span>
+          </div>
+          <div class="ob-progress">
+            <span class="ob-seg done"></span><span class="ob-seg done"></span><span class="ob-seg cur"></span><span class="ob-seg todo"></span><span class="ob-seg todo"></span>
+          </div>
+        </header>
+
+        <section class="hero">
+          <span class="eyebrow">Base location</span>
+          <h1 class="q">Where will you base yourself?</h1>
+          <p class="sub">A neighborhood is enough — we'll route around it. You can change this later.</p>
+        </section>
+
+        <div class="seg">
+          <button class="on">Smart from plan</button>
+          <button>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4"/></svg>
+            Pick manually
+          </button>
+        </div>
+
+        <div class="rec">
+          <div class="map">
+            <svg class="streets" viewBox="0 0 358 184" preserveAspectRatio="none">
+              <g fill="none" stroke="var(--ink-200)" stroke-width="1">
+                <path d="M0 56 L358 82"/><path d="M0 104 L250 124 L358 110"/><path d="M0 150 L358 168"/>
+                <path d="M40 0 L70 184"/><path d="M116 0 L144 184"/><path d="M204 0 L190 184"/><path d="M286 0 L302 184"/>
+              </g>
+              <g fill="none" stroke="var(--ink-100)" stroke-width="0.8">
+                <path d="M0 28 L358 38"/><path d="M0 78 L358 68"/><path d="M78 0 L92 184"/><path d="M164 0 L154 184"/><path d="M242 0 L252 184"/>
+              </g>
+              <path d="M0 168 Q88 158 196 174 T358 182 L358 184 L0 184 Z" fill="var(--paper-200)"/>
+            </svg>
+            <div class="zone"></div>
+            <div class="zlab">Baixa</div>
+            <span class="pin" style="left:42%;top:40%"></span><span class="pin" style="left:49%;top:43%"></span>
+            <span class="pin" style="left:57%;top:38%"></span><span class="pin" style="left:60%;top:50%"></span>
+            <span class="pin" style="left:46%;top:54%"></span><span class="pin" style="left:38%;top:48%"></span>
+            <span class="pin" style="left:65%;top:55%"></span><span class="pin" style="left:53%;top:60%"></span>
+            <span class="pin out" style="left:14%;top:30%"></span><span class="pin out" style="left:84%;top:32%"></span><span class="pin out" style="left:20%;top:72%"></span>
+            <div class="home" style="left:50%;top:47%">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-7H10v7H6a2 2 0 0 1-2-2z"/></svg>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="ai why">
+              <div class="lab"><span class="mk"></span> Where to base you</div>
+              <p class="line">Baixa, dead-central — close to most of what fits a food-and-history first trip, and an easy hop to everywhere else.</p>
+            </div>
+            <div class="reach">
+              <div class="r">
+                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.6"/><path d="M11 9l3-1 2 4-2 2 2 6"/><path d="M9 14l-1 5"/><path d="M14 12l-3-1"/></svg></span>
+                <span class="t">Most of the plan <span>on foot</span></span>
+                <span class="m"><b>≤ 20</b> min</span>
+              </div>
+              <div class="r">
+                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M9 17l-2 3M15 17l2 3"/><circle cx="9" cy="11" r=".8" fill="currentColor"/><circle cx="15" cy="11" r=".8" fill="currentColor"/></svg></span>
+                <span class="t">Everywhere else <span>via metro</span></span>
+                <span class="m"><b>≤ 15</b> min</span>
+              </div>
+              <div class="r">
+                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="13" rx="2"/><path d="M4 11h16"/><circle cx="8" cy="19" r="1.3"/><circle cx="16" cy="19" r="1.3"/></svg></span>
+                <span class="t">Belém <span>by tram 15E</span></span>
+                <span class="m"><b>22</b> min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tent">Tentative · change it any time</div>
+
+        <div class="alt-head">Other neighborhoods we weighed</div>
+        <div class="alts">
+          <div class="alt"><div class="nm">Chiado</div><div class="m">central · flat</div></div>
+          <div class="alt"><div class="nm">Alfama</div><div class="m">atmospheric · hilly</div></div>
+          <div class="alt"><div class="nm">Bairro Alto</div><div class="m">nightlife</div></div>
+          <div class="alt"><div class="nm">Príncipe Real</div><div class="m">quieter</div></div>
+        </div>
+
+        <div class="spacer-floor" style="height: 150px;"></div>
+      </div>
+
+      <div class="ob-action">
+        <button class="ob-cta">
+          Use Baixa as base
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <button class="ob-ghost">Pick a specific hotel or address</button>
+      </div>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

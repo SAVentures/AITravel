@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Booking detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<link rel="stylesheet" href="wallet-shell.css" />
+</head>
+<body>
+<div class="frame">
+  <div class="screen">
+    <div class="island"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-icons">
+        <svg width="18" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx=".7" fill="currentColor"/><rect x="4.8" y="5" width="3.2" height="7" rx=".7" fill="currentColor"/><rect x="9.6" y="2.5" width="3.2" height="9.5" rx=".7" fill="currentColor"/><rect x="14.4" y="0" width="3.2" height="12" rx=".7" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 17 12"><path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/><path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/><circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/></svg>
+        <svg width="25" height="12" viewBox="0 0 27 13"><rect x="0.5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="24.5" y="4" width="1.6" height="5" rx=".8" fill="currentColor" opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="viewport">
+      <div class="scroll">
+        <header class="screen-topbar --over-hero" data-screen-label="Booking detail">
+          <button class="screen-topbar__back">
+            <svg class="chev-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+            Wallet
+          </button>
+          <span class="ttl">Flight</span>
+          <button class="ic" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
+        </header>
+
+        <section class="bd-hero">
+          <div class="bd-top">
+            <span class="bd-ico transport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16l8.5-2.5L8 5l2-.5 5.5 7.5 5-1.4a1.6 1.6 0 0 1 .8 3L4 19z"/></svg></span>
+            <span class="who">
+              <span class="bd-kind">TAP Air Portugal · TP 201</span>
+              <h1 class="bd-name">Lisbon → New York</h1>
+            </span>
+          </div>
+          <div class="bd-sub">
+            <span class="pill upcoming">Upcoming</span>
+            <span class="meta">Sat, Aug 29 · nonstop · 8h 45m</span>
+          </div>
+        </section>
+
+        <div class="info-grid">
+          <div class="info-cell"><div class="k">Depart</div><div class="v">13:40</div><div class="vs">LIS · Terminal 1</div></div>
+          <div class="info-cell"><div class="k">Arrive</div><div class="v">17:25</div><div class="vs">JFK · Terminal 8</div></div>
+          <div class="info-cell"><div class="k">Seat</div><div class="v">14A</div><div class="vs">Economy · window</div></div>
+        </div>
+
+        <div class="conf-row">
+          <div><div class="k">Confirmation</div><div class="v">7XQK2M</div></div>
+          <button class="cp" aria-label="Copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg></button>
+        </div>
+
+        <div class="det-list">
+          <div class="det-head">Flight</div>
+          <div class="det-rows">
+            <div class="det-row"><span class="k">Boarding</span><span class="v">13:05 · Gate 24</span></div>
+            <div class="det-row"><span class="k">Group</span><span class="v">Zone 2</span></div>
+            <div class="det-row"><span class="k">Aircraft</span><span class="v">Airbus A330-900</span></div>
+            <div class="det-row"><span class="k">Baggage</span><span class="v">1 checked · 23 kg</span></div>
+            <div class="det-row"><span class="k">Booked through</span><span class="v">flytap.com</span></div>
+          </div>
+        </div>
+
+        <div class="placed">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg>
+          Placed on Day 4 · Sat, Aug 29
+        </div>
+
+        <div class="spacer-cta"></div>
+      </div>
+
+      <div class="cta-bar">
+        <button class="cta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M21 21v-4M17 21h-3"/></svg>
+          Show boarding pass
+        </button>
+      </div>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

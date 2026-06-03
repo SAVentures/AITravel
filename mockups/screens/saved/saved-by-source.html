@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Saved · by source</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<link rel="stylesheet" href="../wallet/wallet-shell.css" />
+<link rel="stylesheet" href="saved-shell.css" />
+</head>
+<body>
+<div class="frame">
+  <div class="screen">
+    <div class="island"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-icons">
+        <svg width="18" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx=".7" fill="currentColor"/><rect x="4.8" y="5" width="3.2" height="7" rx=".7" fill="currentColor"/><rect x="9.6" y="2.5" width="3.2" height="9.5" rx=".7" fill="currentColor"/><rect x="14.4" y="0" width="3.2" height="12" rx=".7" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 17 12"><path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/><path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/><circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/></svg>
+        <svg width="25" height="12" viewBox="0 0 27 13"><rect x="0.5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="24.5" y="4" width="1.6" height="5" rx=".8" fill="currentColor" opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="viewport">
+      <div class="scroll">
+
+        <header class="screen-topbar" data-screen-label="Saved · by source">
+          <span class="tb-spacer"></span>
+          <span class="ttl" style="opacity:0"></span>
+          <button class="ic" aria-label="Add a place">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </header>
+
+        <div class="sav-hero">
+          <div class="eyebrow">Wishlist</div>
+          <h1>Saved by source</h1>
+          <div class="sub">11 sources<span class="dot"></span>24 places<span class="dot"></span>one clip can hold many</div>
+        </div>
+
+        <div class="sav-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <span class="q">Search saved — by place or creator</span>
+        </div>
+
+        <div class="sav-controls">
+          <div class="seg">
+            <button>By category</button>
+            <button class="on">By source</button>
+          </div>
+          <button class="city-filter">All cities
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+
+        <div style="height:14px;"></div>
+        <div class="src-list">
+
+          <!-- VIDEO · multiple places · EXPANDED -->
+          <div class="srccard open">
+            <button class="srccard-head">
+              <span class="srccard-ico reel"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 7.5v9l7.5-4.5z"/></svg></span>
+              <span class="srccard-body">
+                <span class="nm">Lisbon in 48 hours</span>
+                <span class="mt">Reel · @saltinmycoffee</span>
+              </span>
+              <span class="srccard-end">
+                <span class="srccard-count">3 places</span>
+                <span class="srccard-caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+              </span>
+            </button>
+            <div class="srccard-places">
+              <button class="src-place">
+                <span class="pl-thumb ph-img"></span>
+                <span class="pl-body">
+                  <span class="nm">A Cevicheria</span>
+                  <span class="mt">Príncipe Real · Lisbon <span class="stamp">0:42</span></span>
+                </span>
+                <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="src-place">
+                <span class="pl-thumb ph-img"></span>
+                <span class="pl-body">
+                  <span class="nm">Park Bar</span>
+                  <span class="mt">Bairro Alto · Lisbon <span class="stamp">1:15</span></span>
+                </span>
+                <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="src-place">
+                <span class="pl-thumb ph-img"></span>
+                <span class="pl-body">
+                  <span class="nm">Time Out Market</span>
+                  <span class="mt">Cais do Sodré · Lisbon <span class="stamp">2:03</span></span>
+                </span>
+                <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+              </button>
+            </div>
+            <div class="srccard-foot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4-2.5z" fill="currentColor" stroke="none"/></svg>
+              Watch the original — pinned at each mention
+            </div>
+          </div>
+
+          <!-- VIDEO · multiple places · collapsed -->
+          <div class="srccard">
+            <button class="srccard-head">
+              <span class="srccard-ico reel"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 7.5v9l7.5-4.5z"/></svg></span>
+              <span class="srccard-body">
+                <span class="nm">Tokyo eats you can't miss</span>
+                <span class="mt">Reel · @tokyo.eats</span>
+              </span>
+              <span class="srccard-end">
+                <span class="srccard-count">4 places</span>
+                <span class="srccard-caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+              </span>
+            </button>
+          </div>
+
+          <!-- SCREENSHOT · multiple places · collapsed -->
+          <div class="srccard">
+            <button class="srccard-head">
+              <span class="srccard-ico shot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M4 15l4-3 3 2 3-2 6 4"/><circle cx="9" cy="9" r="1.5"/></svg></span>
+              <span class="srccard-body">
+                <span class="nm">Maps list · screenshot</span>
+                <span class="mt">Screenshot · saved Jul 3</span>
+              </span>
+              <span class="srccard-end">
+                <span class="srccard-count">2 places</span>
+                <span class="srccard-caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+              </span>
+            </button>
+          </div>
+
+          <!-- SEARCH · single place · collapsed -->
+          <div class="srccard">
+            <button class="srccard-head">
+              <span class="srccard-ico search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+              <span class="srccard-body">
+                <span class="nm">Bar Trench</span>
+                <span class="mt">Searched · Ebisu, Tokyo</span>
+              </span>
+              <span class="srccard-end">
+                <span class="srccard-count">1 place</span>
+                <span class="srccard-caret"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+              </span>
+            </button>
+          </div>
+
+        </div>
+
+        <div class="spacer-tab"></div>
+      </div>
+
+      <div class="tabbar-fade"></div>
+      <nav class="screen-tabbar">
+        <a class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3z"/></svg>Trip</a>
+        <a class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 4 4 6v14l5-2 6 2 5-2V4l-5 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>Map</a>
+        <a class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Saved</a>
+        <a class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>You</a>
+      </nav>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

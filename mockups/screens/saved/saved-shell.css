@@ -1,0 +1,209 @@
+/* ============================================================================
+   AI Travel — saved-shell.css
+   The SAVED tab: a global wishlist of places, grouped by category, each place
+   stamped with where it came from (reel · screenshot · search). One video can
+   yield many places — see .srccard expanded.
+   New vocabulary only; pairs with foundations.css and reuses wallet-shell.css
+   chrome (frame · top bar · glass tab bar · empty · sheet · method · detail).
+   Used by saved/*.html.
+   ========================================================================== */
+
+/* ── Striped image placeholder ─ stand-in for real photography ──────────── */
+.ph-img {
+  position: relative; overflow: hidden;
+  background:
+    repeating-linear-gradient(135deg,
+      var(--paper-200), var(--paper-200) 7px,
+      var(--paper-100) 7px, var(--paper-100) 14px);
+}
+.ph-img .ph-lab {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase; color: var(--ink-400);
+}
+.ph-img .ph-glyph { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-300); }
+.ph-img .ph-glyph svg { width: 22px; height: 22px; }
+
+/* ── Editorial hero — a tab root names itself (07-nav §1) ───────────────── */
+.sav-hero { padding: 10px 22px 4px; }
+.sav-hero .eyebrow {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase; color: var(--text-tertiary);
+}
+.sav-hero h1 {
+  font-family: var(--font-display); font-weight: 600; font-size: 30px;
+  letter-spacing: -0.03em; color: var(--ink-900); margin: 8px 0 0; line-height: 1.04;
+}
+.sav-hero .sub {
+  font-size: 14px; color: var(--text-secondary); margin: 9px 0 0;
+  display: flex; align-items: center; gap: 7px;
+}
+.sav-hero .sub .dot { width: 3px; height: 3px; border-radius: 999px; background: var(--ink-300); }
+
+/* ── Fuzzy search well ──────────────────────────────────────────────────── */
+.sav-search {
+  margin: 16px 22px 0; display: flex; align-items: center; gap: 11px;
+  padding: 13px 15px; background: var(--fill-tertiary); border-radius: var(--r-row);
+}
+.sav-search > svg { width: 18px; height: 18px; color: var(--ink-400); flex: none; }
+.sav-search .q { flex: 1; min-width: 0; font-size: 15px; color: var(--ink-400); letter-spacing: -0.01em; }
+.sav-search .q b { color: var(--ink-900); font-weight: 600; }   /* typed query */
+.sav-search .caret { width: 1.5px; height: 18px; background: var(--accent-600); border-radius: 1px; animation: blink 1.1s steps(1) infinite; }
+.sav-search .clear { width: 22px; height: 22px; border-radius: 999px; background: var(--ink-200); color: var(--ink-600); border: none; cursor: pointer; display: grid; place-items: center; flex: none; }
+.sav-search .clear svg { width: 12px; height: 12px; }
+@keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+
+/* ── Control row — segmented view toggle + destination filter ───────────── */
+.sav-controls { display: flex; align-items: center; gap: 10px; padding: 14px 22px 0; }
+.seg { display: inline-flex; background: var(--fill-tertiary); border-radius: var(--r-pill); padding: 3px; gap: 2px; }
+.seg button {
+  border: none; cursor: pointer; font-family: var(--font-ui); font-weight: 600;
+  font-size: 12.5px; letter-spacing: -0.01em; color: var(--ink-600);
+  padding: 7px 13px; border-radius: var(--r-pill); background: transparent;
+  white-space: nowrap;
+}
+.seg button.on { background: var(--paper-0); color: var(--ink-900); box-shadow: var(--shadow-rest); }
+.city-filter {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+  border: none; cursor: pointer; background: transparent;
+  font-family: var(--font-ui); font-weight: 600; font-size: 13px; color: var(--ink-700);
+  letter-spacing: -0.01em; padding: 7px 4px;
+}
+.city-filter svg { width: 13px; height: 13px; color: var(--ink-400); }
+
+/* ── Category filter pills — horizontally scrollable ────────────────────── */
+.sav-pills {
+  display: flex; gap: 7px; padding: 14px 22px 2px; overflow-x: auto; scrollbar-width: none;
+}
+.sav-pills::-webkit-scrollbar { display: none; }
+.sav-pills .chip { flex: none; }
+.sav-pills .chip .gl { width: 13px; height: 13px; }
+
+/* ── Place card — the repeated wishlist entry ───────────────────────────── */
+.pl-list { display: flex; flex-direction: column; gap: 10px; padding: 0 18px; }
+.pl {
+  display: grid; grid-template-columns: 62px 1fr 18px; align-items: center; gap: 14px;
+  padding: 10px; background: var(--paper-100); border-radius: var(--r-card);
+  cursor: pointer; text-align: left; border: none; width: 100%; font-family: inherit;
+}
+.pl-thumb { width: 62px; height: 62px; border-radius: var(--r-row); flex: none; }
+/* source stamp — provenance mark on the thumbnail corner */
+.src-badge {
+  position: absolute; right: -5px; bottom: -5px; width: 23px; height: 23px;
+  border-radius: 999px; background: var(--paper-0); box-shadow: var(--shadow-rest);
+  display: grid; place-items: center;
+}
+.src-badge svg { width: 12px; height: 12px; color: var(--ink-700); }
+.pl-body { min-width: 0; }
+.pl-body .nm {
+  display: block; font-family: var(--font-display); font-weight: 600; font-size: 16px;
+  letter-spacing: -0.015em; color: var(--ink-900);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pl-body .mt {
+  display: block; font-size: 13px; color: var(--text-secondary); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pl-body .src {
+  display: flex; align-items: center; gap: 5px; margin-top: 6px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.03em;
+  text-transform: uppercase; color: var(--ink-500);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pl-body .src svg { width: 11px; height: 11px; flex: none; color: var(--ink-400); }
+.pl .pl-cat { font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 7px; border-radius: var(--r-tag); white-space: nowrap; }
+.pl .chev { color: var(--ink-300); align-self: center; }
+.pl .chev svg { width: 16px; height: 16px; display: block; }
+
+/* category tints — reuse the categorical day marks (foundations) */
+.cat-eat   { background: oklch(0.605 0.072 156 / 0.13); color: var(--day-2); }
+.cat-drink { background: oklch(0.640 0.090 55 / 0.13);  color: var(--day-1); }
+.cat-stay  { background: oklch(0.585 0.072 236 / 0.13); color: var(--day-3); }
+.cat-do    { background: oklch(0.590 0.082 318 / 0.12); color: var(--day-4); }
+.cat-shop  { background: var(--fill-tertiary);          color: var(--ink-600); }
+
+/* a small leading category dot for group headers */
+.daygrp .cat-dot { width: 9px; height: 9px; border-radius: 999px; flex: none; align-self: center; }
+.cat-dot.eat   { background: var(--day-2); }
+.cat-dot.drink { background: var(--day-1); }
+.cat-dot.stay  { background: var(--day-3); }
+.cat-dot.do    { background: var(--day-4); }
+.cat-dot.shop  { background: var(--ink-400); }
+.daygrp .ct { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+
+/* ── Source view — one card per source, video expands into many places ──── */
+.src-list { display: flex; flex-direction: column; gap: 12px; padding: 0 18px; }
+.srccard { background: var(--paper-100); border-radius: var(--r-card); overflow: hidden; }
+.srccard-head {
+  display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 14px;
+  padding: 14px; cursor: pointer; border: none; width: 100%; text-align: left;
+  font-family: inherit; background: transparent;
+}
+.srccard-ico { width: 52px; height: 52px; border-radius: var(--r-row); display: grid; place-items: center; flex: none; position: relative; }
+.srccard-ico svg { width: 23px; height: 23px; }
+.srccard-ico.reel   { background: oklch(0.590 0.082 318 / 0.12); color: var(--day-4); }
+.srccard-ico.shot   { background: oklch(0.585 0.072 236 / 0.13); color: var(--day-3); }
+.srccard-ico.search { background: var(--fill-tertiary);          color: var(--ink-600); }
+.srccard-body { min-width: 0; }
+.srccard-body .nm { display: block; font-family: var(--font-display); font-weight: 600; font-size: 16px; letter-spacing: -0.015em; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srccard-body .mt { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-500); margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srccard-end { display: flex; align-items: center; gap: 10px; flex: none; }
+.srccard-count { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--ink-600); background: var(--fill-tertiary); padding: 5px 9px; border-radius: var(--r-pill); font-variant-numeric: tabular-nums; }
+.srccard-caret { color: var(--ink-400); transition: transform var(--dur-standard) var(--ease-standard); }
+.srccard-caret svg { width: 16px; height: 16px; display: block; }
+.srccard.open .srccard-caret { transform: rotate(180deg); }
+
+/* expanded body — the places this source yielded */
+.srccard-places { border-top: 0.5px solid var(--separator); padding: 4px 14px 10px; }
+.src-place {
+  display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 12px;
+  padding: 11px 0; border-bottom: 0.5px solid var(--separator);
+  cursor: pointer; border-left: none; border-right: none; border-top: none;
+  width: 100%; text-align: left; font-family: inherit; background: transparent;
+}
+.src-place:last-child { border-bottom: none; }
+.src-place .pl-thumb { width: 46px; height: 46px; border-radius: var(--r-thumb); }
+.src-place .nm { display: block; font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -0.015em; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.src-place .mt { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-size: 12.5px; color: var(--text-secondary); }
+.src-place .stamp { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.03em; color: var(--accent-700); background: var(--accent-50); padding: 2px 6px; border-radius: var(--r-tag); white-space: nowrap; }
+.src-place .chev { color: var(--ink-300); }
+.src-place .chev svg { width: 15px; height: 15px; display: block; }
+/* hint footer inside an expanded video source */
+.srccard-foot { display: flex; align-items: center; gap: 7px; padding: 12px 14px 14px; font-size: 12.5px; color: var(--text-secondary); border-top: 0.5px solid var(--separator); }
+.srccard-foot svg { width: 14px; height: 14px; color: var(--ink-400); flex: none; }
+
+/* ── Place detail — photo hero + provenance + map ───────────────────────── */
+.pd-hero { position: relative; height: 290px; width: 100%; }
+.pd-hero .ph-lab { font-size: 10.5px; }
+.pd-hero .scrim { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, oklch(0.20 0.01 256 / 0.04)); }
+.pd-titleblock { padding: 18px 22px 2px; }
+.pd-kicker { display: flex; align-items: center; gap: 8px; }
+.pd-kicker .pl-cat { font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-tag); }
+.pd-kicker .where { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.pd-name { font-family: var(--font-display); font-weight: 600; font-size: 27px; letter-spacing: -0.03em; color: var(--ink-900); margin: 11px 0 0; line-height: 1.05; text-wrap: balance; }
+
+/* provenance card */
+.prov { margin: 20px 22px 0; background: var(--paper-100); border-radius: var(--r-card); padding: 14px; }
+.prov .lab { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.prov .lab .mk { width: 11px; height: 11px; color: var(--ink-500); }
+.prov-row { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 13px; }
+.prov-thumb { width: 52px; height: 52px; border-radius: var(--r-thumb); flex: none; }
+.prov-who { min-width: 0; }
+.prov-who .nm { display: block; font-family: var(--font-display); font-weight: 600; font-size: 15px; letter-spacing: -0.015em; color: var(--ink-900); }
+.prov-who .mt { display: block; font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prov-open { flex: none; display: inline-flex; align-items: center; gap: 5px; border: none; cursor: pointer; background: var(--surface-grouped); box-shadow: var(--shadow-rest); border-radius: var(--r-pill); padding: 8px 13px; font-family: var(--font-ui); font-weight: 600; font-size: 12.5px; color: var(--ink-800); }
+.prov-open svg { width: 13px; height: 13px; }
+.prov .quote { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 15px; line-height: 1.4; letter-spacing: -0.01em; color: var(--ink-800); margin: 13px 0 0; text-wrap: pretty; }
+
+/* map snippet */
+.map-snip { margin: 12px 22px 0; border-radius: var(--r-card); overflow: hidden; }
+.map-snip .canvas { position: relative; height: 132px; width: 100%; background:
+    repeating-linear-gradient(0deg, var(--paper-200), var(--paper-200) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, var(--paper-200), var(--paper-200) 1px, transparent 1px, transparent 26px),
+    var(--paper-100); }
+.map-snip .pin { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-100%); color: var(--accent-600); }
+.map-snip .pin svg { width: 28px; height: 28px; filter: drop-shadow(0 2px 4px oklch(0.30 0.02 245 / 0.25)); }
+.map-snip .addr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; background: var(--paper-100); }
+.map-snip .addr .t { font-size: 13.5px; color: var(--ink-800); letter-spacing: -0.01em; }
+.map-snip .addr .go { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10px; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--accent-700); }
+.map-snip .addr .go svg { width: 13px; height: 13px; }

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Onboarding · C · 02 · Trip shape (first trip)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<link rel="stylesheet" href="screen-shell.css" />
+<style>
+/* ── Step 02 · Trip shape — first trip (taste, not bucket) ────────────── */
+.tblock { padding: 0 22px; margin-top: 28px; }
+.tblock:first-of-type { margin-top: 24px; }
+.tlab { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 13px; }
+.tlab .t { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.tlab .h { font-size: 12px; color: var(--text-secondary); }
+
+/* day stepper */
+.stepper { display: inline-flex; align-items: center; background: var(--paper-200); border-radius: var(--r-pill); padding: 4px; }
+.stepper button { width: 32px; height: 32px; border-radius: 999px; border: none; background: transparent; display: grid; place-items: center; color: var(--ink-700); cursor: pointer; }
+.stepper button:hover { background: var(--paper-0); }
+.stepper .v { display: inline-flex; align-items: baseline; gap: 5px; padding: 0 16px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-600); }
+.stepper .v b { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--ink-900); letter-spacing: -0.01em; }
+
+/* interest chips — multi-select; selected = solid ink (never the accent) */
+.chips { display: flex; flex-wrap: wrap; gap: 9px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: var(--r-pill); font-family: var(--font-ui); font-size: 14px; font-weight: 600; background: var(--paper-100); color: var(--ink-600); cursor: pointer; }
+.chip .ck { display: none; }
+.chip.on { background: var(--ink-900); color: var(--paper-0); }
+.chip.on .ck { display: inline-grid; place-items: center; }
+.chip svg { width: 12px; height: 12px; }
+
+/* pace segmented */
+.pace { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--fill-tertiary); border-radius: var(--r-pill); padding: 3px; }
+.pace .o { padding: 11px 0; text-align: center; border-radius: var(--r-pill); font-family: var(--font-ui); font-size: 13.5px; font-weight: 600; color: var(--ink-600); }
+.pace .o.on { background: var(--ink-900); color: var(--paper-0); }
+
+.foot-ai { margin: 30px 22px 0; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen">
+    <div class="island"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-icons">
+        <svg width="18" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx=".7" fill="currentColor"/><rect x="4.8" y="5" width="3.2" height="7" rx=".7" fill="currentColor"/><rect x="9.6" y="2.5" width="3.2" height="9.5" rx=".7" fill="currentColor"/><rect x="14.4" y="0" width="3.2" height="12" rx=".7" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 17 12"><path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/><path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/><circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/></svg>
+        <svg width="25" height="12" viewBox="0 0 27 13"><rect x="0.5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="24.5" y="4" width="1.6" height="5" rx=".8" fill="currentColor" opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="viewport">
+      <div class="scroll">
+
+        <header class="ob-header">
+          <div class="ob-topbar">
+            <button class="ob-iconbtn" aria-label="Back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <span></span>
+            <span class="ob-counter"><b>02</b> / 05</span>
+          </div>
+          <div class="ob-progress">
+            <span class="ob-seg done"></span><span class="ob-seg cur"></span><span class="ob-seg todo"></span><span class="ob-seg todo"></span><span class="ob-seg todo"></span>
+          </div>
+        </header>
+
+        <section class="hero">
+          <span class="eyebrow">Trip shape</span>
+          <h1 class="q">What kind of trip is this?</h1>
+          <p class="sub">No saved places yet — so tell us the shape, and we'll fill it with Lisbon's best.</p>
+        </section>
+
+        <div class="tblock">
+          <div class="tlab"><span class="t">How long</span></div>
+          <div class="stepper">
+            <button aria-label="Fewer days"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+            <span class="v"><b>4</b> days</span>
+            <button aria-label="More days"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+          </div>
+        </div>
+
+        <div class="tblock">
+          <div class="tlab"><span class="t">What you're into</span><span class="h">pick a few</span></div>
+          <div class="chips">
+            <span class="chip on"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Food</span>
+            <span class="chip on"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>History</span>
+            <span class="chip on"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Coffee</span>
+            <span class="chip">Architecture</span>
+            <span class="chip">Views</span>
+            <span class="chip">Nightlife</span>
+            <span class="chip">Markets</span>
+            <span class="chip">Nature</span>
+            <span class="chip">Art</span>
+          </div>
+        </div>
+
+        <div class="tblock">
+          <div class="tlab"><span class="t">Pace</span></div>
+          <div class="pace">
+            <div class="o">Easy</div>
+            <div class="o on">Balanced</div>
+            <div class="o">Packed</div>
+          </div>
+        </div>
+
+        <div class="foot-ai">
+          <div class="ai">
+            <div class="lab"><span class="mk"></span> How we'll use this</div>
+            <p class="line">Three stops a day at a balanced pace, leaning into food and history — with room left to wander.</p>
+          </div>
+        </div>
+
+        <div class="spacer-floor"></div>
+      </div>
+
+      <div class="ob-action">
+        <button class="ob-cta">
+          Continue · 4 days
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

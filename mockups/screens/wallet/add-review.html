@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Add to wallet · review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<link rel="stylesheet" href="wallet-shell.css" />
+<style>
+  .bg-chrome { filter: saturate(0.9); }
+  .bg-chrome .screen-topbar { background: oklch(0.99 0.003 256 / 0.9); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen">
+    <div class="island"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-icons">
+        <svg width="18" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx=".7" fill="currentColor"/><rect x="4.8" y="5" width="3.2" height="7" rx=".7" fill="currentColor"/><rect x="9.6" y="2.5" width="3.2" height="9.5" rx=".7" fill="currentColor"/><rect x="14.4" y="0" width="3.2" height="12" rx=".7" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 17 12"><path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/><path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/><circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/></svg>
+        <svg width="25" height="12" viewBox="0 0 27 13"><rect x="0.5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="24.5" y="4" width="1.6" height="5" rx=".8" fill="currentColor" opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="viewport bg-chrome">
+      <header class="screen-topbar">
+        <button class="screen-topbar__back"><svg class="chev-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg> Trip</button>
+        <span class="ttl">Travel wallet</span>
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      </header>
+      <div class="wal-sub"><div class="ctx"><b>Lisbon</b> · 4 days · 7 bookings</div></div>
+      <div class="daygrp"><span class="n">Day 1</span><span class="d">Wed · Aug 26</span><span class="rule"></span></div>
+    </div>
+
+    <div class="sheet-scrim"></div>
+
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <span class="sheet-title">Check the details</span>
+        <button class="sheet-x" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="rev-ai"><span class="mk"></span> Read from your screenshot</div>
+
+      <div class="rev-card">
+        <div class="rev-field">
+          <div class="k">Type</div>
+          <div class="v"><span class="rev-type"><span class="bk-ico activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4z"/></svg></span>Activity</span></div>
+        </div>
+        <div class="rev-field">
+          <div class="k">Name</div>
+          <div class="v">Fado at Tasca do Chico</div>
+        </div>
+        <div class="rev-field">
+          <div class="k">When</div>
+          <div class="v low">Probably Aug 27, 21:00 <span class="verify">verify</span></div>
+        </div>
+        <div class="rev-field">
+          <div class="k">Where</div>
+          <div class="v">Rua do Diário de Notícias 39, Bairro Alto</div>
+        </div>
+        <div class="rev-field">
+          <div class="k">Confirmation</div>
+          <div class="v mono" style="font-family:var(--font-mono);font-size:15px;">TDC-8841</div>
+        </div>
+      </div>
+
+      <button class="sheet-cta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg>
+        Add to wallet
+      </button>
+      <button class="sheet-ghost">Edit details</button>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

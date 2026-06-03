@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Travel wallet &amp; bookings</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #f0eee9; }
+  #root { height: 100vh; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { createRoot } = ReactDOM;
+
+const STUDIO = '#eaecf0';
+const AW = 540, AH = 1010;
+
+function Device({ src, title }) {
+  return (
+    <iframe
+      src={src}
+      title={title}
+      scrolling="no"
+      style={{ width: '100%', height: '100%', border: 0, display: 'block', background: STUDIO }}
+    />
+  );
+}
+
+const SECTIONS = [
+  {
+    id: 'wallet', title: 'Travel wallet · the surface',
+    subtitle: 'From zero to a full trip. The Wallet lives in the Trip stack (\u2039 Trip) and groups bookings by day. Tap + or any \u201cway\u201d to add one.',
+    screens: [
+      { id: 'empty', label: 'Empty \u00b7 three ways to add', src: 'wallet-empty.html' },
+      { id: 'populated', label: 'Populated \u00b7 by day + orphan', src: 'wallet-populated.html' },
+    ],
+  },
+  {
+    id: 'booking', title: 'Booking \u00b7 detail & access',
+    subtitle: 'Tap an entry for the type-aware detail. The day-of access card is the boarding-pass moment \u2014 presented full-screen, brightness up.',
+    screens: [
+      { id: 'detail', label: 'Booking detail \u00b7 flight', src: 'booking-detail.html' },
+      { id: 'access', label: 'Day-of access \u00b7 boarding pass', src: 'access-card.html' },
+    ],
+  },
+  {
+    id: 'add', title: 'Add to wallet',
+    subtitle: 'The flow behind the + button: forward/paste, scan, or photo \u2192 the AI reads it out for you to confirm. Low-confidence fields are flagged to verify.',
+    screens: [
+      { id: 'method', label: 'Choose a method', src: 'add-method.html' },
+      { id: 'review', label: 'AI-extracted \u00b7 review', src: 'add-review.html' },
+    ],
+  },
+];
+
+function App() {
+  return (
+    <DesignCanvas>
+      {SECTIONS.map((sec) => (
+        <DCSection key={sec.id} id={sec.id} title={sec.title} subtitle={sec.subtitle}>
+          {sec.screens.map((s) => (
+            <DCArtboard key={s.id} id={s.id} label={s.label} width={AW} height={AH} style={{ background: STUDIO }}>
+              <Device src={s.src} title={s.label} />
+            </DCArtboard>
+          ))}
+        </DCSection>
+      ))}
+    </DesignCanvas>
+  );
+}
+
+createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#eaecf0"/>
+    <rect x="30" y="34" width="40" height="30" rx="5" fill="#0c0d0f"/>
+    <rect x="30" y="42" width="40" height="3" fill="#ffffff" opacity="0.85"/>
+    <circle cx="62" cy="56" r="3" fill="#0a84ff"/>
+  </svg>
+</template>
+</body>
+</html>

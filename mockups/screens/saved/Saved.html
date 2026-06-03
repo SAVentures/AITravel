@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Saved places</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #f0eee9; }
+  #root { height: 100vh; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { createRoot } = ReactDOM;
+
+const STUDIO = '#eaecf0';
+const AW = 540, AH = 1010;
+
+function Device({ src, title }) {
+  return (
+    <iframe
+      src={src}
+      title={title}
+      scrolling="no"
+      style={{ width: '100%', height: '100%', border: 0, display: 'block', background: STUDIO }}
+    />
+  );
+}
+
+const SECTIONS = [
+  {
+    id: 'surface', title: 'Saved \u00b7 the surface',
+    subtitle: 'A global wishlist of places. Lands grouped by category; each place is stamped with where it came from \u2014 a reel, a screenshot, or a search. Tap + to add one.',
+    screens: [
+      { id: 'empty', label: 'Empty \u00b7 three ways to save', src: 'saved-empty.html' },
+      { id: 'populated', label: 'Populated \u00b7 by category + source stamps', src: 'saved-populated.html' },
+    ],
+  },
+  {
+    id: 'find', title: 'Find & filter',
+    subtitle: 'Fuzzy search matches by vibe, not just by name, across every city. Flip to \u201cBy source\u201d to see whole clips \u2014 one video can hold many places.',
+    screens: [
+      { id: 'search', label: 'Fuzzy search \u00b7 matched by vibe', src: 'saved-search.html' },
+      { id: 'source', label: 'By source \u00b7 a reel \u2192 many places', src: 'saved-by-source.html' },
+    ],
+  },
+  {
+    id: 'detail', title: 'Place \u00b7 detail & add',
+    subtitle: 'Tap a place for the full detail \u2014 photo, where it came from, the map, and the basics. The + button opens the same add sheet as the Wallet, tuned for places.',
+    screens: [
+      { id: 'place', label: 'Place detail \u00b7 provenance + map', src: 'place-detail.html' },
+      { id: 'add', label: 'Add a place \u00b7 method sheet', src: 'add-place.html' },
+    ],
+  },
+];
+
+function App() {
+  return (
+    <DesignCanvas>
+      {SECTIONS.map((sec) => (
+        <DCSection key={sec.id} id={sec.id} title={sec.title} subtitle={sec.subtitle}>
+          {sec.screens.map((s) => (
+            <DCArtboard key={s.id} id={s.id} label={s.label} width={AW} height={AH} style={{ background: STUDIO }}>
+              <Device src={s.src} title={s.label} />
+            </DCArtboard>
+          ))}
+        </DCSection>
+      ))}
+    </DesignCanvas>
+  );
+}
+
+createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#eaecf0"/>
+    <path d="M38 28h24v44l-12-8-12 8z" fill="#0c0d0f"/>
+    <circle cx="62" cy="34" r="7" fill="#ffffff"/>
+    <path d="M59 34l2.5 2.5L66 31" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</template>
+</body>
+</html>
