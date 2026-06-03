@@ -41,8 +41,8 @@ state.
 ```swift
 @MainActor @Observable final class AppStore {
     // — domain graph (hydrated from the network; see §5) —
-    private(set) var library: Library?          // the @Observable reference graph (02-models)
-    private(set) var borrowedBooks: [Book] = []  // cross-entity mirror, kept in sync by commands (§4)
+    private(set) var library: LibraryModel?          // the @Observable reference graph (02-models)
+    private(set) var borrowedBooks: [BookModel] = []  // cross-entity mirror, kept in sync by commands (§4)
 
     // — transient store state —
     var loadState: LoadState = .idle            // idle | loading | loaded | failed(String)
@@ -98,7 +98,7 @@ this is just where the state sits.
 Mutations split into two tiers — this is the rule that keeps the store thin and the models reusable.
 
 **Tier 1 — pure state transitions live on the reference models** as methods (`02-models.md §2`).
-Given a `Book` reference, the change is a direct in-place mutation; because `Book` is `@Observable`,
+Given a `BookModel` reference, the change is a direct in-place mutation; because `BookModel` is `@Observable`,
 only the views reading the changed property invalidate:
 
 ```swift
@@ -114,7 +114,7 @@ views already hold):
 
 ```swift
 // Store/AppStore+Library.swift
-func borrow(bookID: Book.ID) async {
+func borrow(bookID: BookModel.ID) async {
     guard let book = library?.book(id: bookID) else { return }
     let snapshot = book.toDTO()                  // value snapshot for rollback
     book.toggleBorrowed()                         // optimistic, in place → only this row re-renders
@@ -227,7 +227,7 @@ Read-only derivations that several screens share live as computed properties on 
 *screen-specific* belongs in that screen's presenter instead, `06-screens.md`):
 
 ```swift
-var overdueBooks: [Book] {
+var overdueBooks: [BookModel] {
     (library?.books ?? []).filter { $0.isOverdue(now: simulatedNow) }
 }
 var isLoaded: Bool { if case .loaded = loadState { return true } else { return false } }

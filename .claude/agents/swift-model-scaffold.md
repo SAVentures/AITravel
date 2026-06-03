@@ -11,7 +11,7 @@ Read `ios/docs/engineering/02-models.md`, then execute the task you were given.
 
 **You get a contract, not code.** The plan gives you the interface — type kind (reference model vs leaf
 value type), names, the field table, conformances, cross-reference `*.ID` types, the **exemplar to
-mirror** (usually `Book`/`Library` or `Author`/`Format`), and the **Done-when acceptance criteria** —
+mirror** (usually `BookModel`/`LibraryModel` or `Author`/`Format`), and the **Done-when acceptance criteria** —
 not the bodies. You write the implementation:
 
 1. **Read the cited exemplar's span first — not the whole file** (LSP `goToDefinition` jumps you
@@ -26,27 +26,31 @@ this doc, don't transcribe it blind.
 ## The one decision that drives everything: reference model vs leaf value type
 
 `02-models.md §1` — **a type is a `@MainActor @Observable final class` reference model iff it is a
-mutable row in a list** (`Library`, `Book`). Everything else is a leaf value type. The contract names
+mutable row in a list** (`LibraryModel`, `BookModel`). Everything else is a leaf value type. The contract names
 the kind; if it doesn't, apply the decision rule and report which you chose and why.
 
-### If the contract asks for a **reference model** (`Library`/`Book`-shaped)
+### If the contract asks for a **reference model** (`LibraryModel`/`BookModel`-shaped)
+
+> **Naming (`02-models.md §1`):** for a conceptual entity `<Entity>` (e.g. `Book`), the reference model
+> is **`<Entity>Model`** (suffix `Model`), the wire mirror is **`<Entity>DTO`**, and value types stay
+> bare. So `BookModel` ↔ `BookDTO`. Never prefix (`ModelBook`); never suffix a value type.
 
 You produce, in lock-step:
 
-- **`ios/AppTemplate/Models/<TypeName>.swift`** — `@MainActor @Observable final class <TypeName>:
+- **`ios/AppTemplate/Models/<Entity>Model.swift`** — `@MainActor @Observable final class <Entity>Model:
   Identifiable` with `let id: String`, the mutable `var` fields, a designated init, and its **mutation
   methods** (pure, synchronous, in-place state transitions — `toggleFavorite()`, `markRead()` — never
   network or cross-entity effects; those are `AppStore` wrappers, out of scope). Cross-references use
   the synthesized `*.ID` type (`var authorID: Author.ID`), never bare `String`.
   - **NOT `Codable`. NOT value `Equatable`/`Hashable`** (equality is identity-based). No SwiftUI import.
-  - A `restore(from: <TypeName>DTO)` method that applies a value snapshot back onto the live reference
+  - A `restore(from: <Entity>DTO)` method that applies a value snapshot back onto the live reference
     (the rollback path), if the contract calls for it.
-- **`ios/AppTemplate/Networking/Responses/DTO/<TypeName>DTO.swift`** — `nonisolated struct
-  <TypeName>DTO: Codable, Equatable, Sendable`, a field-for-field mirror that **reuses the leaf value
+- **`ios/AppTemplate/Networking/Responses/DTO/<Entity>DTO.swift`** — `nonisolated struct
+  <Entity>DTO: Codable, Equatable, Sendable`, a field-for-field mirror that **reuses the leaf value
   types unchanged** (no `AuthorDTO` — leaf types are already wire-safe). Plus the two mappings:
-  - `extension <TypeName>DTO { @MainActor func toDomain() -> <TypeName> }` — builds the reference graph
+  - `extension <Entity>DTO { @MainActor func toDomain() -> <Entity>Model }` — builds the reference graph
     on the main actor.
-  - `extension <TypeName> { func toDTO() -> <TypeName>DTO }` — snapshots the reference graph back.
+  - `extension <Entity>Model { func toDTO() -> <Entity>DTO }` — snapshots the reference graph back.
   - These must satisfy the **round-trip invariant `dto.toDomain().toDTO() == dto`** (the test writer
     asserts it; you make it total — every field maps both ways).
 
@@ -93,7 +97,7 @@ extension file (a new file, or an addition to its domain's existing file — **n
   `04-networking.md §2`). Reference models stay `@MainActor` and are NOT `Codable` — they never get
   `nonisolated`.
 - **Navigate with SwiftLSP** (the `LSP` tool — see `.claude/agents/README.md` § "Navigating code"):
-  `documentSymbol` on a neighboring model (`Book`, `Author`, `Format`) to copy its conformance set,
+  `documentSymbol` on a neighboring model (`BookModel`, `Author`, `Format`) to copy its conformance set,
   `*.ID` pattern, and init shape exactly; its line numbers give you positions for `goToDefinition`.
   Confirm the new type name isn't already taken with a `Grep` (a string search — LSP can't find a
   symbol that doesn't exist yet).

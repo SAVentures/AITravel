@@ -35,10 +35,10 @@ quality gate rather than a green-light rubber stamp.
 | **4 — UI / E2E** | The real compiled app driven through its UI against a `MockProvider` scenario | ~minutes/suite | Broken navigation, gestures, async load, accessibility |
 
 **What belongs where** (book domain):
-- **L1** — `Book.toggleBorrowed()` flips `isBorrowed`; `BookDTO.toDomain().toDTO() == dto`;
-  `BookListPresenter.rows` count/order/derived fields; `Book.isOverdue` given a fixed `simulatedNow`.
+- **L1** — `BookModel.toggleBorrowed()` flips `isBorrowed`; `BookDTO.toDomain().toDTO() == dto`;
+  `BookListPresenter.rows` count/order/derived fields; `BookModel.isOverdue` given a fixed `simulatedNow`.
 - **L2** — `store.borrow(bookID:)` fires `BorrowBookRequest` through `MockProvider`, mutates the
-  reference `Book`, and rolls back on failure; a `LibraryDTO` payload decodes and maps to a `Library`
+  reference `BookModel`, and rolls back on failure; a `LibraryDTO` payload decodes and maps to a `LibraryModel`
   graph with the expected books.
 - **L3** — a `BookRow` in its `.borrowed` state renders the borrowed badge **and** the dimmed cover
   **and** the correct byline simultaneously; no unit test can confirm that co-occurrence.
@@ -107,9 +107,9 @@ The model-owned transitions (§6.3 of `01-architecture.md`) test as pure in-plac
 
 | What | Assertion |
 |---|---|
-| `Book.toggleFavorite()` / `markRead()` / `toggleBorrowed()` | the single field flips; no side effects |
-| `Library.book(id:)` | returns the reference for a known id, `nil` for an unknown one |
-| computed properties (e.g. `Book.isOverdue` given `simulatedNow`) | pure function of inputs, no `Date()` |
+| `BookModel.toggleFavorite()` / `markRead()` / `toggleBorrowed()` | the single field flips; no side effects |
+| `LibraryModel.book(id:)` | returns the reference for a known id, `nil` for an unknown one |
+| computed properties (e.g. `BookModel.isOverdue` given `simulatedNow`) | pure function of inputs, no `Date()` |
 
 ### 4.2 DTO round-trip
 The reference models aren't `Codable`; the round-trip runs through the mapping:
@@ -123,7 +123,7 @@ The reference models aren't `Codable`; the round-trip runs through the mapping:
 Use a **plain symmetric `JSONEncoder`/`JSONDecoder`** (`.iso8601` dates) for any JSON round-trip —
 **not** `APIJSON`, whose `.convertToSnakeCase`/`.convertFromSnakeCase` is asymmetric on acronym/ID keys
 (`bookID` → `book_id` → `bookId` — the capitalized `ID` is lost on the way back) and would falsely fail
-a symmetric round-trip. This test guards mapping drift: a field added to `Book` but not `BookDTO`
+a symmetric round-trip. This test guards mapping drift: a field added to `BookModel` but not `BookDTO`
 breaks the round-trip.
 
 ### 4.3 Presenter derivation

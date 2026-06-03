@@ -3,7 +3,7 @@
 Single-target SwiftUI app (`AppTemplate` scheme, Xcode 26, **minimum iOS 26**, **Swift 6 language
 mode**). This document describes the code as written — read it alongside the source before adding a
 layer or file. It is domain-agnostic: the running example is a small **library / book-management**
-slice (browse the library, open a book, borrow one). Swap `Library`/`Book` for your own entities when
+slice (browse the library, open a book, borrow one). Swap `LibraryModel`/`BookModel` for your own entities when
 you instantiate the template.
 
 Visual language is specified in `docs/design-docs/`; this document does not restate visual rules.
@@ -101,15 +101,16 @@ ios/
       LoadState.swift  WriteError.swift     transient store state (enum / error)
 
     Models/
-      Library.swift                         @MainActor @Observable container reference model (holds [Book])
-      Book.swift                            @MainActor @Observable row reference model (+ mutation methods)
+      LibraryModel.swift                         @MainActor @Observable container reference model (holds [BookModel])
+      BookModel.swift                            @MainActor @Observable row reference model (+ mutation methods)
       ReadingStatus.swift                   value enum (.unread | .reading | .read)
       Format.swift                          value enum with associated values (manual Codable)
       Author.swift  BookDetail.swift        leaf value types (Codable, Sendable)
       Genre.swift   Rating.swift            leaf value types (enum / struct)
       DateFormatters.swift                  AppDate — pinned tz/locale formatters
-      SampleData.swift                      domain seed entry (fixed simulatedNow for determinism)
-      SampleData+Library.swift              per-domain make* helpers
+      SampleData/                           sample-data seed in its own dir
+        SampleData.swift                    domain seed entry (fixed simulatedNow for determinism)
+        SampleData+Library.swift            per-domain make* helpers
 
     Networking/
       APIRequest.swift                      the endpoint contract (associatedtype Response)
@@ -208,11 +209,11 @@ One `@MainActor @Observable final class AppStore` holds everything the UI reads:
 
 ```swift
 @MainActor @Observable final class AppStore {
-    private(set) var library: Library?             // domain reference graph (holds [Book])
+    private(set) var library: LibraryModel?             // domain reference graph (holds [BookModel])
     var loadState: LoadState = .idle               // idle | loading | loaded | failed(String)
     var writeError: WriteError?                     // surfaced by the write path; cleared on retry
     var libraryPath = NavigationPath()              // one per tab
-    private(set) var borrowedBooks: [Book]          // cross-entity mirror, kept in sync by commands
+    private(set) var borrowedBooks: [BookModel]          // cross-entity mirror, kept in sync by commands
     let api: APIClient
 
     init(api: APIClient = .live) { self.api = api; … }   // App root owns one; tests/previews make their own
@@ -236,8 +237,8 @@ you render and mutate cannot also be the type the network decodes. The wire side
 
 ```
 Wire (off-actor, Sendable, Codable)        MainActor domain (@Observable, reference)
-BookDTO     (Codable struct)     ──map──▶    Book      (@MainActor @Observable final class)
-LibraryDTO  (Codable struct)     ──map──▶    Library   (@MainActor @Observable final class)
+BookDTO     (Codable struct)     ──map──▶    BookModel      (@MainActor @Observable final class)
+LibraryDTO  (Codable struct)     ──map──▶    LibraryModel   (@MainActor @Observable final class)
                                              holds ↓  (value types — shared by BOTH sides)
                                  Author · BookDetail · Genre · Rating  (Codable, Sendable)
 ```
@@ -252,12 +253,12 @@ LibraryDTO  (Codable struct)     ──map──▶    Library   (@MainActor @Ob
   WWDC23). Identity
   equality; `ForEach` keys on `id`. **Not** `Codable`, **not** cross-actor `Sendable` (its
   `@MainActor` isolation *is* the Sendable conformance). Nested containers: each list-participating
-  level is its own reference model (e.g. a `Library → Shelf → Book` hierarchy makes all three).
+  level is its own reference model (e.g. a `LibraryModel → Shelf → BookModel` hierarchy makes all three).
 - **Value type** — `struct`/`enum`, `Codable, Equatable, Hashable, Sendable`. Leaf/immutable data;
   shared by both the DTO and the domain side.
 
 ```swift
-@MainActor @Observable final class Book: Identifiable {
+@MainActor @Observable final class BookModel: Identifiable {
     let id: String
     var title: String
     var author: Author          // value type
@@ -275,7 +276,7 @@ LibraryDTO  (Codable struct)     ──map──▶    Library   (@MainActor @Ob
 Each mutation is a pure in-place transition **method on the model** — never an index-walk on the store:
 
 ```swift
-extension Book {
+extension BookModel {
     func toggleFavorite()  { isFavorite.toggle() }
     func markRead()        { status = .read }
     func toggleBorrowed()  { isBorrowed.toggle() }   // used optimistically by the borrow command (§7.4)
@@ -289,8 +290,8 @@ A `library.book(id:)` helper returns the reference for command sites that hold o
 `*DTO`s mirror each reference model field-for-field, reusing leaf value types. Two extensions per entity:
 
 ```swift
-extension BookDTO { @MainActor func toDomain() -> Book }   // build reference graph on main
-extension Book    { func toDTO() -> BookDTO }              // snapshot reference → value (rollback, request bodies)
+extension BookDTO { @MainActor func toDomain() -> BookModel }   // build reference graph on main
+extension BookModel    { func toDTO() -> BookDTO }              // snapshot reference → value (rollback, request bodies)
 ```
 
 A `toDomain().toDTO() == dto` round-trip test guards mapping drift. **`SampleData` builds the domain
@@ -347,7 +348,7 @@ A write is an `AppStore` command, because it needs `api` and `writeError` (which
 cannot reach):
 
 ```swift
-func borrow(bookID: Book.ID) async {
+func borrow(bookID: BookModel.ID) async {
     guard let book = library?.book(id: bookID) else { return }
     let snapshot = book.toDTO()                 // value snapshot for rollback
     book.toggleBorrowed()                        // optimistic, in place → only this row re-renders
@@ -447,7 +448,7 @@ why this logic can't live on the model):
 struct BookListPresenter {
     let store: AppStore
     var title: String { "Library" }
-    var rows: [BookRowModel] {                 // Book → row view-model (cover, status glyph, borrowed/favorite, byline)
+    var rows: [BookRowModel] {                 // BookModel → row view-model (cover, status glyph, borrowed/favorite, byline)
         (store.library?.books ?? []).map(BookRowModel.init)
     }
     var emptyStateMessage: String? { store.library?.books.isEmpty == true ? "No books yet" : nil }
@@ -491,7 +492,7 @@ caught by a render snapshot — see `05-design-system.md`).
 Each pushable destination is a value type in `Screens/Routes/<Name>Route.swift` (one per file):
 
 ```swift
-struct BookDetailRoute: Hashable { let id: Book.ID }
+struct BookDetailRoute: Hashable { let id: BookModel.ID }
 ```
 
 Navigation state is **owned by `AppStore`** — one `NavigationPath` per tab (§4). A view pushes by

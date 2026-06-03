@@ -11,7 +11,7 @@ values and component anatomy. When two disagree, the artifact and its prose move
 **The app.** Single-target SwiftUI (`AppTemplate` scheme, Xcode 26, **minimum iOS 26**, **Swift 6.2 —
 MainActor-by-default**). Light-mode only. It ships one reference vertical slice — a **library /
 book-management** master-detail with one write flow — that exercises every layer end-to-end and is the
-living exemplar. Swap `Library`/`Book` for your domain when you instantiate the template.
+living exemplar. Swap `LibraryModel`/`BookModel` for your domain when you instantiate the template.
 
 ---
 

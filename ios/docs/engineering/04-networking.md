@@ -125,7 +125,7 @@ nonisolated struct GetLibraryRequest: APIRequest {     // nonisolated — it cro
 }
 
 nonisolated struct BorrowBookRequest: APIRequest {
-    let id: Book.ID
+    let id: BookModel.ID
     typealias Response = BookDTO
     var path: String { "/books/\(id)/borrow" }
     var method: HTTPMethod { .post }
@@ -146,7 +146,7 @@ must agree.
 
 ## 3. Domain models never cross the wire — the DTO boundary
 
-`APIRequest.Response` is `Decodable & Sendable`. The domain reference models (`Library`, `Book`) are
+`APIRequest.Response` is `Decodable & Sendable`. The domain reference models (`LibraryModel`, `BookModel`) are
 `@MainActor`-isolated and **not** `Codable`, so they satisfy neither half — decoding happens off the
 main actor. **The wire types are value-type DTOs:**
 
@@ -154,7 +154,7 @@ main actor. **The wire types are value-type DTOs:**
   Equatable, Sendable`), field-for-field mirrors. **They — and every leaf value type they compose
   (`Author`, `Format`, `Rating`, `BookDetail`) — are `nonisolated`** (see the §2 callout + `02-models.md
   §9`): their `Codable` conformance is exercised off-main, which a MainActor-isolated type can't satisfy.
-- Every request/response that represents a `Library`/`Book` uses the DTO: `GetLibraryRequest.Response`
+- Every request/response that represents a `LibraryModel`/`BookModel` uses the DTO: `GetLibraryRequest.Response`
   is `LibraryDTO`; `BorrowBookRequest.Response` is `BookDTO`.
 - **Mapping is the caller's job, on the main actor — not the provider's.** `AppStore` maps after the
   `await`:

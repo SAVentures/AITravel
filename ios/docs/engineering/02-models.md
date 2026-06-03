@@ -1,11 +1,11 @@
 # 02 — Models
 
 The model layer lives in `ios/AppTemplate/Models/`. It has **two kinds of type**: a small set of
-`@Observable` **reference models** (`Library`, `Book`) that form the mutable graph and own their own
+`@Observable` **reference models** (`LibraryModel`, `BookModel`) that form the mutable graph and own their own
 mutations, and the **leaf value types** (everything else) they hold. The whole graph is owned by
 `AppStore`. This doc describes the *shape of the data* and *where mutations live*; the orchestration
 around them — optimistic writes, rollback, hydration — is `03-store.md`. The running example is the
-library / book-management reference slice; swap `Library`/`Book` for your own entities.
+library / book-management reference slice; swap `LibraryModel`/`BookModel` for your own entities.
 
 ---
 
@@ -15,19 +15,37 @@ library / book-management reference slice; swap `Library`/`Book` for your own en
 > a mutable row in a list**. Everything else is a value type. (Apple's WWDC25 performance guidance:
 > per-row observation means mutating one row invalidates only that row, not the whole array.)
 
-### 1.1 The reference models — `Library`, `Book`
+> ### Naming + placement — the three kinds read distinctly at a glance
+> A name and a directory tell you which kind a type is, so a bare name is never ambiguous between a
+> mutable reference and an immutable value:
+>
+> | Kind | Suffix | Lives in | Example |
+> |---|---|---|---|
+> | **Leaf value type** | none (bare) | `Models/` | `City`, `Author`, `Rating`, `Format` |
+> | **Reference model** (`@Observable`) | **`Model`** | `Models/` | `BookModel`, `LibraryModel`, `TripDraftModel` |
+> | **Wire DTO** | **`DTO`** | `Networking/Responses/DTO/` | `BookDTO`, `LibraryDTO` |
+> | **Request** | **`<Verb><Name>Request`** | `Networking/Requests/` | `GetLibraryRequest`, `BorrowBookRequest` |
+>
+> So `BookModel` ↔ `BookDTO` is the reference/wire pair, and `City` (no suffix) is unmistakably a value
+> type. **The conceptual entity name is unqualified; the reference and wire twins carry the qualifier**
+> — never the value types, and never a prefix (`BookModel`, not `ModelBook`). The seed lives in its own
+> `Models/SampleData/` dir (`SampleData.swift` + per-domain `SampleData+<Domain>.swift`); the
+> `SampleData+<Domain>` and `AppStore+<Domain>` extension files are named for the **domain/feature**, not
+> a model type (so `AppStore+Library.swift`, not `AppStore+LibraryModel.swift`).
+
+### 1.1 The reference models — `LibraryModel`, `BookModel`
 
 The container and the row both participate in list rendering and mutate, so both are reference models:
 
 ```swift
-@MainActor @Observable final class Library: Identifiable {
+@MainActor @Observable final class LibraryModel: Identifiable {
     let id: String
     var name: String
-    var books: [Book]
-    func book(id: Book.ID) -> Book? { books.first { $0.id == id } }   // lookup helper for command sites
+    var books: [BookModel]
+    func book(id: BookModel.ID) -> BookModel? { books.first { $0.id == id } }   // lookup helper for command sites
 }
 
-@MainActor @Observable final class Book: Identifiable {
+@MainActor @Observable final class BookModel: Identifiable {
     let id: String
     var title: String
     var author: Author             // value type
@@ -54,8 +72,8 @@ Consequences of being reference `@Observable` types:
 - **They own their mutations as methods** (`book.toggleFavorite()`, …) — §2. Mutation is in place;
   there is no replace-the-value dance.
 
-Nested containers: each list-participating level is its own reference model. A `Library → Shelf →
-Book` hierarchy would make all three reference models; the slice keeps two.
+Nested containers: each list-participating level is its own reference model. A `LibraryModel → Shelf →
+BookModel` hierarchy would make all three reference models; the slice keeps two.
 
 ### 1.2 The leaf value types — everything else
 
@@ -81,7 +99,7 @@ nonisolated struct Rating: Codable, Equatable, Hashable, Sendable {
 nonisolated enum Format: Equatable, Hashable, Sendable { /* … */ }   // the enums too
 ```
 
-These are leaf/immutable data. A reference model holds them directly (a `Book` holds an `Author`
+These are leaf/immutable data. A reference model holds them directly (a `BookModel` holds an `Author`
 value); a DTO holds the *same* value types unchanged (there is no `AuthorDTO` — leaf types are already
 wire-safe). The only "mutation" of leaf data is whole-value reassignment of a reference-model property
 (`book.rating = Rating(stars: 4)`), which `@Observable` tracks.
@@ -97,7 +115,7 @@ wire-safe). The only "mutation" of leaf data is whole-value reassignment of a re
 > `04-networking.md §2` (the callout).
 
 > **Why keep the boundary small:** the over-invalidation Apple's guidance addresses is per-row.
-> `Library`/`Book` are the container/rows; making the leaves reference types would buy no observation
+> `LibraryModel`/`BookModel` are the container/rows; making the leaves reference types would buy no observation
 > granularity and cost `Codable` and value semantics. Keep the boundary at the rows.
 
 ### 1.3 `Identifiable` and id references
@@ -108,10 +126,10 @@ Every reference model and every collection-stored value type is `Identifiable` v
 
 ```swift
 var authorID: Author.ID        // Author.ID == String
-var bookIDs:  [Book.ID]        // e.g. on a Shelf or a borrow record
+var bookIDs:  [BookModel.ID]        // e.g. on a Shelf or a borrow record
 ```
 
-`Book.ID` over `String` makes a reference's intent explicit and lets the compiler catch
+`BookModel.ID` over `String` makes a reference's intent explicit and lets the compiler catch
 argument-order mistakes. Seed ids are stable literals (`"book-dune"`, `"author-herbert"`) so previews
 and tests hard-link to fixtures without going through `UUID()` (§5).
 
@@ -123,7 +141,7 @@ Domain mutations live on the reference models as methods — Apple's "the model 
 stance (WWDC24 *SwiftUI essentials*). Each is a **pure, synchronous, in-place** state transition:
 
 ```swift
-@MainActor @Observable final class Book {
+@MainActor @Observable final class BookModel {
     func toggleFavorite() { isFavorite.toggle() }
     func markRead()       { status = .read }
     func toggleBorrowed() { isBorrowed.toggle() }   // used optimistically by AppStore.borrow (03)
@@ -140,7 +158,7 @@ Computed *display* helpers may live on the model when they're pure functions of 
 **data, not `View`s** (a model never imports SwiftUI):
 
 ```swift
-extension Book {
+extension BookModel {
     var isOverdue: Bool { /* given a due date and a `now` passed in — never reads Date() */ }
     var statusLabel: String { status == .read ? "Read" : status == .reading ? "Reading" : "Unread" }
 }
@@ -192,16 +210,16 @@ The reference models can't be the network types (they're `@MainActor` and not `C
 boundary uses **DTOs** — value-type mirrors in `Networking/Responses/DTO/`:
 
 ```swift
-nonisolated struct LibraryDTO: Codable, Equatable, Sendable { … }   // mirrors Library; nonisolated — decoded off-main
-nonisolated struct BookDTO:    Codable, Equatable, Sendable { … }   // mirrors Book
+nonisolated struct LibraryDTO: Codable, Equatable, Sendable { … }   // mirrors LibraryModel; nonisolated — decoded off-main
+nonisolated struct BookDTO:    Codable, Equatable, Sendable { … }   // mirrors BookModel
 ```
 
 DTOs reuse the leaf value types directly (a `BookDTO` holds the same `Author`/`Format`/`Rating` values
-a `Book` does). Mapping is explicit and total:
+a `BookModel` does). Mapping is explicit and total:
 
-- `extension BookDTO { @MainActor func toDomain() -> Book }` (and `LibraryDTO`) — builds the reference
+- `extension BookDTO { @MainActor func toDomain() -> BookModel }` (and `LibraryDTO`) — builds the reference
   graph on the main actor.
-- `extension Book { func toDTO() -> BookDTO }` (and `Library`) — snapshots the reference graph back to
+- `extension BookModel { func toDTO() -> BookDTO }` (and `LibraryModel`) — snapshots the reference graph back to
   a value DTO. Used for rollback snapshots (§ `03`) and any request body that sends a book/library.
 
 The round-trip invariant **`dto.toDomain().toDTO() == dto`** is unit-tested (`07-testing.md §4.2`) and
@@ -209,7 +227,7 @@ is what catches a field added to the model but not the DTO. **Only the DTOs and 
 `Codable`; the reference models are not.** JSON wire format and decoding are detailed in
 `04-networking.md`.
 
-> A `restore(from: BookDTO)` method on `Book` applies a value snapshot back onto the live reference,
+> A `restore(from: BookDTO)` method on `BookModel` applies a value snapshot back onto the live reference,
 > so a failed optimistic write can revert in place (the rollback path in `03-store.md`).
 
 ---
@@ -223,7 +241,7 @@ There is no inline-constructed data anywhere else (that's how fixtures drift). E
 
 ```swift
 struct SampleSeed {
-    var library: Library          // a live Library/Book reference graph
+    var library: LibraryModel          // a live LibraryModel/BookModel reference graph
     var simulatedNow: Date        // fixed clock for time-conditional state (overdue, etc.)
     // add a field per new top-level domain the UI shows
 }
@@ -251,7 +269,7 @@ Add a variant whenever a screen has a state worth previewing/testing. **These na
 
 ### How the domain graph and the wire seed stay in lock-step
 
-Each factory builds the **domain reference graph** — its `library` field is a live `Library`/`Book`
+Each factory builds the **domain reference graph** — its `library` field is a live `LibraryModel`/`BookModel`
 object tree — so it is `@MainActor` (it constructs `@MainActor` reference models). It performs no I/O
 and is cheap to rebuild, so previews and tests call it freely from their `@MainActor` contexts. The
 mock backend needs the same data as **DTOs**: the stateless `MockProvider` holds an immutable seed
@@ -284,7 +302,7 @@ All date display goes through one `AppDate` enum in `DateFormatters.swift`, expo
 
 The formatters are lazy `static` properties — created once, reused; callers never spin up their own
 `DateFormatter` for the same format. **Never call the live clock** anywhere in the model layer:
-time-conditional logic (`Book.isOverdue`) takes a `now: Date` argument, supplied from the store's
+time-conditional logic (`BookModel.isOverdue`) takes a `now: Date` argument, supplied from the store's
 `simulatedNow`. The pinned `simulatedNow` is a field on `AppStore`, not a model concept — see
 `03-store.md`.
 

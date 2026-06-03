@@ -24,7 +24,7 @@ only once a second screen needs it.
 ```swift
 struct BookDetailView: View {
     @Environment(AppStore.self) private var store
-    let bookID: Book.ID
+    let bookID: BookModel.ID
 
     var body: some View {
         let p = BookDetailPresenter(store: store, bookID: bookID)
@@ -47,7 +47,7 @@ The shell is the persistent chrome around screen content. Four layers, each with
 
 | Layer | What | Owner | When it shows |
 |---|---|---|---|
-| **Tab bar** (bottom) | top-level switcher (Library · You) | `RootView` — not screens | always at tab roots; **persists into pushes**; hidden only on immersive screens |
+| **Tab bar** (bottom) | top-level switcher (LibraryModel · You) | `RootView` — not screens | always at tab roots; **persists into pushes**; hidden only on immersive screens |
 | **Top bar** (nav bar) | title · back **only** | the `NavigationStack`, via `ScreenScaffold` | **large title at roots; inline + back on pushed screens** |
 | **Action bar** (thumb zone) | the screen's primary action(s) | the screen, via `ScreenScaffold(actions:)` | when a screen has a primary CTA; floats above the tab bar |
 | **Overlays** (sheet / cover) | a transient modal task | the presenting view (`@State`) | a side task or a takeover; **covers all bars** |
@@ -230,7 +230,7 @@ an `AppStore`, never references a concrete provider, and never hand-rolls layout
 only the ids the destination needs to look the model up:
 
 ```swift
-struct BookDetailRoute: Hashable { let id: Book.ID }
+struct BookDetailRoute: Hashable { let id: BookModel.ID }
 ```
 
 **Views push** by appending to the active tab's `NavigationPath` (owned by `AppStore`, never a

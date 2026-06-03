@@ -30,7 +30,7 @@ symbols:
     a known id and `nil` otherwise (`library.book(id:)`); computed properties are pure functions of
     inputs given a fixed `simulatedNow` (`book.isOverdue(now:)`) — never the live clock.
   - **DTO round-trip** — `dto.toDomain().toDTO() == dto`, proving the mapping is lossless and guarding
-    drift (a `Book` field with no `BookDTO` mirror breaks it). Use a **plain symmetric
+    drift (a `BookModel` field with no `BookDTO` mirror breaks it). Use a **plain symmetric
     `JSONEncoder`/`JSONDecoder`** (`.iso8601`) for any JSON round-trip — **never `APIJSON`**, whose
     snake-case conversion is asymmetric on acronym/ID keys (`bookID` → `book_id` → `bookId`) and would
     falsely fail a symmetric round-trip.
