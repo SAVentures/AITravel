@@ -6,9 +6,14 @@
 // typography, spacing — fails the build. (07-testing §6 governing doc.)
 //
 // States covered (one snapshot each, per 07-testing §6.2):
-//   step-0  — stepIndex 0: one "cur" ink segment, four "todo" separator segments, counter "01 / 05"
-//   step-2  — stepIndex 2: two "done" tertiary segments, one "cur" ink segment, two "todo"
-//   step-4  — stepIndex 4 (last): four "done" tertiary segments, one "cur" ink segment, counter "05 / 05"
+//   step-0  — stepIndex 0: one "cur" ink segment, five "todo" separator segments, counter "01 / 06"
+//   step-2  — stepIndex 2: two "done" tertiary segments, one "cur" ink segment, three "todo"
+//   step-4  — stepIndex 4: four "done" tertiary segments, one "cur" ink segment, one "todo", counter "05 / 06"
+//   step-5  — stepIndex 5 (final, totalSteps default 6): five "done" tertiary segments, one "cur"
+//             ink segment, counter "06 / 06". Locks the six-segment default and the final-step state.
+//
+// NOTE: The existing step-0/2/4 baselines reference a prior 5-step default. The coordinator will
+// re-record them for the 6-segment (totalSteps: 6) default. Leave those cases as-is per the task contract.
 //
 // The bar is embedded in a surfacePage canvas matching the #Preview padding so the
 // PNG shows it in the context a real onboarding screen provides.
@@ -66,6 +71,20 @@ struct OnboardingProgressBarSnapshotTests {
         assertDesignSnapshot(
             canvas { OnboardingProgressBar(stepIndex: 4) },
             named: "step-4"
+        )
+    }
+
+    // MARK: - step-5
+
+    /// stepIndex 5 — the sixth and final step of the new 6-step default (totalSteps: 6).
+    /// Segments 0–4 are textTertiary (done); segment 5 is textPrimary (cur). Counter reads
+    /// "06 / 06". Locks the totalSteps default of 6 and the terminal-step color ramp together
+    /// in a single frame — no unit test can confirm that co-occurrence.
+    @Test("step-5 — final step of 6: five done segments, one ink segment, counter 06 / 06")
+    @MainActor func step5() {
+        assertDesignSnapshot(
+            canvas { OnboardingProgressBar(stepIndex: 5) },
+            named: "step-5"
         )
     }
 }

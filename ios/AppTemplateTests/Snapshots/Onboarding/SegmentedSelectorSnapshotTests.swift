@@ -11,6 +11,9 @@
 //   two-way-no-sel      — 2-way text-only with the second option selected (covers unselected left)
 //   three-way-selected  — 3-way text-only (pace), middle option (Balanced) selected
 //   four-way-with-icons — 4-way with SF Symbols (transport), second item (Transit) selected
+//   scrollable          — 5-way icon+label (transport extended), scrollable:true, third item selected;
+//                         confirms the ScrollView wrapper, content-width segments (not equal-width),
+//                         and the ink pill on a scrollable track.
 //
 // The control is embedded in a surfacePage canvas matching the #Preview padding so the
 // PNG shows it in the context a real onboarding screen provides.
@@ -69,6 +72,16 @@ struct SegmentedSelectorSnapshotTests {
         TestSegmentOption(id: "transit", title: "Transit", systemImage: "tram.fill"),
         TestSegmentOption(id: "drive",   title: "Drive",   systemImage: "car.fill"),
         TestSegmentOption(id: "cycle",   title: "Cycle",   systemImage: "bicycle"),
+    ]
+
+    // 5-way transport-extended fixture — one more option than `transportOptions` so the row
+    // overflows a 393pt canvas and exercises the ScrollView path (SegmentedSelector.swift line 25–27).
+    private let scrollableTransportOptions: [TestSegmentOption] = [
+        TestSegmentOption(id: "walk",    title: "Walk",    systemImage: "figure.walk"),
+        TestSegmentOption(id: "transit", title: "Transit", systemImage: "tram.fill"),
+        TestSegmentOption(id: "drive",   title: "Drive",   systemImage: "car.fill"),
+        TestSegmentOption(id: "cycle",   title: "Cycle",   systemImage: "bicycle"),
+        TestSegmentOption(id: "ferry",   title: "Ferry",   systemImage: "ferry.fill"),
     ]
 
     // MARK: - two-way-selected
@@ -158,6 +171,34 @@ struct SegmentedSelectorSnapshotTests {
                 )
             },
             named: "four-way-with-icons"
+        )
+    }
+
+    // MARK: - scrollable
+
+    /// 5-way icon+label (transport extended), `scrollable: true`, "Drive" (index 2) selected.
+    /// Mirrors the 4-way transport fixture but with `scrollable: true` and a fifth option so the
+    /// track overflows the 393pt canvas. Confirms:
+    ///   · The ScrollView wrapper is engaged (SegmentedSelector.swift line 25–27).
+    ///   · Segments are content-width (not equal-width) — `equalWidth: false` in SegmentButtonStyle.
+    ///   · The ink pill lands on the correct (Drive) segment amid content-width peers.
+    ///   · `lineLimit(1)` keeps each label one line inside a scrollable track (line 86).
+    @Test("scrollable — 5-way icon+label, scrollable:true, Drive selected, overflowing track")
+    @MainActor func scrollable() {
+        let options = scrollableTransportOptions
+        assertDesignSnapshot(
+            canvas {
+                SegmentedSelector(
+                    options: options,
+                    selection: options[2],   // "Drive"
+                    label: \.title,
+                    systemImage: \.systemImage,
+                    accessibilityIDPrefix: "transport.scrollable",
+                    scrollable: true,
+                    onSelect: { _ in }
+                )
+            },
+            named: "scrollable"
         )
     }
 }

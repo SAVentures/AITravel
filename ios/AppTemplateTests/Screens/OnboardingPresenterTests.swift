@@ -427,11 +427,69 @@ struct TripShapeStepPresenterTests {
 
     // MARK: ctaTitle
 
-    @Test("ctaTitle contains tasteDays") @MainActor
+    @Test("ctaTitle contains tasteDays — stateC tasteForm") @MainActor
     func ctaTitleContainsDays() {
         let store = AppStore.preview(SampleData.onboardingCContext(), step: .tripShape)
         let p = TripShapeStepPresenter(store: store)
         #expect(p.ctaTitle == "Continue · \(p.tasteDays) days")
+    }
+
+    // MARK: canContinue
+
+    @Test("canContinue is false when no strategy picked — stateA shapeCards") @MainActor
+    func canContinueFalseNoPick_stateA() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .tripShape)
+        let p = TripShapeStepPresenter(store: store)
+        #expect(p.canContinue == false)
+    }
+
+    @Test("canContinue is false when no strategy picked — stateB shapeCards") @MainActor
+    func canContinueFalseNoPick_stateB() {
+        let store = AppStore.preview(SampleData.onboardingBContext(), step: .tripShape)
+        let p = TripShapeStepPresenter(store: store)
+        #expect(p.canContinue == false)
+    }
+
+    @Test("canContinue is true after select(strategy:) — stateA shapeCards") @MainActor
+    func canContinueTrueAfterSelect_stateA() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .tripShape)
+        store.onboarding?.select(strategy: .fixedDays)
+        let p = TripShapeStepPresenter(store: store)
+        #expect(p.canContinue == true)
+    }
+
+    @Test("canContinue is true always — stateC tasteForm") @MainActor
+    func canContinueTrueAlways_stateC() {
+        let store = AppStore.preview(SampleData.onboardingCContext(), step: .tripShape)
+        let p = TripShapeStepPresenter(store: store)
+        #expect(p.canContinue == true)
+    }
+
+    // MARK: Extended ctaTitle — shapeCards states
+
+    @Test("ctaTitle is 'Choose a trip shape' when no card picked — stateA shapeCards") @MainActor
+    func ctaTitleNoPick_stateA() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .tripShape)
+        let p = TripShapeStepPresenter(store: store)
+        #expect(p.ctaTitle == "Choose a trip shape")
+    }
+
+    @Test("ctaTitle is 'Continue · <tasteDays> days' after selecting fixedDays — stateA") @MainActor
+    func ctaTitleFixedDaysSelected_stateA() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .tripShape)
+        store.onboarding?.select(strategy: .fixedDays)
+        let p = TripShapeStepPresenter(store: store)
+        // fixedDays card is day-led: CTA uses tasteDays (== draft.tripDays, seeded 4)
+        #expect(p.ctaTitle == "Continue · \(p.tasteDays) days")
+    }
+
+    @Test("ctaTitle is 'Continue · Just the highlights' after selecting highlights — stateA") @MainActor
+    func ctaTitleHighlightsSelected_stateA() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .tripShape)
+        store.onboarding?.select(strategy: .highlights)
+        let p = TripShapeStepPresenter(store: store)
+        // eyebrow "C · Just the highlights" → shortLabel drops "C · " prefix → "Just the highlights"
+        #expect(p.ctaTitle == "Continue · Just the highlights")
     }
 }
 
@@ -618,6 +676,131 @@ struct BaseLocationStepPresenterTests {
         let store = AppStore.preview(SampleData.onboardingCContext(), step: .baseLocation)
         let p = BaseLocationStepPresenter(store: store)
         #expect(p.ctaTitle == "Use Baixa as base")
+    }
+
+    // MARK: ctaTitle — manual mode paths
+
+    @Test("ctaTitle is 'Pick a neighborhood' in manual mode with no pick") @MainActor
+    func ctaTitleManualNoPick() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .baseLocation)
+        store.onboarding?.setBaseMode(.manual)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.ctaTitle == "Pick a neighborhood")
+    }
+
+    @Test("ctaTitle is 'Use <name> as base' in manual mode after selectNeighborhood") @MainActor
+    func ctaTitleManualAfterSelectNeighborhood() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .baseLocation)
+        store.onboarding?.setBaseMode(.manual)
+        store.onboarding?.selectNeighborhood("neighborhood-bairro-alto")
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.ctaTitle == "Use Bairro Alto as base")
+    }
+
+    @Test("ctaTitle is 'Use <base.neighborhoodName> as base' after selectSpecificBase regardless of segment") @MainActor
+    func ctaTitlePinnedOverridesSegment() {
+        let context = SampleData.onboardingAContext()
+        let store = AppStore.preview(context, step: .baseLocation)
+        // selectSpecificBase pins an address — override applies regardless of baseMode
+        let base = context.recommendedBase
+        store.onboarding?.selectSpecificBase(base)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.ctaTitle == "Use \(base.neighborhoodName) as base")
+    }
+
+    @Test("ctaTitle is 'Use <base.neighborhoodName> as base' after selectSpecificBase in manual mode") @MainActor
+    func ctaTitlePinnedInManualMode() {
+        let context = SampleData.onboardingAContext()
+        let store = AppStore.preview(context, step: .baseLocation)
+        store.onboarding?.setBaseMode(.manual)
+        let base = context.recommendedBase
+        store.onboarding?.selectSpecificBase(base)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.ctaTitle == "Use \(base.neighborhoodName) as base")
+    }
+
+    // MARK: canContinue
+
+    @Test("canContinue is true in smart mode (has recommendation)") @MainActor
+    func canContinueSmart() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .baseLocation)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.canContinue == true)
+    }
+
+    @Test("canContinue is false in manual mode with no pick") @MainActor
+    func canContinueManualNoPick() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .baseLocation)
+        store.onboarding?.setBaseMode(.manual)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.canContinue == false)
+    }
+
+    @Test("canContinue is true in manual mode after selectNeighborhood") @MainActor
+    func canContinueManualAfterSelectNeighborhood() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .baseLocation)
+        store.onboarding?.setBaseMode(.manual)
+        store.onboarding?.selectNeighborhood("neighborhood-chiado")
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.canContinue == true)
+    }
+
+    @Test("canContinue is true when a specific base is pinned (overrides segment)") @MainActor
+    func canContinuePinned() {
+        let context = SampleData.onboardingAContext()
+        let store = AppStore.preview(context, step: .baseLocation)
+        store.onboarding?.setBaseMode(.manual)
+        store.onboarding?.selectSpecificBase(context.recommendedBase)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.canContinue == true)
+    }
+
+    // MARK: manualOptions
+
+    @Test("manualOptions.count equals context.neighborhoods.count — stateA") @MainActor
+    func manualOptionsCountStateA() {
+        let context = SampleData.onboardingAContext()
+        let store = AppStore.preview(context, step: .baseLocation)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.manualOptions.count == context.neighborhoods.count)
+    }
+
+    @Test("manualOptions.count equals context.neighborhoods.count — stateB") @MainActor
+    func manualOptionsCountStateB() {
+        let context = SampleData.onboardingBContext()
+        let store = AppStore.preview(context, step: .baseLocation)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.manualOptions.count == context.neighborhoods.count)
+    }
+
+    // MARK: pinnedBaseName
+
+    @Test("pinnedBaseName is nil by default") @MainActor
+    func pinnedBaseNameNilDefault() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .baseLocation)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.pinnedBaseName == nil)
+    }
+
+    @Test("pinnedBaseName equals base.neighborhoodName after selectSpecificBase") @MainActor
+    func pinnedBaseNameAfterSelect() {
+        let context = SampleData.onboardingAContext()
+        let store = AppStore.preview(context, step: .baseLocation)
+        let base = context.recommendedBase
+        store.onboarding?.selectSpecificBase(base)
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.pinnedBaseName == base.neighborhoodName)
+    }
+
+    @Test("pinnedBaseName is nil after selectNeighborhood (clears baseSelection)") @MainActor
+    func pinnedBaseNameClearedBySelectNeighborhood() {
+        let context = SampleData.onboardingAContext()
+        let store = AppStore.preview(context, step: .baseLocation)
+        store.onboarding?.selectSpecificBase(context.recommendedBase)
+        // selectNeighborhood clears baseSelection, so pinnedBaseName returns nil
+        store.onboarding?.selectNeighborhood("neighborhood-chiado")
+        let p = BaseLocationStepPresenter(store: store)
+        #expect(p.pinnedBaseName == nil)
     }
 }
 
@@ -1005,11 +1188,37 @@ struct OnboardingFlowPresenterTests {
         #expect(p.progressIndex == 1)
     }
 
-    @Test("progressIndex == 4 for .generating step") @MainActor
+    @Test("progressIndex == 5 for .generating step") @MainActor
     func progressIndexGenerating() {
         let store = AppStore.preview(SampleData.onboardingAContext(), step: .generating)
         let p = OnboardingFlowPresenter(store: store)
+        #expect(p.progressIndex == 5)
+    }
+
+    @Test("progressIndex == 2 for .when step") @MainActor
+    func progressIndexWhen() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = OnboardingFlowPresenter(store: store)
+        #expect(p.progressIndex == 2)
+    }
+
+    @Test("progressIndex == 3 for .baseLocation step") @MainActor
+    func progressIndexBaseLocation() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .baseLocation)
+        let p = OnboardingFlowPresenter(store: store)
+        #expect(p.progressIndex == 3)
+    }
+
+    @Test("progressIndex == 4 for .gettingAround step") @MainActor
+    func progressIndexGettingAround() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .gettingAround)
+        let p = OnboardingFlowPresenter(store: store)
         #expect(p.progressIndex == 4)
+    }
+
+    @Test("OnboardingStep.totalSteps == 6") @MainActor
+    func totalStepsIsSix() {
+        #expect(OnboardingStep.totalSteps == 6)
     }
 
     // MARK: leadingGlyph
@@ -1023,7 +1232,7 @@ struct OnboardingFlowPresenterTests {
 
     @Test("leadingGlyph is .back on subsequent steps (index > 0)") @MainActor
     func leadingGlyphBackOnSubsequentSteps() {
-        for step in [OnboardingStep.tripShape, .baseLocation, .gettingAround, .generating] {
+        for step in [OnboardingStep.tripShape, .when, .baseLocation, .gettingAround, .generating] {
             let store = AppStore.preview(SampleData.onboardingAContext(), step: step)
             let p = OnboardingFlowPresenter(store: store)
             #expect(p.leadingGlyph == .back, "Expected .back for step \(step)")
@@ -1035,5 +1244,189 @@ struct OnboardingFlowPresenterTests {
         let store = AppStore(api: .mock())
         let p = OnboardingFlowPresenter(store: store)
         #expect(p.leadingGlyph == .close)
+    }
+}
+
+// MARK: - WhenStepPresenter
+
+@Suite("WhenStepPresenter derivation")
+struct WhenStepPresenterTests {
+
+    // MARK: Default precision
+
+    @Test("datePrecision defaults to .justMonth") @MainActor
+    func datePrecisionDefaultJustMonth() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = WhenStepPresenter(store: store)
+        #expect(p.datePrecision == .justMonth)
+    }
+
+    // MARK: fixedDays
+
+    @Test("fixedDays equals draft.tripDays — stateA seeded default (4)") @MainActor
+    func fixedDaysMirrorsDraft() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let draftDays = store.onboarding?.tripDays ?? 4
+        let p = WhenStepPresenter(store: store)
+        #expect(p.fixedDays == draftDays)
+    }
+
+    @Test("fixedDays reflects setDays mutation") @MainActor
+    func fixedDaysAfterSetDays() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        store.onboarding?.setDays(7)
+        let p = WhenStepPresenter(store: store)
+        #expect(p.fixedDays == 7)
+    }
+
+    // MARK: selectedMonthLabel
+
+    @Test("selectedMonthLabel formats the chosen month-start — seed is June 2026") @MainActor
+    func selectedMonthLabelSeedJune2026() {
+        // TripWhen.seedDefault is year=2026, month=6 → "June 2026"
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = WhenStepPresenter(store: store)
+        let monthStart = AppDate.make(y: 2026, m: 6, d: 1)
+        let expected = AppDate.monthYear.string(from: monthStart)
+        #expect(p.selectedMonthLabel == expected)
+    }
+
+    @Test("selectedMonthLabel updates after setTripMonth") @MainActor
+    func selectedMonthLabelAfterSetMonth() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        store.onboarding?.setTripMonth(year: 2026, month: 9)
+        let p = WhenStepPresenter(store: store)
+        let monthStart = AppDate.make(y: 2026, m: 9, d: 1)
+        let expected = AppDate.monthYear.string(from: monthStart)
+        #expect(p.selectedMonthLabel == expected)
+    }
+
+    // MARK: monthOptions
+
+    @Test("monthOptions has exactly 12 entries") @MainActor
+    func monthOptionsHas12Entries() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = WhenStepPresenter(store: store)
+        #expect(p.monthOptions.count == 12)
+    }
+
+    @Test("monthOptions first entry equals AppDate.simulatedNow year/month") @MainActor
+    func monthOptionsFirstEntryIsSimulatedNow() {
+        // AppDate.simulatedNow is 2026-06-01: first option should be year=2026, month=6
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = WhenStepPresenter(store: store)
+        let first = p.monthOptions.first
+        #expect(first != nil)
+        if let first {
+            let cal = AppDate.calendar
+            let nowYear = cal.component(.year, from: AppDate.simulatedNow)
+            let nowMonth = cal.component(.month, from: AppDate.simulatedNow)
+            #expect(first.year == nowYear)
+            #expect(first.month == nowMonth)
+        }
+    }
+
+    @Test("monthOptions covers 12 consecutive months from simulatedNow") @MainActor
+    func monthOptionsCover12Months() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = WhenStepPresenter(store: store)
+        // Last entry should be 11 months after simulatedNow
+        let last = p.monthOptions.last
+        #expect(last != nil)
+        if let last {
+            let expected = AppDate.calendar.date(
+                byAdding: .month, value: 11,
+                to: AppDate.make(y: 2026, m: 6, d: 1)
+            )!
+            let expectedYear = AppDate.calendar.component(.year, from: expected)
+            let expectedMonth = AppDate.calendar.component(.month, from: expected)
+            #expect(last.year == expectedYear)
+            #expect(last.month == expectedMonth)
+        }
+    }
+
+    // MARK: exactDates precision path
+
+    @Test("exactStartDefault after setDatePrecision(.exactDates) is the month-start") @MainActor
+    func exactStartDefaultAfterPrecisionSwitch() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        // Before switching: precision is .justMonth, startDate is nil
+        store.onboarding?.setDatePrecision(.exactDates)
+        let p = WhenStepPresenter(store: store)
+        // setDatePrecision seeds startDate to month-start when it was nil
+        let expectedStart = AppDate.make(y: 2026, m: 6, d: 1)
+        #expect(p.exactStartDefault == expectedStart)
+    }
+
+    @Test("minEndDate == exactStartDefault + fixedDays - 1 days") @MainActor
+    func minEndDateFloor() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        store.onboarding?.setDatePrecision(.exactDates)
+        let p = WhenStepPresenter(store: store)
+        // fixedDays = 4; start = June 1, 2026; minEnd = June 1 + 3 = June 4, 2026
+        let expectedEnd = AppDate.calendar.date(
+            byAdding: .day, value: max(p.fixedDays - 1, 0),
+            to: p.exactStartDefault
+        )!
+        #expect(p.minEndDate == expectedEnd)
+    }
+
+    @Test("exactEndDefault equals minEndDate when seeded by setDatePrecision(.exactDates)") @MainActor
+    func exactEndDefaultEqualsMinEnd() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        store.onboarding?.setDatePrecision(.exactDates)
+        let p = WhenStepPresenter(store: store)
+        // setDatePrecision seeds endDate to minimumExactEnd(from: start) — same as minEndDate
+        #expect(p.exactEndDefault == p.minEndDate)
+    }
+
+    // MARK: exactRangeFloorHint
+
+    @Test("exactRangeFloorHint is 'At least <fixedDays> days'") @MainActor
+    func exactRangeFloorHint() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = WhenStepPresenter(store: store)
+        #expect(p.exactRangeFloorHint == "At least \(p.fixedDays) days")
+    }
+
+    // MARK: Hero copy
+
+    @Test("eyebrow is non-empty and equals 'When'") @MainActor
+    func eyebrowIsWhen() {
+        for context in [SampleData.onboardingAContext(), SampleData.onboardingBContext(), SampleData.onboardingCContext()] {
+            let store = AppStore.preview(context, step: .when)
+            let p = WhenStepPresenter(store: store)
+            #expect(!p.eyebrow.isEmpty)
+            #expect(p.eyebrow == "When")
+        }
+    }
+
+    @Test("question is non-empty") @MainActor
+    func questionNonEmpty() {
+        for context in [SampleData.onboardingAContext(), SampleData.onboardingBContext(), SampleData.onboardingCContext()] {
+            let store = AppStore.preview(context, step: .when)
+            let p = WhenStepPresenter(store: store)
+            #expect(!p.question.isEmpty)
+        }
+    }
+
+    @Test("sub is non-empty and mentions fixedDays") @MainActor
+    func subNonEmptyMentionsDays() {
+        let store = AppStore.preview(SampleData.onboardingAContext(), step: .when)
+        let p = WhenStepPresenter(store: store)
+        #expect(!p.sub.isEmpty)
+        // sub includes the trip day count
+        #expect(p.sub.contains("\(p.fixedDays)"))
+    }
+
+    // MARK: ctaTitle
+
+    @Test("ctaTitle is 'Continue'") @MainActor
+    func ctaTitleIsContinue() {
+        for context in [SampleData.onboardingAContext(), SampleData.onboardingBContext(), SampleData.onboardingCContext()] {
+            let store = AppStore.preview(context, step: .when)
+            let p = WhenStepPresenter(store: store)
+            #expect(p.ctaTitle == "Continue")
+        }
     }
 }

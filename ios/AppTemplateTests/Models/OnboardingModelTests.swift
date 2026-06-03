@@ -156,6 +156,36 @@ struct OnboardingModelTests {
             let recovered = try codableRoundTrip(dto)
             #expect(recovered == dto)
         }
+
+        /// FIX: Proves tripWhen and selectedNeighborhoodID survive the full dto.toDomain().toDTO()
+        /// round-trip. The draft is mutated to exactDates and a non-nil neighborhoodID before
+        /// snapshotting — the default seedDefault state would not exercise these two fields.
+        @Test("TripDraftDTO: tripWhen (exactDates) and selectedNeighborhoodID survive the mapping round-trip")
+        @MainActor
+        func tripDraftTripWhenAndNeighborhoodRoundTrip() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+
+            // Set a non-default tripWhen (exactDates) so the round-trip is non-trivial.
+            draft.setTripMonth(year: 2026, month: 9)
+            draft.setDatePrecision(.exactDates)
+            // Set a non-nil selectedNeighborhoodID.
+            draft.selectNeighborhood("neighborhood-alfama")
+
+            let dto = draft.toDTO()
+
+            // Verify the DTO captured the mutations.
+            #expect(dto.tripWhen.precision == .exactDates)
+            #expect(dto.tripWhen.year == 2026)
+            #expect(dto.tripWhen.month == 9)
+            #expect(dto.tripWhen.startDate != nil)
+            #expect(dto.tripWhen.endDate != nil)
+            #expect(dto.selectedNeighborhoodID == "neighborhood-alfama")
+
+            // Verify the full mapping round-trip is lossless.
+            let recovered = dto.toDomain().toDTO()
+            #expect(recovered == dto)
+        }
     }
 
     // MARK: - Group 2: TripDraftModel mutation methods
@@ -407,9 +437,12 @@ struct OnboardingModelTests {
                                  ?? ctx.destination)
             draft.select(strategy: .highlights)
             draft.setDays(6)
+            draft.setTripMonth(year: 2027, month: 3)
+            draft.setDatePrecision(.exactDates)
             draft.toggleInterest(.art)
             draft.setPace(.packed)
             draft.select(base: ctx.recommendedBase)
+            draft.selectNeighborhood("neighborhood-alfama")
             draft.setBaseMode(.manual)
             draft.setPrimaryMode(.drive)
             draft.toggleAlsoOK(.rideshare)
@@ -421,8 +454,10 @@ struct OnboardingModelTests {
             #expect(draft.destination == snapshot.destination)
             #expect(draft.shapeStrategy == snapshot.shapeStrategy)
             #expect(draft.tripDays == snapshot.tripDays)
+            #expect(draft.tripWhen == snapshot.tripWhen)
             #expect(draft.tasteProfile == snapshot.tasteProfile)
             #expect(draft.baseSelection == snapshot.baseSelection)
+            #expect(draft.selectedNeighborhoodID == snapshot.selectedNeighborhoodID)
             #expect(draft.baseMode == snapshot.baseMode)
             #expect(draft.transport == snapshot.transport)
             #expect(draft.currentStep == snapshot.currentStep)
@@ -446,6 +481,258 @@ struct OnboardingModelTests {
         func savedAnywhereZeroForStateC() {
             let draft = SampleData.onboardingCContext().toDomain()
             #expect(draft.savedAnywhere == 0)
+        }
+    }
+
+    // MARK: - Group 3: TripWhen + DatePrecision value tests
+
+    @Suite("TripWhen and DatePrecision — value semantics and seedDefault")
+    struct TripWhenAndDatePrecisionTests {
+
+        /// seedDefault is a pure literal — verifiable without the live clock.
+        @Test("TripWhen.seedDefault is (.justMonth, year 2026, month 6, no dates)")
+        func tripWhenSeedDefault() {
+            let w = TripWhen.seedDefault
+            #expect(w.precision == .justMonth)
+            #expect(w.year == 2026)
+            #expect(w.month == 6)
+            #expect(w.startDate == nil)
+            #expect(w.endDate == nil)
+        }
+
+        /// A TripWhen with exactDates survives a Codable round-trip (including the Date fields).
+        @Test("TripWhen with exactDates round-trips through JSON without data loss")
+        func tripWhenExactDatesJSONRoundTrip() throws {
+            let start = AppDate.make(y: 2026, m: 9, d: 15)
+            let end   = AppDate.make(y: 2026, m: 9, d: 21)
+            let original = TripWhen(
+                precision: .exactDates,
+                year: 2026,
+                month: 9,
+                startDate: start,
+                endDate: end
+            )
+            let recovered = try codableRoundTrip(original)
+            #expect(recovered == original)
+            #expect(recovered.precision == .exactDates)
+            #expect(recovered.startDate == start)
+            #expect(recovered.endDate == end)
+        }
+
+        /// Label values are part of the UI contract — pin them explicitly.
+        @Test("DatePrecision.justMonth.label == \"Just the month\"")
+        func justMonthLabel() {
+            #expect(DatePrecision.justMonth.label == "Just the month")
+        }
+
+        @Test("DatePrecision.exactDates.label == \"Exact dates\"")
+        func exactDatesLabel() {
+            #expect(DatePrecision.exactDates.label == "Exact dates")
+        }
+
+        /// CaseIterable must enumerate exactly the two live cases (no `flexible` case).
+        @Test("DatePrecision.allCases contains exactly [.justMonth, .exactDates]")
+        func allCasesContainsExactlyTwo() {
+            let cases = DatePrecision.allCases
+            #expect(cases.count == 2)
+            #expect(cases.contains(.justMonth))
+            #expect(cases.contains(.exactDates))
+        }
+    }
+
+    // MARK: - Group 4: New TripDraftModel date and base methods
+
+    @Suite("TripDraftModel — date and base-selection methods")
+    struct TripDraftModelDateAndBaseTests {
+
+        // MARK: setTripMonth(year:month:)
+
+        @Test("setTripMonth(year:month:) updates tripWhen.year and .month")
+        @MainActor
+        func setTripMonthUpdatesYearAndMonth() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            // Confirm the seed default before mutation.
+            #expect(draft.tripWhen.year == 2026)
+            #expect(draft.tripWhen.month == 6)
+
+            draft.setTripMonth(year: 2027, month: 4)
+
+            #expect(draft.tripWhen.year == 2027)
+            #expect(draft.tripWhen.month == 4)
+        }
+
+        @Test("setTripMonth(year:month:) does not change precision or dates")
+        @MainActor
+        func setTripMonthPreservesPrecisionAndDates() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setTripMonth(year: 2027, month: 8)
+            // precision and dates unchanged from seedDefault.
+            #expect(draft.tripWhen.precision == .justMonth)
+            #expect(draft.tripWhen.startDate == nil)
+            #expect(draft.tripWhen.endDate == nil)
+        }
+
+        // MARK: setDatePrecision(.exactDates)
+
+        /// When precision is switched to .exactDates, startDate is seeded to the 1st of the chosen
+        /// month and endDate is start + (tripDays - 1) days.
+        @Test("setDatePrecision(.exactDates) seeds startDate to first of chosen month and endDate to start+(tripDays-1)")
+        @MainActor
+        func setDatePrecisionExactDatesSeedsRange() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            // Default tripDays == 4 (OnboardingContextDTO.defaultTripDays).
+            #expect(draft.tripDays == 4, "precondition: toDomain seeds tripDays == 4")
+
+            draft.setTripMonth(year: 2026, month: 9)
+            draft.setDatePrecision(.exactDates)
+
+            let expectedStart = AppDate.make(y: 2026, m: 9, d: 1)
+            let expectedEnd   = AppDate.calendar.date(byAdding: .day, value: draft.tripDays - 1, to: expectedStart)!
+
+            #expect(draft.tripWhen.precision == .exactDates)
+            #expect(draft.tripWhen.startDate == expectedStart)
+            #expect(draft.tripWhen.endDate   == expectedEnd)
+        }
+
+        /// Switching to .exactDates twice in a row (without clearing) must not re-seed the dates —
+        /// the guard `if tripWhen.startDate == nil` in the implementation means calling it again
+        /// when dates are already set is a no-op on the dates themselves.
+        @Test("setDatePrecision(.exactDates) is idempotent when startDate is already set")
+        @MainActor
+        func setDatePrecisionExactDatesIdempotent() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setTripMonth(year: 2026, month: 9)
+            draft.setDatePrecision(.exactDates)
+            let firstStart = draft.tripWhen.startDate
+            let firstEnd   = draft.tripWhen.endDate
+
+            // Call again — dates must not change because startDate is already set.
+            draft.setDatePrecision(.exactDates)
+            #expect(draft.tripWhen.startDate == firstStart)
+            #expect(draft.tripWhen.endDate   == firstEnd)
+        }
+
+        // MARK: setDatePrecision(.justMonth)
+
+        @Test("setDatePrecision(.justMonth) clears startDate and endDate back to nil")
+        @MainActor
+        func setDatePrecisionJustMonthClearsDates() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setTripMonth(year: 2026, month: 8)
+            draft.setDatePrecision(.exactDates)
+            #expect(draft.tripWhen.startDate != nil, "precondition: exactDates must seed a startDate")
+
+            draft.setDatePrecision(.justMonth)
+
+            #expect(draft.tripWhen.precision == .justMonth)
+            #expect(draft.tripWhen.startDate == nil)
+            #expect(draft.tripWhen.endDate   == nil)
+        }
+
+        // MARK: setExactStart(_:)
+
+        /// If the new start is set so that the existing end is still >= start+(tripDays-1), the end
+        /// must not be changed.  If the new start would make end too early, the end is floored up.
+        @Test("setExactStart(_:) floors endDate when the new start pushes the minimum end past the old end")
+        @MainActor
+        func setExactStartFloorsEnd() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setTripMonth(year: 2026, month: 9)
+            draft.setDatePrecision(.exactDates)   // start = Sep 1, end = Sep 4 (tripDays==4)
+
+            // Move start to a later date so the old end (Sep 4) is now before start+(tripDays-1).
+            let laterStart = AppDate.make(y: 2026, m: 9, d: 5)
+            draft.setExactStart(laterStart)
+
+            let minEnd = AppDate.calendar.date(byAdding: .day, value: draft.tripDays - 1, to: laterStart)!
+            #expect(draft.tripWhen.startDate == laterStart)
+            #expect(draft.tripWhen.endDate! >= minEnd)
+        }
+
+        @Test("setExactStart(_:) leaves endDate unchanged when the new start is early enough")
+        @MainActor
+        func setExactStartLeavesEndWhenSufficient() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setTripMonth(year: 2026, month: 9)
+            draft.setDatePrecision(.exactDates)   // start = Sep 1, end = Sep 4
+
+            // Move start earlier — end (Sep 4) is still >= start+(tripDays-1).
+            // After setDatePrecision the end was seeded from Sep 1. Move start back to Sep 1 (same
+            // day) — the end should not shift because it is already at the minimum.
+            let sameStart = AppDate.make(y: 2026, m: 9, d: 1)
+            let endBefore = draft.tripWhen.endDate!
+            draft.setExactStart(sameStart)
+            #expect(draft.tripWhen.endDate == endBefore)
+        }
+
+        // MARK: setExactEnd(_:)
+
+        @Test("setExactEnd(_:) clamps a too-short end up to start+(tripDays-1)")
+        @MainActor
+        func setExactEndClampsShortEnd() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setTripMonth(year: 2026, month: 9)
+            draft.setDatePrecision(.exactDates)   // start = Sep 1, end = Sep 4
+
+            // Pass an end that is only 1 day after start — shorter than tripDays (4) requires.
+            let tooEarlyEnd = AppDate.make(y: 2026, m: 9, d: 2)
+            draft.setExactEnd(tooEarlyEnd)
+
+            let start = draft.tripWhen.startDate!
+            let minEnd = AppDate.calendar.date(byAdding: .day, value: draft.tripDays - 1, to: start)!
+            #expect(draft.tripWhen.endDate == minEnd)
+        }
+
+        @Test("setExactEnd(_:) accepts a valid end that is at least tripDays from start")
+        @MainActor
+        func setExactEndAcceptsValidEnd() {
+            let draft = SampleData.onboardingAContext().toDomain()
+            draft.setTripMonth(year: 2026, month: 9)
+            draft.setDatePrecision(.exactDates)
+
+            // Pass an end that is comfortably beyond the minimum.
+            let validEnd = AppDate.make(y: 2026, m: 9, d: 15)
+            draft.setExactEnd(validEnd)
+
+            #expect(draft.tripWhen.endDate == validEnd)
+        }
+
+        // MARK: selectNeighborhood(_:)
+
+        /// selectNeighborhood sets selectedNeighborhoodID and clears baseSelection.
+        @Test("selectNeighborhood(_:) sets selectedNeighborhoodID and clears baseSelection")
+        @MainActor
+        func selectNeighborhoodSetsIDAndClearsBase() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+
+            // Pre-set a baseSelection so the clear is meaningful.
+            draft.select(base: ctx.recommendedBase)
+            #expect(draft.baseSelection != nil, "precondition: baseSelection must be set before selectNeighborhood")
+
+            draft.selectNeighborhood("neighborhood-alfama")
+
+            #expect(draft.selectedNeighborhoodID == "neighborhood-alfama")
+            #expect(draft.baseSelection == nil)
+        }
+
+        // MARK: selectSpecificBase(_:)
+
+        /// selectSpecificBase sets baseSelection and clears selectedNeighborhoodID.
+        @Test("selectSpecificBase(_:) sets baseSelection and clears selectedNeighborhoodID")
+        @MainActor
+        func selectSpecificBaseSetsBaseAndClearsNeighborhood() {
+            let ctx = SampleData.onboardingAContext()
+            let draft = ctx.toDomain()
+
+            // Pre-set a neighborhood pick so the clear is meaningful.
+            draft.selectNeighborhood("neighborhood-alfama")
+            #expect(draft.selectedNeighborhoodID != nil, "precondition: selectedNeighborhoodID must be set before selectSpecificBase")
+
+            draft.selectSpecificBase(ctx.recommendedBase)
+
+            #expect(draft.baseSelection?.id == ctx.recommendedBase.id)
+            #expect(draft.selectedNeighborhoodID == nil)
         }
     }
 }

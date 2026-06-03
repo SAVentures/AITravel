@@ -26,7 +26,8 @@
 //   focus acquired → .onChange(of: searchFocused) calls store.onboarding?.clearDestination()
 //                 → destination == nil → actions: slot renders EmptyView → destination.cta hidden
 //   isSearching == true → searchWell() + resultsList(presenter) replace hero/rail/grid
-//   result row tap → select(city:) + searchFocused=false + searchText="" → normal mode + CTA returns
+//   result row tap → select(city:) + searchFocused=false + searchText="" + advanceOnboardingStep()
+//                 → step ADVANCES to Trip Shape (destination screen leaves; tripshape.cta appears)
 //
 // City ids confirmed against SampleData+Onboarding.swift:
 //   "city-lisbon", "city-tokyo", "city-mexico-city", "city-marrakech"
@@ -37,8 +38,9 @@ import XCTest
 /// XCUITest flow for `DestinationStepView` — the onboarding destination picker (step 01).
 ///
 /// Tests the final behavior: normal-mode pill/grid selection updates the CTA; entering search mode
-/// clears the selection so the CTA hides; typing filters the result list; tapping a result commits
-/// the city and restores the CTA. Also runs the accessibility audit with a narrow documented exemption.
+/// clears the selection so the CTA hides; typing filters the result list; tapping a result row
+/// calls select(city:) + advanceOnboardingStep() — the step advances to Trip Shape (destination
+/// screen exits, tripshape.cta appears). Also runs the accessibility audit with a narrow documented exemption.
 @MainActor
 final class OnboardingDestinationUITests: XCTestCase {
 
@@ -205,7 +207,9 @@ final class OnboardingDestinationUITests: XCTestCase {
     //   3. Typing "Tok" filters the result list:
     //        destination.result.city-tokyo   EXISTS   (matches "Tokyo")
     //        destination.result.city-lisbon  does NOT exist  (no match)
-    //   4. Tapping destination.result.city-tokyo commits Tokyo, exits search, CTA reappears with "Tokyo".
+    //   4. Tapping destination.result.city-tokyo calls resultRow: select(city:) + clear search +
+    //      advanceOnboardingStep() — the step ADVANCES to Trip Shape. We left the destination
+    //      step (destination.search no longer exists) and landed on Trip Shape (tripshape.cta exists).
     //
     // Replaces the old testSearchFiltersCities which incorrectly asserted against grid/rail ids in
     // search mode — those elements are replaced by destination.result.* rows in search mode
@@ -284,31 +288,35 @@ final class OnboardingDestinationUITests: XCTestCase {
         filteredShot.lifetime = .keepAlways
         add(filteredShot)
 
-        // ── 4. Tap the Tokyo result row — commits city, exits search, CTA reappears ──
-        // Tapping resultRow calls: select(city:) + searchFocused=false + searchText="" (line 189–191).
-        // The screen returns to normal mode: isSearching becomes false, actions: slot renders
-        // OnboardingActionFloor again with ctaTitle = "Continue with Tokyo".
+        // ── 4. Tap the Tokyo result row — resultRow: select(city:) + clear search + advanceOnboardingStep() ──
+        // The step ADVANCES to Trip Shape: destination.search is no longer in the tree (we left the
+        // destination step), and tripshape.cta appears (the Trip Shape step's CTA always renders;
+        // its label is "Choose a trip shape" when no shape is picked yet — we do not assert the label).
         XCTAssertTrue(tokyoResult.isHittable, "destination.result.city-tokyo must be hittable")
         tokyoResult.tap()
 
-        // The CTA must reappear after search is dismissed.
-        let ctaAfterResult = app.buttons["destination.cta"]
+        // After advancing, the destination search field must be gone — we are no longer on that step.
+        // Query across both element types used earlier (searchFields + textFields) to be exhaustive.
+        let searchFieldAfter = app.searchFields["destination.search"]
+        let textFieldAfter = app.textFields["destination.search"]
         XCTAssertTrue(
-            ctaAfterResult.waitForExistence(timeout: 5),
-            "destination.cta must reappear after tapping a result row (search mode exits)"
+            searchFieldAfter.waitForNonExistence(timeout: 5),
+            "destination.search (searchField) must not exist after result-tap advances to Trip Shape"
+        )
+        XCTAssertFalse(
+            textFieldAfter.exists,
+            "destination.search (textField) must not exist after result-tap advances to Trip Shape"
         )
 
-        // CTA must now reflect the newly selected city — Tokyo.
-        let tokyoCTAPredicate = NSPredicate(format: "label CONTAINS[cd] 'Tokyo'")
-        let tokyoCTAExpectation = XCTNSPredicateExpectation(predicate: tokyoCTAPredicate, object: ctaAfterResult)
-        let ctaResult = XCTWaiter.wait(for: [tokyoCTAExpectation], timeout: 4)
-        XCTAssertEqual(
-            ctaResult, .completed,
-            "CTA label must contain 'Tokyo' after tapping the Tokyo result row; got '\(ctaAfterResult.label)'"
+        // Trip Shape step CTA must now be present — confirms we landed on the next step.
+        let tripShapeCTA = app.buttons["tripshape.cta"]
+        XCTAssertTrue(
+            tripShapeCTA.waitForExistence(timeout: 5),
+            "tripshape.cta must exist after result-tap advances from Destination to Trip Shape"
         )
 
         let finalShot = XCTAttachment(screenshot: app.screenshot())
-        finalShot.name = "destination-after-result-tap-tokyo-selected"
+        finalShot.name = "destination-result-tap-advances-to-tripshape"
         finalShot.lifetime = .keepAlways
         add(finalShot)
     }

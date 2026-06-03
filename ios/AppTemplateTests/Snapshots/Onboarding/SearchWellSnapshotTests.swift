@@ -6,12 +6,17 @@
 // kbdHint mono capsule, fillTertiary pill well — fails the build. (07-testing §6 governing doc.)
 //
 // States covered (one snapshot each, per 07-testing §6.2):
-//   placeholder — text is empty: magnifier + placeholder label + kbdHint mono hint co-occur.
-//   with-value  — text is "Lisbon": magnifier + value text; kbdHint is hidden (text non-empty).
+//   placeholder       — text is empty: magnifier + placeholder label + kbdHint mono hint co-occur.
+//   with-value        — text is "Lisbon": magnifier + value text; kbdHint is hidden (text non-empty).
+//   with-clear-button — text is "Lisbon" + showsClearButton:true: the xmark.circle.fill button
+//                       is visible in place of the kbdHint (SearchWell.swift line 55–66). Confirms
+//                       the clear affordance co-occurs with typed text and the kbdHint is absent.
 //
 // SearchWell requires a FocusState<Bool>.Binding (the caller owns focus state). We supply
 // it from a wrapper struct that holds @FocusState so the binding is well-formed for the
 // snapshot render. Focus is never active during a snapshot (no keyboard, no text entry).
+// The `with-clear-button` case reuses the same @FocusState fixture wrapper, adding
+// `showsClearButton: true` so the condition at SearchWell.swift line 55 is exercised.
 //
 // The well is embedded in a surfacePage canvas matching the #Preview padding so the PNG
 // shows it in the context a real onboarding screen provides.
@@ -44,6 +49,7 @@ private struct SearchWellFixture: View {
     @FocusState private var focused: Bool
     let text: String
     let placeholder: String
+    var showsClearButton: Bool = false
 
     var body: some View {
         // Capture text into a @State-like constant binding suitable for snapshot rendering.
@@ -51,6 +57,7 @@ private struct SearchWellFixture: View {
         SearchWell(
             text: .constant(text),
             placeholder: placeholder,
+            showsClearButton: showsClearButton,
             focused: $focused
         )
     }
@@ -85,6 +92,27 @@ struct SearchWellSnapshotTests {
                 SearchWellFixture(text: "Lisbon", placeholder: "Search a city…")
             },
             named: "with-value"
+        )
+    }
+
+    // MARK: - with-clear-button
+
+    /// Non-empty text ("Lisbon") + `showsClearButton: true`: the `xmark.circle.fill` clear
+    /// button appears in the trailing slot. Confirms the three signals co-occur in a single
+    /// frame — magnifier glyph visible, typed text visible, clear button visible — and that the
+    /// kbdHint is absent (the clear-button branch at SearchWell.swift line 55 takes priority
+    /// over the kbdHint branch at line 67). No unit test can confirm that co-occurrence.
+    @Test("with-clear-button — text Lisbon + showsClearButton:true: magnifier + value + clear button co-occur")
+    @MainActor func withClearButton() {
+        assertDesignSnapshot(
+            canvas {
+                SearchWellFixture(
+                    text: "Lisbon",
+                    placeholder: "Search a city…",
+                    showsClearButton: true
+                )
+            },
+            named: "with-clear-button"
         )
     }
 }

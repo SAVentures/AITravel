@@ -6,9 +6,14 @@
 // enabled/disabled button ink, capsule shape — fails the build. (07-testing §6 governing doc.)
 //
 // States covered (one snapshot each, per 07-testing §6.2):
-//   min     — value at lower bound (1): decrement button is textTertiary (disabled);
-//             increment button is textPrimary (enabled).
-//   typical — value in mid-range (4): both buttons enabled, tabular numeral face, "days" unit.
+//   min           — value at lower bound (1): decrement button is textTertiary (disabled);
+//                   increment button is textPrimary (enabled).
+//   typical       — value in mid-range (4): both buttons enabled, tabular numeral face, "days" unit.
+//   max           — value at upper bound (14): increment button is textTertiary (disabled);
+//                   decrement button is textPrimary (enabled). Locks the upper-bound disabled state.
+//   double-digit  — value 10: confirms the fixed-width number slot holds its width for a two-digit
+//                   value — the hidden sizer (range.upperBound = 14) reserves the widest width so
+//                   the ± buttons do not shift between 9 and 10 (DayStepper.swift line 80–84).
 //
 // The stepper is embedded in a surfacePage canvas matching the #Preview padding so the
 // PNG shows it in the context a real onboarding screen provides.
@@ -60,6 +65,37 @@ struct DayStepperSnapshotTests {
                 DayStepper(value: 4, range: 1...14, onChange: { _ in })
             },
             named: "typical"
+        )
+    }
+
+    // MARK: - max
+
+    /// Value at upper bound (14 of 1…14). The increment button is disabled and renders in
+    /// textTertiary ink; the decrement button is enabled and renders in textPrimary.
+    /// Confirms the upper-bound disabled state co-occurs with the correct (14) value display.
+    @Test("max — value 14, upper bound: increment disabled (textTertiary), decrement enabled (textPrimary)")
+    @MainActor func max_() {
+        assertDesignSnapshot(
+            canvas {
+                DayStepper(value: 14, range: 1...14, onChange: { _ in })
+            },
+            named: "max"
+        )
+    }
+
+    // MARK: - double-digit
+
+    /// Value 10 of 1…14 — the first double-digit value in the range. Locks the fixed-width
+    /// number slot: the hidden sizer reserves `range.upperBound` ("14") width so the capsule
+    /// does not expand when the value crosses from "9" to "10" (DayStepper.swift line 80–84).
+    /// Both ± buttons are enabled; the value face shows "10 days".
+    @Test("double-digit — value 10: fixed-width slot stable, both buttons enabled, 10 days")
+    @MainActor func doubleDigit() {
+        assertDesignSnapshot(
+            canvas {
+                DayStepper(value: 10, range: 1...14, onChange: { _ in })
+            },
+            named: "double-digit"
         )
     }
 }

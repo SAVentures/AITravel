@@ -8,12 +8,19 @@
 // Component source: ios/AppTemplate/DesignSystem/Components/FilterChip.swift.
 //
 // States covered (one snapshot each, §6.2):
-//   default  — unselected, enabled. Neutral `fillSecondary` pill, no check glyph.
-//   selected — selected, enabled. Solid ink (`textPrimary`) pill + leading check glyph.
-//   disabled — unselected, disabled via `.disabled(true)`. Muted `fillTertiary` pill,
-//              `textTertiary` label — disabled is NEVER a hand-dimmed color; it reads
-//              from the environment (`@Environment(\.isEnabled)` in FilterChipButtonStyle
-//              line 90).
+//   default          — unselected, enabled. Neutral `fillSecondary` pill, no check glyph.
+//   selected         — selected, enabled. Solid ink (`textPrimary`) pill + leading check glyph.
+//   disabled         — unselected, disabled via `.disabled(true)`. Muted `fillTertiary` pill,
+//                      `textTertiary` label — disabled is NEVER a hand-dimmed color; it reads
+//                      from the environment (`@Environment(\.isEnabled)` in FilterChipButtonStyle
+//                      line 90).
+//   with-icon        — unselected, enabled, with a leading category glyph (systemImage:
+//                      "figure.walk"). The icon occupies the leading slot in both states; the
+//                      check glyph does NOT appear when a systemImage is set (FilterChip.swift
+//                      line 56). The fill and label ink match the default (unselected) register.
+//   with-icon-selected — selected, enabled, with the same glyph. Confirms the icon persists
+//                      into the selected register (ink fill + textOnAccent label), and that
+//                      the checkmark does NOT co-appear when a systemImage is present.
 //
 // Determinism (§6.4):
 //   - No live clock — FilterChip is a pure display component with no time-conditional state.
@@ -26,6 +33,8 @@
 //   __Snapshots__/FilterChipSnapshotTests/default.png
 //   __Snapshots__/FilterChipSnapshotTests/selected.png
 //   __Snapshots__/FilterChipSnapshotTests/disabled.png
+//   __Snapshots__/FilterChipSnapshotTests/with-icon.png
+//   __Snapshots__/FilterChipSnapshotTests/with-icon-selected.png
 //
 // First run records (fails with "recorded") — commit the PNGs. Do NOT leave
 // `record: .all` in this file; that silently re-records and hides regressions (§6.3).
@@ -84,6 +93,38 @@ struct FilterChipSnapshotTests {
                     .disabled(true)
             },
             named: "disabled"
+        )
+    }
+
+    // MARK: - with-icon
+
+    /// Unselected, enabled, with a leading category glyph ("figure.walk").
+    /// When `systemImage` is non-nil the leading slot always shows the icon — the checkmark
+    /// does NOT appear even when unselected (FilterChip.swift line 56). Fill and label ink
+    /// match the default (unselected) register: `fillSecondary` + `textPrimary`.
+    @Test("with-icon — unselected, enabled, category glyph present, no check glyph")
+    @MainActor func withIcon() {
+        assertDesignSnapshot(
+            chipCanvas {
+                FilterChip(label: "Walk", systemImage: "figure.walk", isSelected: false, action: {})
+            },
+            named: "with-icon"
+        )
+    }
+
+    // MARK: - with-icon-selected
+
+    /// Selected, enabled, with the same category glyph ("figure.walk").
+    /// Confirms the icon persists into the selected register (solid ink fill + `textOnAccent`
+    /// label) and that the checkmark does NOT co-appear when a `systemImage` is provided
+    /// (FilterChip.swift line 56–60: the icon branch has no `isSelected` guard).
+    @Test("with-icon-selected — selected, enabled, category glyph + ink fill, no check glyph")
+    @MainActor func withIconSelected() {
+        assertDesignSnapshot(
+            chipCanvas {
+                FilterChip(label: "Walk", systemImage: "figure.walk", isSelected: true, action: {})
+            },
+            named: "with-icon-selected"
         )
     }
 }
