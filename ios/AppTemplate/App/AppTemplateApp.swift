@@ -15,6 +15,8 @@ struct AppTemplateApp: App {
         WindowGroup {
             RootView()
                 .environment(store)
+                // UI tests force the deterministic static map (no live MapKit tiles / attribution / labels).
+                .environment(\.mapSnapshotMode, ProcessInfo.processInfo.environment["UITEST_STATIC_MAP"] == "1")
                 .preferredColorScheme(.light)   // light-mode only
         }
     }

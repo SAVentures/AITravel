@@ -239,6 +239,9 @@ private struct SelectAction: ViewModifier {
             content
                 .onTapGesture(perform: action)
                 .accessibilityAddTraits(.isButton)
+                // `.onTapGesture` only fires on a real touch; the explicit action makes the card
+                // ACTIVATABLE by VoiceOver and XCUITest (the `.isButton` trait alone is a lie without it).
+                .accessibilityAction { action() }
         } else {
             content
         }

@@ -62,6 +62,10 @@ struct BaseMapCard: View {
         }
         .frame(height: mapHeight)
         .clipShape(ConcentricRectangle()) // inherits the rec card's corner from the parent `.containerShape`
+        // The map is decorative context — collapse it to ONE labeled element so its internal pin / place /
+        // zone-label text (and the live MapKit labels) aren't surfaced as loose, unlabeled a11y text.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Map of \(model.zoneName) and nearby places")
         .accessibilityIdentifier("onboarding.basemap")
     }
 
