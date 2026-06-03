@@ -1,57 +1,25 @@
-// BaseLocationStepView.swift — onboarding step 03 (base location), the immersive takeover step.
-//
-// NAMES ITS MOCKUPS (the fidelity gate, 06-screens §9):
-//   • mockups/screens/onboarding/state-a-screen-03-base-location.html  (Alfama)
-//   • mockups/screens/onboarding/state-b-screen-03-base-location.html  (Gion)
-//   • mockups/screens/onboarding/state-c-screen-03-base-location.html  (Baixa)
-//
-// Layout + wiring ONLY (06-screens §2 / §8): the view reads `AppStore` via the environment, holds no
-// domain state, places design-system components fed by a stateless `BaseLocationStepPresenter`, and
-// triggers change through model methods on the draft (`setBaseMode` / `select(base:)`) + the store's step
-// command (`advanceOnboardingStep`). It NEVER hand-wires `.toolbar` / `.navigationTitle` / `ScrollView` /
-// structural `.padding` — chrome + scroll come from `ScreenScaffold(.immersive)`, the in-content progress
-// from `OnboardingProgressBar`, the floating back glyph from `GlassCircleButton`, the thumb-zone CTA from
-// `OnboardingActionFloor`.
-//
-// Chrome intent: `.immersive` — a takeover (tab bar hidden), per the onboarding flow (06-screens §2).
-//
-// ── Composition primitives + components placed ─────────────────────────────────────────────────────────
-//   ScreenScaffold(.immersive, actions:) · OnboardingProgressBar (in-content, FIRST) · GlassCircleButton
-//   (floating leading back glyph, overlaid) · OnboardingActionFloor (the floor) · ScreenSection ·
-//   RhythmSpacer · HScrollSection (the alt rail) — composition;
-//   SegmentedSelector · BaseMapCard · AIVoice · TimeHint · EmptyStateView — components.
-//
-// ── J-rules honored ────────────────────────────────────────────────────────────────────────────────────
-//   J-0.1 — the map card is CONTENT, never glass (it sits on `cardSurface`, not a glass material); glass
-//           lives only on the floating leading `GlassCircleButton`. The base mode pill is content
-//           (ink-pill selected). The in-content `OnboardingProgressBar` is NOT glass.
-//   J-2.4 — one accent budget: the CTA's blue + the one AI "why" dot. The selected base-mode segment is
-//           ink, not accent; the progress bar is neutral.
-//   J-3.6 / J-6.2 — exactly one editorial italic moment: the AI "why" line.
-//   J-0.2 / J-0.3 — semantic tokens only; Dynamic Type throughout (no literals, no fixed content frames).
+/*
+ Onboarding step 03 — base location, the immersive takeover step. Layout + wiring only; per-state
+ derivation lives in BaseLocationStepPresenter. Ports state-{a,b,c}-screen-03-base-location.html
+ (Alfama / Gion / Baixa).
+
+ Two non-obvious choices:
+ - The ONE glass surface is the floating leading back glyph; the map card is content on cardSurface (J-0.1).
+ - One accent budget: the CTA's blue + the one AI "why" dot; the selected base-mode segment is ink (J-2.4).
+*/
 import SwiftUI
 
-/// Onboarding step 03 — where the traveller bases themselves. Reads the active draft via the presenter,
-/// renders the smart-recommendation card (map + AI "why" + reach rows + alts) or the manual stub, and
-/// commits the recommended base on the CTA before advancing the flow.
 struct BaseLocationStepView: View {
 
-    /// The single source of truth — read from the environment, never constructed here (01-arch §4).
     @Environment(AppStore.self) private var store
 
-    /// The stateless presenter over the store — all screen-specific derivation. Rebuilt each `body` pass
-    /// (06-screens §3), so it is a cheap value, not stored state.
     private var presenter: BaseLocationStepPresenter { BaseLocationStepPresenter(store: store) }
 
-    /// The top clearance band that pins the scroll content below the floating leading `GlassCircleButton`
-    /// (back glyph) so nothing collides at rest; scales with Dynamic Type (J-0.3) rather than a fixed point.
+    // Clearance band pinning scroll content below the floating back glyph so nothing collides at rest.
     @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
 
     var body: some View {
         ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
-            // The solid immersive floor (mockup `.ob-action`): the primary "Use {Neighborhood} as base"
-            // CTA + the "Pick a specific hotel or address" ghost. CTA commits the recommended base then
-            // advances; the ghost is stubbed (OPEN DECISION 5).
             OnboardingActionFloor(
                 primaryTitle: presenter.ctaTitle,
                 primaryAccessibilityID: "baselocation.cta",
@@ -69,18 +37,12 @@ struct BaseLocationStepView: View {
             )
         }) {
             ScreenSection {
-                // The in-content progress bar — counter + neutral segments, no glass. FIRST element,
-                // scrolls with the content (step index 2 → "03 / 05"). The scaffold already insets content
-                // horizontally by `Spacing.screenInset`, so the bar needs no extra inset here.
                 OnboardingProgressBar(stepIndex: 2)
 
-                // The hero — mono eyebrow + display question + the calming sub (mockup `.hero`).
                 hero
 
-                // The two-path segmented selector (mockup `.seg`) — ink-pill selected, never the accent.
                 baseModeSelector
 
-                // The body switches on the chosen mode: the smart recommendation, or the manual stub.
                 switch presenter.baseMode {
                 case .smart:
                     smartRecommendation
@@ -88,15 +50,9 @@ struct BaseLocationStepView: View {
                     manualStub
                 }
             }
-            // Clear the floating leading `GlassCircleButton` (top-leading overlay): the section begins
-            // BELOW the back glyph so the progress bar + hero don't collide with it at rest, then scroll
-            // under it. Scaled with Dynamic Type so the band tracks text size (J-0.3).
             .padding(.top, topChrome)
         }
-        // The floating leading affordance: the back glyph as a `GlassCircleButton`, overlaid top-leading
-        // on the scaffold (floating chrome, NOT in the scroll content) → retreat a step. The ONE glass
-        // surface on the screen (J-0.1). The `.immersive` safe-area handling keeps it below the notch; the
-        // top pad sets it in the top safe area (mockup).
+        // Floating back glyph overlaid as chrome (not in scroll content) — the one glass surface (J-0.1).
         .overlay(alignment: .topLeading) {
             GlassCircleButton(
                 systemImage: "chevron.left",
@@ -109,7 +65,7 @@ struct BaseLocationStepView: View {
         }
     }
 
-    // MARK: - Hero (mockup `.hero`)
+    // MARK: - Hero
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: Spacing.paired) {
@@ -128,7 +84,7 @@ struct BaseLocationStepView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Base-mode selector (mockup `.seg`)
+    // MARK: - Base-mode selector
 
     private var baseModeSelector: some View {
         SegmentedSelector(
@@ -143,22 +99,17 @@ struct BaseLocationStepView: View {
         )
     }
 
-    // MARK: - Smart recommendation (mockup `.rec` — map + AI "why" + reach rows + alts)
+    // MARK: - Smart recommendation
 
     private var smartRecommendation: some View {
         VStack(alignment: .leading, spacing: Spacing.sectionGap) {
 
-            // The recommendation card — white `cardSurface`, NO colored edge (mockup `.rec`). The map fills
-            // its top; the body carries the AI "why" + the reach rows. The card is CONTENT (J-0.1).
             VStack(alignment: .leading, spacing: Spacing.cardInset) {
-                // The map card is content, never glass (J-0.1). The presenter owns the coord → region map.
                 BaseMapCard(model: presenter.mapModel)
 
                 VStack(alignment: .leading, spacing: Spacing.cardInset) {
-                    // The one editorial italic moment + its accent dot (J-3.6 / J-6.2 / J-2.4).
                     AIVoice(eyebrow: presenter.whyEyebrow, line: presenter.whyVoice)
 
-                    // The reach rows — each a `TimeHint` chip carrying the mono measurement (mockup `.reach`).
                     VStack(alignment: .leading, spacing: Spacing.paired) {
                         ForEach(presenter.reachRows) { row in
                             TimeHint(row.hint)
@@ -173,17 +124,13 @@ struct BaseLocationStepView: View {
             .cardSurface()
             .accessibilityIdentifier("baselocation.rec")
 
-            // The "Tentative · change it any time" caption (mockup `.tent`) — quiet mono caps, the contract
-            // that the base stays movable. No alarm color (J-11.5).
             tentativeCaption
 
-            // The alternatives the model weighed (mockup `.alt-head` / `.alts`) — a horizontal rail.
             altNeighborhoodsRail
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The "Tentative · change it any time" eyebrow caption (mockup `.tent`).
     private var tentativeCaption: some View {
         Text("Tentative · change it any time")
             .font(Typography.caption)
@@ -193,10 +140,6 @@ struct BaseLocationStepView: View {
             .frame(maxWidth: .infinity, alignment: .center)
     }
 
-    /// The alt-neighborhoods rail (mockup `.alts`) — each card a quiet name + mono meta line. `HScrollSection`
-    /// owns its own head inset + scroll-content margins, so the rail composes as-is; the scaffold's
-    /// content-margins inset the section content and the rail's leading edge aligns to the same screen
-    /// margin (no manual padding here — structure is the primitive's job, J-1 / 06-screens §2).
     private var altNeighborhoodsRail: some View {
         HScrollSection(
             "Other neighborhoods we weighed",
@@ -220,11 +163,9 @@ struct BaseLocationStepView: View {
     }
 }
 
-// MARK: - Base-mode option (the segmented selector's value-type fixture)
+// MARK: - Base-mode option
 
-/// The base-mode segments (mockup `.seg`): the smart AI recommendation vs the manual pick. A tiny
-/// `Identifiable & Hashable` wrapper over `BaseSelectionMode` so it drives the generic `SegmentedSelector`,
-/// with the per-case label + leading glyph (the manual segment carries the map-pin glyph, mockup `.seg svg`).
+/* Identifiable/Hashable wrapper over BaseSelectionMode so it drives the generic SegmentedSelector. */
 private enum BaseModeOption: String, CaseIterable, Identifiable, Hashable {
     case smart
     case manual
@@ -245,9 +186,7 @@ private enum BaseModeOption: String, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
-    /// The segment label. "Smart from saved" in state A; the catalog can later vary this, but the mockups
-    /// across A/B/C all read "Smart from …" + "Pick manually" — the recommendation source word ("saved" /
-    /// "plan") is editorial and kept literal to the primary (A) mockup here.
+    // Kept literal to the primary (A) mockup; A/B/C vary the source word ("saved"/"plan") editorially.
     var title: String {
         switch self {
         case .smart: "Smart from saved"
@@ -255,7 +194,6 @@ private enum BaseModeOption: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// The leading glyph — text-only for smart, a map-pin for the manual segment (mockup `.seg svg`).
     var systemImage: String? {
         switch self {
         case .smart: nil
@@ -264,15 +202,11 @@ private enum BaseModeOption: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
-// MARK: - Alt-neighborhood card (mockup `.alts .alt`)
+// MARK: - Alt-neighborhood card
 
-/// One card in the alt-neighborhoods rail: a display name over a mono meta line. Content, never chrome —
-/// a quiet `surfacePage` row on `Radius.row` (mockup `.alt` `background: var(--paper-100)`).
 private struct AltNeighborhoodCard: View {
     let alt: BaseLocationStepPresenter.AltModel
 
-    /// A floor on the card width so the rail reads as even tiles (mockup `.alt min-width: 134px`), scaled
-    /// with Dynamic Type so it grows with the text rather than clipping (J-0.3).
     @ScaledMetric(relativeTo: .body) private var minCardWidth: CGFloat = 134
 
     var body: some View {
@@ -293,12 +227,10 @@ private struct AltNeighborhoodCard: View {
     }
 }
 
-// MARK: - Previews — one per state (A/B/C), seeded via AppStore.preview at the .baseLocation step
+// MARK: - Previews
 //
-// The previews render the LIVE `BaseMapCard` (snapshotMode false) — interactive map tiles read correctly
-// in Xcode. The Wave-5 L3 SNAPSHOT, by contrast, renders `BaseMapCard(snapshotMode: true)` so the lock is
-// deterministic (no network tiles) per OPEN DECISION 4 — that variant is the snapshot writer's seam, not
-// this preview's.
+// These render the LIVE BaseMapCard (snapshotMode false); the L3 snapshot uses snapshotMode true for a
+// deterministic, network-free lock (OPEN DECISION 4) — that variant is the snapshot writer's seam.
 
 #Preview("State A · Alfama (returning, local saves)") {
     NavigationStack {

@@ -1,16 +1,14 @@
 import Foundation
 
-/// The production `URLSession` provider — a generic shell that dispatches on the request and
-/// holds no per-endpoint code (`04-networking.md §2`). `send` is `@concurrent` so the
-/// `URLRequest` build → network call → JSON decode runs off the main actor; the decoded
-/// `Sendable` DTO crosses back and the store maps `toDomain()` on the main actor
-/// (`01-architecture.md §9`).
-///
-/// Every failure is mapped into ``APIError`` before it propagates — call sites never see a
-/// raw `URLError`/`DecodingError` (`04-networking.md §6`). There is no real backend in the
-/// template, so `baseURL` is a placeholder; the structure is the point.
+/*
+ Production URLSession provider — a generic shell that dispatches on the request and holds no
+ per-endpoint code. `send` is @concurrent: build → network → decode runs off the main actor,
+ the Sendable DTO crosses back, and the store maps toDomain() on the main actor.
+
+ Every failure is mapped into APIError before it propagates — call sites never see a raw
+ URLError/DecodingError. No real backend ships with the template, so baseURL is a placeholder.
+*/
 nonisolated struct LiveProvider: APIClientProtocol, Sendable {
-    /// Placeholder base — no real backend ships with the template.
     var baseURL: URL = URL(string: "https://api.example.com")!
     var session: URLSession = .shared
 

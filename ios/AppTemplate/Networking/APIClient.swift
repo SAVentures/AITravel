@@ -1,10 +1,11 @@
 import Foundation
 
-/// The single concrete handle the store and screens hold — a thin `final class` wrapping one
-/// immutable provider. Because the wrapped existential is a `let` and `APIClientProtocol`
-/// refines `Sendable`, the compiler **verifies** the `Sendable` conformance: plain `Sendable`,
-/// no `@unchecked` (`01-architecture.md §9`, `04-networking.md §1`). Nothing outside this folder
-/// references `MockProvider`/`LiveProvider`; swapping providers happens only here, via the factories.
+/*
+ The single concrete handle the store and screens hold — a thin class over one immutable provider.
+ The provider is a `let` and `APIClientProtocol` refines `Sendable`, so the compiler verifies a
+ plain `Sendable` conformance (no `@unchecked`). Provider swaps happen only here, via the factories;
+ nothing outside this folder references `MockProvider`/`LiveProvider`.
+*/
 final class APIClient: APIClientProtocol, Sendable {
     private let provider: any APIClientProtocol
 
@@ -18,16 +19,14 @@ final class APIClient: APIClientProtocol, Sendable {
 }
 
 extension APIClient {
-    /// The default production client, backed by `LiveProvider` (`URLSession` HTTP).
     static var live: APIClient {
         APIClient(provider: LiveProvider())
     }
 
-    /// A client backed by the stateless `MockProvider`, built from the seed for `scenario`.
-    /// - Parameters:
-    ///   - scenario: which `SampleData` seed variant to snapshot into the `MockSeed`.
-    ///   - failure: an `APIError` to throw on every `send` — drives the write-error/offline paths.
-    ///   - latency: a delay applied before each response — drives loading states.
+    /*
+     A client over the stateless `MockProvider`, seeded for `scenario`. `failure` throws on every
+     `send` (drives write-error/offline paths); `latency` delays each response (drives loading states).
+    */
     static func mock(
         scenario: MockScenario = .empty,
         failure: APIError? = nil,
@@ -42,10 +41,11 @@ extension APIClient {
     }
 }
 
-/// Caseless namespace vending the pinned JSON coders. All `Request` bodies and `Response`/DTO
-/// types use camelCase property names; the coder handles the snake_case wire translation
-/// (`04-networking.md §5`). Symmetric round-trip tests use plain coders, never these, because
-/// the snake-case strategy is asymmetric on acronym/ID keys.
+/*
+ Namespace vending the pinned JSON coders: camelCase properties, snake_case on the wire. Symmetric
+ round-trip tests must use plain coders, not these — the snake-case strategy is asymmetric on
+ acronym/ID keys.
+*/
 nonisolated enum APIJSON {
     static func encoder() -> JSONEncoder {
         let encoder = JSONEncoder()

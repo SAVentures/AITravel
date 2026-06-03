@@ -1,27 +1,18 @@
-// SampleData+Onboarding.swift — the three onboarding seed contexts (plan W2-11).
-//
-// `SampleData` is the one mock source (02-models.md §5). Each `MockScenario.onboardingA/B/C`
-// resolves to a `MockSeed` whose `onboardingContext` is built here. All ids are stable literals;
-// the content is faithful to the named mockups under `mockups/screens/onboarding/`
-// (state-a/b/c-*.html) — city names, saved counts, neighborhood place counts, reach rows,
-// trip-shape copy + metric strips + diagram numbers, transport reasons (€ / ¥) + context notes,
-// and the six generation steps + cluster names + handoff lines.
-//
-// The three contexts drive A/B/C branch selection via `savedHere` / `savedAnywhere`
-// (`OnboardingContextDTO.onboardingState`):
-//   - A: `savedHere > 0`                          → returningWithLocalSaves
-//   - B: `savedHere == 0 && savedAnywhere > 0`     → savesElsewhere
-//   - C: `savedAnywhere == 0`                      → firstTrip
+/*
+ The three onboarding seed contexts. Content is faithful to mockups/screens/onboarding/
+ (state-a/b/c-*.html); all ids are stable literals.
+
+ A/B/C branch selection is driven by savedHere / savedAnywhere (OnboardingContextDTO.onboardingState):
+ - A: savedHere > 0                        → returningWithLocalSaves
+ - B: savedHere == 0 && savedAnywhere > 0  → savesElsewhere
+ - C: savedAnywhere == 0                   → firstTrip
+*/
 import Foundation
 
 extension SampleData {
 
     // MARK: - A — returning, local saves (Lisbon, 23 saved)
 
-    /// State A: Lisbon chosen with 23 saved places here (plus 6 in Tokyo). Full cover-the-bucket
-    /// option available; Alfama base (18 / 23 within a 25-min walk); transit rec in € with a rain
-    /// note; the six Lisbon generation steps.
-    /// Mockups: `state-a-screen-01..05`.
     static func onboardingAContext() -> OnboardingContextDTO {
         OnboardingContextDTO(
             destination: lisbonCity(savedHere: 23, meta: .savedCount(23)),
@@ -39,11 +30,6 @@ extension SampleData {
 
     // MARK: - B — saves elsewhere, none here (Kyoto, 0 here)
 
-    /// State B: Kyoto chosen with no local saves but saves elsewhere (Tokyo + Lisbon). The
-    /// cover-the-bucket option is locked ("Save places in Kyoto to unlock"); copy pivots to taste +
-    /// the city's best; Gion base; transit rec in ¥ with a blossom-crowd note; the Kyoto generation
-    /// steps ("12 picks shortlisted").
-    /// Mockups: `state-b-screen-01..05`.
     static func onboardingBContext() -> OnboardingContextDTO {
         OnboardingContextDTO(
             destination: kyotoCity(savedHere: 0, meta: .neighborhood("plan from scratch")),
@@ -61,11 +47,8 @@ extension SampleData {
 
     // MARK: - C — first trip, nothing saved anywhere (Lisbon)
 
-    /// State C: Lisbon chosen as a first trip with nothing saved anywhere. Step 02 is the taste form
-    /// (no shape cards), so `shapeOptions` is empty and `tasteDefaults` carries the seed taste
-    /// (4 days, food / history / coffee, balanced). Baixa base (descriptors, no place counts); the
-    /// shared Lisbon transport rec; the Lisbon "best for food and history" generation plan.
-    /// Mockups: `state-c-screen-01..05`.
+    /* Step 02 is the taste form (no shape cards), so shapeOptions is empty and tasteDefaults
+       carries the seed taste instead. */
     static func onboardingCContext() -> OnboardingContextDTO {
         OnboardingContextDTO(
             destination: lisbonCity(savedHere: 0, meta: .neighborhood("we'll plan it")),
@@ -116,7 +99,6 @@ extension SampleData {
 
     // MARK: City catalogs per state (the recent rail + the "more cities" grid)
 
-    /// State A grid: Lisbon (23 saved, plan started) · Tokyo (6 saved) · Mexico City · Marrakech.
     fileprivate static func cityOptionsStateA() -> [City] {
         [
             lisbonCity(savedHere: 23, meta: .planStarted),
@@ -126,7 +108,6 @@ extension SampleData {
         ]
     }
 
-    /// State B grid: Kyoto (plan started) · Tokyo (6 saved) · Osaka (0) · Seoul (0).
     fileprivate static func cityOptionsStateB() -> [City] {
         [
             kyotoCity(savedHere: 0, meta: .planStarted),
@@ -136,7 +117,6 @@ extension SampleData {
         ]
     }
 
-    /// State C grid: Lisbon (we'll plan it) · Tokyo (trending) · Mexico City · Marrakech.
     fileprivate static func cityOptionsStateC() -> [City] {
         [
             lisbonCity(savedHere: 0, meta: .neighborhood("we'll plan it")),
@@ -151,8 +131,6 @@ extension SampleData {
 
 extension SampleData {
 
-    /// Lisbon neighborhoods (state A): Alfama (recommended) + Bairro Alto / Chiado /
-    /// Príncipe Real / Belém / Baixa — place counts + blurbs per `state-a-screen-03`.
     fileprivate static func lisbonNeighborhoodsStateA() -> [Neighborhood] {
         [
             Neighborhood(
@@ -171,8 +149,6 @@ extension SampleData {
         ]
     }
 
-    /// Kyoto neighborhoods (state B): Gion (recommended) + Downtown / S. Higashiyama /
-    /// Pontochō / Arashiyama — pick counts + blurbs per `state-b-screen-03`.
     fileprivate static func kyotoNeighborhoodsStateB() -> [Neighborhood] {
         [
             Neighborhood(
@@ -190,8 +166,6 @@ extension SampleData {
         ]
     }
 
-    /// Lisbon neighborhoods (state C): Baixa (recommended) + Chiado / Alfama / Bairro Alto /
-    /// Príncipe Real — descriptors, no place counts per `state-c-screen-03`.
     fileprivate static func lisbonNeighborhoodsStateC() -> [Neighborhood] {
         [
             Neighborhood(
@@ -234,12 +208,11 @@ extension SampleData {
     }
 }
 
-// MARK: - Recommended bases (real-ish coordinates + pins)
+// MARK: - Recommended bases
 
 extension SampleData {
 
-    /// Alfama base — 18 / 23 within a 25-min walk. Home anchor near the Alfama centroid; pins are
-    /// `.definitive` in-neighborhood, `.fuzzy` for the out-of-zone (Belém) saves.
+    /* Pins are .definitive in-neighborhood, .fuzzy for the out-of-zone (Belém) saves. */
     fileprivate static func alfamaBase() -> BaseLocation {
         BaseLocation(
             id: "base-alfama",
@@ -260,7 +233,6 @@ extension SampleData {
         )
     }
 
-    /// Gion base — most picks within a 20-min walk of the east temples.
     fileprivate static func gionBase() -> BaseLocation {
         BaseLocation(
             id: "base-gion",
@@ -279,8 +251,6 @@ extension SampleData {
         )
     }
 
-    /// Baixa base — dead-central, close to most of a food-and-history first trip. No place counts
-    /// (state C has nothing saved), so the zone label is descriptive.
     fileprivate static func baixaBase() -> BaseLocation {
         BaseLocation(
             id: "base-baixa",
@@ -304,8 +274,6 @@ extension SampleData {
 
 extension SampleData {
 
-    /// State A shape cards: Fixed days (selectable) · Cover the bucket (unlocked — 23 saved) ·
-    /// Just the highlights. Metric strips + diagram numbers per `state-a-screen-02`.
     fileprivate static func shapeOptionsStateA() -> [TripShapeOption] {
         [
             TripShapeOption(
@@ -356,8 +324,6 @@ extension SampleData {
         ]
     }
 
-    /// State B shape cards: Fixed days · Cover the bucket (**locked** — nothing saved in Kyoto) ·
-    /// Just the highlights (Kyoto's best, tuned to taste). Per `state-b-screen-02`.
     fileprivate static func shapeOptionsStateB() -> [TripShapeOption] {
         [
             TripShapeOption(
@@ -411,8 +377,7 @@ extension SampleData {
 
 extension SampleData {
 
-    /// Lisbon transport rec — transit, € reasons, rain note. Shared by states A and C
-    /// (the common `screen-04-getting-around`).
+    /* Shared by states A and C (the common screen-04-getting-around). */
     fileprivate static func lisbonTransportRec() -> TransportRec {
         TransportRec(
             suggestedMode: .transit,
@@ -429,7 +394,6 @@ extension SampleData {
         )
     }
 
-    /// Kyoto transport rec — transit, ¥ reasons, blossom-crowd note. Per `state-b-screen-04`.
     fileprivate static func kyotoTransportRec() -> TransportRec {
         TransportRec(
             suggestedMode: .transit,
@@ -451,8 +415,6 @@ extension SampleData {
 
 extension SampleData {
 
-    /// Lisbon generation plan (state A): the six steps + clusters (Alfama · Belém · Bairro Alto ·
-    /// Parque), eta 8s, handoff "Lisbon · 4 days, your shape." Per `state-a-screen-05`.
     fileprivate static func lisbonGenerationPlanStateA() -> GenerationPlan {
         GenerationPlan(
             steps: [
@@ -472,9 +434,6 @@ extension SampleData {
         )
     }
 
-    /// Kyoto generation plan (state B): Kyoto's best ("12 picks shortlisted") + clusters
-    /// (Higashiyama · Arashiyama · Downtown · Fushimi), handoff "Kyoto · 4 days, a strong first
-    /// draft." Per `state-b-screen-05`.
     fileprivate static func kyotoGenerationPlanStateB() -> GenerationPlan {
         GenerationPlan(
             steps: [
@@ -494,9 +453,6 @@ extension SampleData {
         )
     }
 
-    /// Lisbon generation plan (state C): "best for food and history" + clusters (Baixa · Alfama ·
-    /// Belém · Bairro Alto), handoff "Lisbon · 4 days, your shape." (sub "A first draft to react
-    /// to."). Per `state-c-screen-05`.
     fileprivate static func lisbonGenerationPlanStateC() -> GenerationPlan {
         GenerationPlan(
             steps: [

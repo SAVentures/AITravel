@@ -1,22 +1,16 @@
 import Foundation
 
-/// The immutable DTO snapshot the ``MockProvider`` serves — a `Sendable` value with no
-/// persisted mutable state. Requests compute their `mockResponse(from:)` purely from this
-/// seed (`04-networking.md §7`).
-///
-/// It starts **empty**. Each feature adds its top-level entity as a stored field via an
-/// extension (e.g. `var library: LibraryDTO`), and `SampleData.seed(for:)` populates those
-/// fields per scenario. Keeping the core type empty here lets parallel feature scaffolders
-/// add fields without colliding on this file.
+/*
+ The immutable DTO snapshot MockProvider serves — a Sendable value computed purely by each
+ request's mockResponse(from:). Starts empty; each feature adds its top-level entity as a field
+ via an extension so parallel scaffolders don't collide on this file.
+*/
 struct MockSeed: Sendable {
 
-    /// The onboarding seed catalog served for the active scenario, or `nil` for `.empty`.
-    /// `GetOnboardingContextRequest.mockResponse(from:)` reads this; an absent context yields a 404
-    /// (`04-networking.md §7`, plan W2-10).
+    // nil for the `.empty` scenario → GetOnboardingContextRequest yields a 404.
     var onboardingContext: OnboardingContextDTO?
 
-    /// A no-argument-able init (all fields default) so the existing `MockSeed()` for `.empty`
-    /// keeps working as features add fields by extension.
+    // All fields default so MockSeed() for `.empty` survives features adding fields by extension.
     init(onboardingContext: OnboardingContextDTO? = nil) {
         self.onboardingContext = onboardingContext
     }

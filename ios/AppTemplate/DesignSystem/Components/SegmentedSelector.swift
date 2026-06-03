@@ -1,53 +1,28 @@
-// SegmentedSelector.swift — a single-select segmented control on a quiet pill track (05-components §5).
-// Ports the onboarding `.seg` (2-way base-mode), `.pace` (3-way pace), and `.mostly` (4-way getting-around)
-// controls — all three share ONE pattern: an ink-pill on the selected segment over a `fill-tertiary` track.
-//
-// THE LOAD-BEARING DECISION (mirrors `FilterChip`, Components.html §05 caption): the selected segment is a
-// **solid ink pill, NOT the accent**. Mockups render `background: var(--ink-900); color: var(--paper-0)` on
-// `.on` — choosing among one's own options is *navigation through a control*, not a now-state, so it must
-// not claim the accent (J-0.4 / J-2.4). The accent (blue `actionPrimary` / `stateNow`) stays reserved for
-// the CTA and the one AI/now mark on each onboarding screen. Selected fill = `ColorRole.textPrimary` (ink),
-// label = `ColorRole.textOnAccent` (the light label legible on ink) — matching `--ink-900` / `--paper-0`.
-//
-// Selection is conveyed by **fill + weight, never color alone** (02-color §6): the selected segment gains the
-// ink pill AND `.accessibilityAddTraits(.isSelected)`, so the state survives grayscale / color-blindness and
-// is announced to assistive tech. One selected segment per group is the model's invariant — `selection`
-// names it; this view renders the state it is handed.
-//
-// Tokens only (J-0.2): semantic `ColorRole` / `Typography` / `Spacing` / `Radius` / `Motion` — zero literals,
-// zero `Primitive.*`. The track and each segment use `Radius.pill` (chrome shape; J-10.2). NEVER glass — a
-// segmented control is content the user taps, not floating chrome (J-0.1; only the bar/floor layer is glass).
-// 44pt tap dimension per segment via `@ScaledMetric` (J-0.3 — a bare `44` would not scale at large text).
+/*
+ A single-select segmented control on a quiet pill track. Ports the onboarding `.seg`/`.pace`/`.mostly`
+ controls (2/3/4-way) — all share one pattern: an ink pill on the selected segment over a `fillTertiary` track.
+
+ The load-bearing call (mirrors FilterChip): the selected segment is a SOLID INK pill, NOT the accent —
+ choosing among one's own options is navigation, not a now-state, so the accent stays reserved for the CTA
+ and the one AI/now mark (J-0.4 / J-2.4). Selection is conveyed by fill + the `.isSelected` trait, never
+ color alone, so it survives grayscale and reaches assistive tech.
+*/
 import SwiftUI
 
-/// A single-select segmented control, generic over an `Identifiable & Hashable` option.
-///
-/// Renders the 2-/3-/4-way onboarding selectors from one component: pass `options` and the current
-/// `selection`; `label` / `systemImage` map each option to its caps-free UI label and optional leading SF
-/// Symbol (return `nil` for text-only segments, as in `.pace`). `onSelect` hands the tapped option back to
-/// the caller, which flips its own selection model (single-selection lives in the model, not here).
-///
-/// Value-type args only — no `AppStore`, no domain object (05-design-system §8). The caller supplies an
-/// `accessibilityIDPrefix` namespace so each segment gets a stable `\(prefix).\(optionID)` identifier
-/// (`basemode.smart`, `pace.balanced`, `transport.mostly.transit`).
+/// A single-select segmented control, generic over an `Identifiable & Hashable` option. Single-selection
+/// lives in the caller's model; `onSelect` hands back the tapped option and the caller re-passes `selection`.
 struct SegmentedSelector<Option: Identifiable & Hashable>: View {
-    /// The segments, left to right.
     let options: [Option]
-    /// The currently selected option — drives the ink pill + the `.isSelected` trait.
     let selection: Option
-    /// Each option's short UI label (a noun, never caps body — J-3.5).
     let label: (Option) -> String
-    /// Each option's optional leading SF Symbol; `nil` renders a text-only segment (the `.pace` register).
+    /// `nil` renders a text-only segment (the `.pace` register).
     let systemImage: (Option) -> String?
-    /// The a11y-id namespace; each segment becomes `\(accessibilityIDPrefix).\(option.id)`.
+    /// Each segment becomes `\(accessibilityIDPrefix).\(option.id)`.
     let accessibilityIDPrefix: String
-    /// Selection callback — the caller updates its own model and re-passes `selection`.
     let onSelect: (Option) -> Void
 
     var body: some View {
-        // The quiet pill TRACK: a `fillTertiary` well that holds the segments (mockup `.seg`/`.pace`/`.mostly`
-        // `background: var(--fill-tertiary)`). Inner padding insets the segments so the selected pill never
-        // touches the track edge — `Spacing.hairline` matches the mockup's 2–3px track padding.
+        // The quiet pill track: hairline inset keeps the selected pill off the track edge.
         HStack(spacing: Spacing.hairline) {
             ForEach(options) { option in
                 Button {
@@ -68,11 +43,8 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
     }
 }
 
-// MARK: - Segment label (optional leading glyph ↔ label)
+// MARK: - Segment label
 
-/// Lays an optional leading SF Symbol at `Spacing.paired` (the icon↔label rung, J-1) before the label. The
-/// glyph uses the mono `footnote` role so it scales with Dynamic Type (no fixed pt; J-0.3). Text-only
-/// segments simply omit the icon — the layout hugs the label (the `.pace` register).
 private struct SegmentLabel: View {
     let title: String
     let systemImage: String?
@@ -89,53 +61,42 @@ private struct SegmentLabel: View {
     }
 }
 
-// MARK: - Segment style (fill · shape · press · 44pt target)
+// MARK: - Segment style
 
-/// A single segment's pill treatment, driven by `configuration.isPressed` so the press commits in ≤100ms
-/// before the release animation (J-9.1). Selected → a solid ink pill (`textPrimary`) + light label
-/// (`textOnAccent`); unselected → transparent over the track with a quiet `textSecondary` label (mockup
-/// `.on` vs the resting `--ink-600` segment). Reads `.isEnabled` from the environment for the disabled
-/// register; never a hand-dimmed color (05-components intro). All values are semantic tokens.
 private struct SegmentButtonStyle: ButtonStyle {
     let isSelected: Bool
     @Environment(\.isEnabled) private var isEnabled
 
-    /// The HIG minimum tap target — a floor; content + Dynamic Type still grow the segment. `@ScaledMetric`
-    /// scales it with the label so it holds at large text (J-0.3); a bare `44` literal would not.
+    // @ScaledMetric so the 44pt tap floor holds at large text — a bare `44` literal would not (J-0.3).
     @ScaledMetric(relativeTo: .subheadline) private var minTapTarget: CGFloat = 44
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(Typography.subhead) // UI family, content density — not chrome-thin (J-5)
+            .font(Typography.subhead)
             .foregroundStyle(labelColor)
-            .frame(maxWidth: .infinity) // equal-width segments — the 2/3/4-up grid (mockup `1fr` columns)
+            .frame(maxWidth: .infinity) // equal-width segments
             .padding(.vertical, Spacing.paired)
             .padding(.horizontal, Spacing.itemGap)
             .frame(minHeight: minTapTarget)
-            .background(fill, in: .rect(cornerRadius: Radius.pill)) // pill segment (J-10.2)
+            .background(fill, in: .rect(cornerRadius: Radius.pill))
             .contentShape(.rect(cornerRadius: Radius.pill))
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(Motion.standard(Motion.tap), value: configuration.isPressed)
     }
 
-    /// Selected → the light label on the ink pill (`textOnAccent`). Disabled → the muted past/placeholder
-    /// ink. Unselected → the quiet `textSecondary` resting label (mockup `--ink-600`).
     private var labelColor: Color {
         if !isEnabled { return ColorRole.textTertiary }
         return isSelected ? ColorRole.textOnAccent : ColorRole.textSecondary
     }
 
-    /// Selected is a SOLID INK pill (`textPrimary`), never the accent (the load-bearing call, mirrors
-    /// `FilterChip`). Unselected segments are transparent so the `fillTertiary` track shows through.
+    // Selected = solid ink (`textPrimary`), never the accent. Unselected is clear so the track shows through.
     private var fill: Color {
         isSelected ? ColorRole.textPrimary : .clear
     }
 }
 
-// MARK: - Previews — one per width register (05-design-system §8; snapshot matrix in Wave 1)
+// MARK: - Previews
 
-/// A tiny value-type fixture — no domain object, no `AppStore` (05-design-system §8). Each preview group is a
-/// local selection model the `#Preview` renders against.
 private struct SegmentOption: Identifiable, Hashable {
     let id: String
     let title: String
