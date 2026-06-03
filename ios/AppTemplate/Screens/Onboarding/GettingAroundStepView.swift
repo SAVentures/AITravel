@@ -31,7 +31,7 @@ struct GettingAroundStepView: View {
     var body: some View {
         let p = GettingAroundStepPresenter(store: store)
 
-        ScreenScaffold(.immersive, actions: {
+        ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
             OnboardingActionFloor(
                 primaryTitle: p.ctaTitle,
                 primaryAccessibilityID: "gettingaround.cta",

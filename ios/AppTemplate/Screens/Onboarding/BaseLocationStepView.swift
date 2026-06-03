@@ -48,7 +48,7 @@ struct BaseLocationStepView: View {
     @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
 
     var body: some View {
-        ScreenScaffold(.immersive, actions: {
+        ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
             // The solid immersive floor (mockup `.ob-action`): the primary "Use {Neighborhood} as base"
             // CTA + the "Pick a specific hotel or address" ghost. CTA commits the recommended base then
             // advances; the ghost is stubbed (OPEN DECISION 5).

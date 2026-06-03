@@ -60,20 +60,26 @@ import SwiftUI
 /// floating `actions` slot — J-0.1). See `05-design-system §9` and `01-architecture §8.4`.
 struct ScreenScaffold<Content: View, Actions: View>: View {
     private let chrome: ScreenChrome
+    private let background: Color
     private let content: Content
     private let actions: Actions
 
     /// - Parameters:
     ///   - chrome: the screen's chrome intent, mapped to platform chrome (`ScreenChrome.swift`).
+    ///   - background: the page tone behind the scaffold body. Defaults to `ColorRole.surfacePage` (the
+    ///     grey ground); an immersive screen can opt into a different semantic tone (e.g.
+    ///     `ColorRole.surfaceGrouped` for a white ground). Semantic tokens only — never a literal.
     ///   - actions: an optional floating chrome slot (e.g. the `ActionBar`) overlaid in the bottom thumb
     ///     zone. Defaults to `EmptyView` so the scaffold compiles without an `ActionBar`.
     ///   - content: the scrollable screen content; it drives height and is inset by `Spacing.screenInset`.
     init(
         _ chrome: ScreenChrome,
+        background: Color = ColorRole.surfacePage,
         @ViewBuilder actions: () -> Actions = { EmptyView() },
         @ViewBuilder content: () -> Content
     ) {
         self.chrome = chrome
+        self.background = background
         self.actions = actions()
         self.content = content()
     }
@@ -90,7 +96,7 @@ struct ScreenScaffold<Content: View, Actions: View>: View {
         // Don't paint our own scroll/nav backgrounds — let the system glass and our page tone show through.
         .scrollContentBackground(.hidden)
         // The page tone sits behind everything; the scaffold body itself is never glass (J-0.1).
-        .background(ColorRole.surfacePage)
+        .background(background)
         .modifier(ScreenChromeModifier(chrome: chrome))
         // The optional floating actions bar (the `ActionBar`) rides the bottom thumb zone over the content;
         // the bar owns its own thumb-zone padding, so no extra spacing token is introduced here.

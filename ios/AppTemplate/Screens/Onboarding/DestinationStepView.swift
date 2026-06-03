@@ -48,7 +48,7 @@ struct DestinationStepView: View {
         // Rebuilt each `body` pass — cheap, and preserves the store's per-field dependency tracking.
         let presenter = DestinationStepPresenter(store: store)
 
-        ScreenScaffold(.immersive, actions: {
+        ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
             OnboardingActionFloor(
                 primaryTitle: presenter.ctaTitle,
                 primaryEnabled: presenter.canContinue,

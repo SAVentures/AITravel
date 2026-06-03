@@ -29,7 +29,7 @@ struct TripShapeStepView: View {
     var body: some View {
         let p = TripShapeStepPresenter(store: store)
 
-        ScreenScaffold(.immersive, actions: {
+        ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
             OnboardingActionFloor(
                 primaryTitle: p.ctaTitle,
                 primaryAccessibilityID: "tripshape.cta",

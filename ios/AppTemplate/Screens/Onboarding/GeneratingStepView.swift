@@ -36,7 +36,7 @@ struct GeneratingStepView: View {
     var body: some View {
         let presenter = GeneratingStepPresenter(store: store)
 
-        ScreenScaffold(.immersive) {
+        ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped) {
             VStack(alignment: .leading, spacing: Spacing.hero) {
                 // The in-content progress bar — counter + neutral segments, no glass. FIRST element,
                 // scrolls with the content; step 5 of 5. The scaffold already insets content horizontally
