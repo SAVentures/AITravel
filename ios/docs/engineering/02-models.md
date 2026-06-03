@@ -60,28 +60,41 @@ Book` hierarchy would make all three reference models; the slice keeps two.
 ### 1.2 The leaf value types — everything else
 
 `Author`, `BookDetail`, `Rating`, and the enums (`ReadingStatus`, `Format`, `Genre`) stay
-`struct`/`enum` and conform to `Codable, Equatable, Hashable, Sendable`:
+`struct`/`enum` and conform to `Codable, Equatable, Hashable, Sendable` — and because they are decoded
+**off the main actor** (they ride inside a DTO `Response`), each one is **`nonisolated`** (see the box
+below):
 
 ```swift
-struct Author: Identifiable, Codable, Equatable, Hashable, Sendable {
+nonisolated struct Author: Identifiable, Codable, Equatable, Hashable, Sendable {
     let id: String
     var name: String
 }
-struct BookDetail: Codable, Equatable, Hashable, Sendable {
+nonisolated struct BookDetail: Codable, Equatable, Hashable, Sendable {
     var synopsis: String
     var pageCount: Int
     var coverSymbol: String        // SF Symbol for the monochrome cover placeholder
     var genre: Genre
 }
-struct Rating: Codable, Equatable, Hashable, Sendable {
+nonisolated struct Rating: Codable, Equatable, Hashable, Sendable {
     var stars: Int                 // 0…5
 }
+nonisolated enum Format: Equatable, Hashable, Sendable { /* … */ }   // the enums too
 ```
 
 These are leaf/immutable data. A reference model holds them directly (a `Book` holds an `Author`
 value); a DTO holds the *same* value types unchanged (there is no `AuthorDTO` — leaf types are already
 wire-safe). The only "mutation" of leaf data is whole-value reassignment of a reference-model property
 (`book.rating = Rating(stars: 4)`), which `@Observable` tracks.
+
+> ### ⚠️ Every wire value type is `nonisolated` — `Sendable` is not enough
+> The project is **MainActor-by-default** (`01-architecture.md §9`), so a bare `struct Author: Codable,
+> Sendable {}` is **MainActor-isolated** — and its `Decodable` conformance then **can't** satisfy
+> `APIRequest.Response: Decodable & Sendable`, which `LiveProvider` decodes off-main. The error surfaces at
+> the DTO that composes the type, not at the leaf, so it's easy to miss. **Rule: any value type that ever
+> rides the wire — every DTO and every leaf value type a DTO composes — is declared `nonisolated`.** The
+> `@MainActor func toDomain()` mapping stays MainActor (it builds the reference graph on the main actor);
+> only the *type* opts out of the default actor. Full wire-boundary rule + the four failure modes:
+> `04-networking.md §2` (the callout).
 
 > **Why keep the boundary small:** the over-invalidation Apple's guidance addresses is per-row.
 > `Library`/`Book` are the container/rows; making the leaves reference types would buy no observation
@@ -179,8 +192,8 @@ The reference models can't be the network types (they're `@MainActor` and not `C
 boundary uses **DTOs** — value-type mirrors in `Networking/Responses/DTO/`:
 
 ```swift
-struct LibraryDTO: Codable, Equatable, Sendable { … }   // mirrors Library
-struct BookDTO:    Codable, Equatable, Sendable { … }   // mirrors Book
+nonisolated struct LibraryDTO: Codable, Equatable, Sendable { … }   // mirrors Library; nonisolated — decoded off-main
+nonisolated struct BookDTO:    Codable, Equatable, Sendable { … }   // mirrors Book
 ```
 
 DTOs reuse the leaf value types directly (a `BookDTO` holds the same `Author`/`Format`/`Rating` values

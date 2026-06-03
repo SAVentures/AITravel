@@ -41,9 +41,9 @@ You produce, in lock-step:
   - **NOT `Codable`. NOT value `Equatable`/`Hashable`** (equality is identity-based). No SwiftUI import.
   - A `restore(from: <TypeName>DTO)` method that applies a value snapshot back onto the live reference
     (the rollback path), if the contract calls for it.
-- **`ios/AppTemplate/Networking/Responses/DTO/<TypeName>DTO.swift`** — `struct <TypeName>DTO: Codable,
-  Equatable, Sendable`, a field-for-field mirror that **reuses the leaf value types unchanged** (no
-  `AuthorDTO` — leaf types are already wire-safe). Plus the two mappings:
+- **`ios/AppTemplate/Networking/Responses/DTO/<TypeName>DTO.swift`** — `nonisolated struct
+  <TypeName>DTO: Codable, Equatable, Sendable`, a field-for-field mirror that **reuses the leaf value
+  types unchanged** (no `AuthorDTO` — leaf types are already wire-safe). Plus the two mappings:
   - `extension <TypeName>DTO { @MainActor func toDomain() -> <TypeName> }` — builds the reference graph
     on the main actor.
   - `extension <TypeName> { func toDTO() -> <TypeName>DTO }` — snapshots the reference graph back.
@@ -52,9 +52,10 @@ You produce, in lock-step:
 
 ### If the contract asks for a **leaf value type**
 
-You produce **`ios/AppTemplate/Models/<TypeName>.swift`** — a `struct`/`enum` conforming to `Codable,
-Equatable, Hashable, Sendable` (and `Identifiable` with `let id: String` iff it's collection-stored).
-No DTO — leaf value types are already wire-safe and are reused directly by the DTOs. Enum patterns:
+You produce **`ios/AppTemplate/Models/<TypeName>.swift`** — a `nonisolated struct`/`enum` conforming to
+`Codable, Equatable, Hashable, Sendable` (and `Identifiable` with `let id: String` iff it's
+collection-stored). No DTO — leaf value types are already wire-safe and are reused directly by the DTOs.
+Enum patterns:
 
 - **Mutually-exclusive state → a raw-`String` enum** (`enum ReadingStatus: String, Codable, …`) — free
   `Codable`. Independent flags stay separate `Bool`s on the owning model (don't fold orthogonal flags
@@ -82,6 +83,15 @@ extension file (a new file, or an addition to its domain's existing file — **n
 
 ## Rules
 
+- **⚠️ Every wire value type is `nonisolated` (MainActor-by-default — the most-repeated build break).**
+  The project sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so a bare `struct XDTO: Codable, Sendable
+  {}` is **MainActor-isolated** and its off-main `Decodable` conformance **won't compile** against
+  `APIRequest.Response: Decodable & Sendable`. So: **every `*DTO` and every leaf value type a DTO composes
+  is declared `nonisolated struct`/`nonisolated enum`.** `Sendable` is necessary but NOT sufficient. The
+  `@MainActor func toDomain()` mapping stays MainActor (it builds the reference graph on main); only the
+  *type* opts out. A DTO or leaf value type that is not `nonisolated` is a **defect** (`02-models.md §1.2`,
+  `04-networking.md §2`). Reference models stay `@MainActor` and are NOT `Codable` — they never get
+  `nonisolated`.
 - **Navigate with SwiftLSP** (the `LSP` tool — see `.claude/agents/README.md` § "Navigating code"):
   `documentSymbol` on a neighboring model (`Book`, `Author`, `Format`) to copy its conformance set,
   `*.ID` pattern, and init shape exactly; its line numbers give you positions for `goToDefinition`.

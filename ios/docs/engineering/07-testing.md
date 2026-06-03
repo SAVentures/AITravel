@@ -226,7 +226,7 @@ let canonicalConfig = ViewImageConfig(
 
 @MainActor
 func assertDesignSnapshot<V: View>(_ view: V, named name: String,
-                                   file: StaticString = #file,
+                                   file: StaticString = #filePath,   // #filePath, NOT #file — see §6.5
                                    testName: String = #function, line: UInt = #line) {
     let host = UIHostingController(rootView: view.designSystemEnvironment())
     host.overrideUserInterfaceStyle = .light
@@ -237,7 +237,8 @@ func assertDesignSnapshot<V: View>(_ view: V, named name: String,
 `designSystemEnvironment()` registers embedded fonts and injects an `AppStore` seeded from
 `SampleData.library()` at the fixed `simulatedNow` — the same state `#Preview` uses. Use the
 `UIHostingController` path (respects safe area, traits, @3x) for screen-level snapshots; either path is
-fine for isolated components.
+fine for isolated components. **The helper takes no `snapshotDirectory:`** — swift-snapshot-testing 1.19
+has no such parameter; the baseline directory is derived from `file` (`#filePath`), full stop.
 
 ### 6.2 What to snapshot
 - **Every component, in each of its key states.** The state name becomes the `named:` argument / PNG
@@ -262,6 +263,17 @@ committed code** — that silently re-records and hides regressions.
 | Random data | only `SampleData.library()` |
 | Font fallback | `designSystemEnvironment()` registers fonts |
 | Simulator/OS/scale change | one pinned simulator (§8); re-record on pin change |
+
+### 6.5 Infrastructure gotchas (each bit on first real use — fix once, here)
+The snapshot infra has four sharp edges under **MainActor-by-default + synchronized folders (pbxproj
+objectVersion 77)**. Get them right up front:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `XCTestCase` subclass **won't compile** in the unit-test target | `XCTestCase.init` is `nonisolated`; it clashes with the target's MainActor default | **Snapshot (and all functional) tests use Swift Testing** — `@Suite` + `@Test @MainActor`, never `XCTestCase`. `XCTestCase` is reserved for the **XCUITest target only** (its own module, §7). |
+| `You can't save the file … the volume is read only` on first record | the helper passed **`#file`**, which `xcodebuild` remaps to a non-writable path | the helper's `file:` default is **`#filePath`** (the real on-disk path), never `#file` (§6.1). |
+| `extra argument 'snapshotDirectory'` | that parameter doesn't exist in swift-snapshot-testing 1.19 | don't pass it — the dir derives from `#filePath`. Pin the library's actual `assertSnapshot` signature before calling. |
+| `Multiple commands produce …/<State>.png` at build time | synchronized folders bundle the committed baseline PNGs into the test target; same-named PNGs across suites collide when flattened | set **`EXCLUDED_SOURCE_FILE_NAMES = "*.png"`** on the test target. NB: hand-authored `membershipExceptions` in the `.pbxproj` are **silently ignored** under objectVersion 77 — the build setting is the only thing that works. |
 
 ---
 

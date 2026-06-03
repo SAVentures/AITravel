@@ -68,19 +68,40 @@ carries its own wire description *and* mock behavior:
 
 ```swift
 protocol APIClientProtocol: Sendable {
-    func send<R: APIRequest>(_ request: R) async throws -> R.Response
+    nonisolated func send<R: APIRequest>(_ request: R) async throws -> R.Response
 }
 
 protocol APIRequest: Sendable {
     associatedtype Response: Decodable & Sendable
-    var path: String { get }
-    var method: HTTPMethod { get }                 // no default — the verb prefix and method must agree
-    var queryItems: [String: String] { get }        // default [:]
-    var body: (any Encodable & Sendable)? { get }    // default nil
-    var mockLatency: Duration { get }                // default .zero
-    func mockResponse(from seed: MockSeed) throws -> Response   // pure: computes from the immutable seed
+    nonisolated var path: String { get }
+    nonisolated var method: HTTPMethod { get }                 // no default — the verb prefix and method must agree
+    nonisolated var queryItems: [String: String] { get }        // default [:]
+    nonisolated var body: (any Encodable & Sendable)? { get }    // default nil
+    nonisolated var mockLatency: Duration { get }                // default .zero
+    nonisolated func mockResponse(from seed: MockSeed) throws -> Response   // pure: computes from the immutable seed
 }
 ```
+
+> ### ⚠️ The wire boundary is `nonisolated` — not just `Sendable` (the single most-repeated build break)
+> The project is **MainActor-by-default** (`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, `01-architecture.md
+> §9`), so *every* type, protocol, and protocol requirement is MainActor-isolated **unless you mark it
+> otherwise**. `Sendable` alone does **not** opt a declaration out of the actor — it only says the value is
+> safe to pass. Because `LiveProvider.send` decodes **off the main actor** (`@concurrent`), every
+> declaration it touches on that path must be explicitly **`nonisolated`**, or the compiler rejects the
+> mismatch — and it fails at the *use site* (the off-main decode), so each layer breaks independently:
+>
+> | Mark `nonisolated` | Why |
+> |---|---|
+> | every **`APIRequest` protocol requirement** (`var path`, `method`, `queryItems`, `body`, `mockLatency`, `func mockResponse`) — and the same default-impl members in the `extension` | the requirements are read from the nonisolated `send` |
+> | `APIClientProtocol.send` | it's the `@concurrent` entry point |
+> | every **request struct** — `nonisolated struct GetXRequest: APIRequest` | its conformance must satisfy the nonisolated requirements |
+> | every **DTO and every leaf value type it composes** (`Codable`) — see `02-models.md §9` | `Response: Decodable & Sendable` is decoded off-main; a MainActor-isolated `Decodable` conformance can't satisfy it |
+> | `LiveProvider`, and the JSON codec helper (`nonisolated enum APIJSON`) | they run the off-main build/decode |
+>
+> The `@MainActor func toDomain()` mapping (built on the main actor) and the providers' `Sendable`
+> conformance **stay** — only the wire-path declarations opt out of the default actor. Rule of thumb: *if it
+> crosses to the background, it carries the `nonisolated` keyword; `Sendable` is necessary but not
+> sufficient.*
 
 `MockProvider` and `LiveProvider` are **generic shells** that dispatch on the request — they hold no
 per-endpoint code. `MockProvider.send` injects failure / sleeps `mockLatency`, then calls
@@ -94,7 +115,7 @@ per-endpoint code. `MockProvider.send` injects failure / sleeps `mockLatency`, t
 A new endpoint is **one new file** `Networking/Requests/<Verb><Name>Request.swift`:
 
 ```swift
-struct GetLibraryRequest: APIRequest {
+nonisolated struct GetLibraryRequest: APIRequest {     // nonisolated — it crosses the wire (see callout above)
     typealias Response = LibraryDTO
     var path: String { "/library" }
     var method: HTTPMethod { .get }
@@ -103,7 +124,7 @@ struct GetLibraryRequest: APIRequest {
     }
 }
 
-struct BorrowBookRequest: APIRequest {
+nonisolated struct BorrowBookRequest: APIRequest {
     let id: Book.ID
     typealias Response = BookDTO
     var path: String { "/books/\(id)/borrow" }
@@ -129,9 +150,10 @@ must agree.
 `@MainActor`-isolated and **not** `Codable`, so they satisfy neither half — decoding happens off the
 main actor. **The wire types are value-type DTOs:**
 
-- DTOs live in `Networking/Responses/DTO/` — `LibraryDTO`, `BookDTO` (`Codable, Equatable, Sendable`),
-  field-for-field mirrors. They reuse the leaf value types directly (`Author`, `Format`, `Rating`,
-  `BookDetail` need no DTO — already wire-safe).
+- DTOs live in `Networking/Responses/DTO/` — `nonisolated struct LibraryDTO`, `BookDTO` (`Codable,
+  Equatable, Sendable`), field-for-field mirrors. **They — and every leaf value type they compose
+  (`Author`, `Format`, `Rating`, `BookDetail`) — are `nonisolated`** (see the §2 callout + `02-models.md
+  §9`): their `Codable` conformance is exercised off-main, which a MainActor-isolated type can't satisfy.
 - Every request/response that represents a `Library`/`Book` uses the DTO: `GetLibraryRequest.Response`
   is `LibraryDTO`; `BorrowBookRequest.Response` is `BookDTO`.
 - **Mapping is the caller's job, on the main actor — not the provider's.** `AppStore` maps after the
@@ -232,9 +254,9 @@ It holds an **immutable DTO seed snapshot** (`MockSeed`, a `Sendable` value of `
 `@MainActor` reference models) plus the two behavior knobs:
 
 ```swift
-struct MockSeed: Sendable { var library: LibraryDTO /* + a field per top-level entity */ }
+nonisolated struct MockSeed: Sendable { var library: LibraryDTO /* + a field per top-level entity */ }
 
-struct MockProvider: APIClientProtocol {       // value type → Sendable for free; no actor, no @unchecked
+nonisolated struct MockProvider: APIClientProtocol {   // nonisolated value type → Sendable; no actor, no @unchecked
     let seed: MockSeed
     let failureRate: Double
     let latency: Duration

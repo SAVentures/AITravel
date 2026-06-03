@@ -26,7 +26,7 @@ this doc, don't transcribe it blind.
 ## The one-file rule
 
 A new endpoint is **ONE new file** in `ios/AppTemplate/Networking/Requests/<Verb><Name>Request.swift`:
-a `struct <Verb><Name>Request: APIRequest` declaring
+a **`nonisolated struct <Verb><Name>Request: APIRequest`** declaring
 
 - `typealias Response = …` — a `Sendable` value: a `*DTO` (`LibraryDTO`/`BookDTO`) or a small ack type.
 - `var path: String` — pluralized resources, verbs hung off them (`/books/\(id)/borrow`); filters are
@@ -48,6 +48,14 @@ the coordinator — don't add it here.
 
 ## Rules
 
+- **⚠️ The request struct is `nonisolated` (MainActor-by-default — the most-repeated build break).**
+  The project sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`; the conformance is exercised on
+  `LiveProvider`'s **off-main** (`@concurrent`) decode path, so a plain `struct GetXRequest: APIRequest {}`
+  fails with *"conformance crosses into main actor-isolated code."* Declare it **`nonisolated struct`**.
+  The `APIRequest` protocol's requirements are already `nonisolated` (don't re-declare them on the struct;
+  just conform). Its `Response` must be a **`nonisolated`** `*DTO`/leaf value type (the model agent's job —
+  if it isn't, report it). A request struct that is not `nonisolated` is a **defect** (`04-networking.md
+  §2` callout).
 - **Navigate with SwiftLSP** (the `LSP` tool — see `.claude/agents/README.md` § "Navigating code"):
   `documentSymbol` on an existing request file to copy its conformance pattern; `goToDefinition` from its
   lines to reuse the `Response` DTO. Confirm a request/DTO name isn't already taken with a `Grep` (a
