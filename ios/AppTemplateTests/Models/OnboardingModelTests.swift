@@ -11,19 +11,60 @@
      setPace(_:), select(base:), setBaseMode(_:), setPrimaryMode(_:), toggleAlsoOK(_:),
      advanceStep(), retreatStep() — each asserts the single field that changes; nothing else.
 
+ Group 3: CityMeta + DiagramSpec associated-value Codable round-trips (§4.2)
+   - CityMeta: parameterized over all four cases (savedCount, planStarted, neighborhood, medina).
+   - DiagramSpec: parameterized over all three cases plus the all-nil-optional rankedBars path.
+
+ Group 4: Wire decode — APIJSON snake_case path (§5.3)
+   - Proves APIJSON.decoder() (convertFromSnakeCase + iso8601) correctly decodes the
+     OnboardingContextDTO wire payload, i.e. saved_here → savedHere.
+   - Distinct from Group 1 which uses the symmetric coder only.
+
  Determinism rules (§3):
    - No Date(), Calendar.current, or Locale.current.
    - All fixtures from SampleData; stable id literals only (e.g. "city-lisbon").
    - TripDraftModel is a reference type — assert on fields, never == between constructed instances.
 
  Coder rule (§4.2):
-   - Plain symmetric JSONEncoder/JSONDecoder with .iso8601 date strategy.
-   - APIJSON is not used — its snake-case key conversion is asymmetric on acronym/ID keys.
+   - Plain symmetric JSONEncoder/JSONDecoder with .iso8601 date strategy for round-trip tests.
+   - APIJSON is not used in symmetric round-trips — its snake-case key conversion is asymmetric
+     on acronym/ID keys (bookID → book_id → bookId; the capitalized ID suffix is lost on decode).
+   - APIJSON.decoder() IS used in the wire-decode suite (Group 4) — that is its entire purpose.
 */
 
 import Testing
 import Foundation
 @testable import AppTemplate
+
+// MARK: - OnboardingFixtureTag
+
+/// Nonisolated discriminator used as @Test(arguments:) parameter so Swift Testing can evaluate the
+/// collection in the nonisolated registration context. The actual context value is built INSIDE the
+/// @MainActor test body via tag.context(), which is @MainActor-isolated and therefore legal there.
+///
+/// Using a nonisolated enum tag instead of placing SampleData.onboarding?Context() directly in the
+/// arguments array avoids the "expression is async but not marked with await" build error that occurs
+/// when a @MainActor builder is evaluated in the nonisolated @Test macro registration scope.
+enum OnboardingFixtureTag: CaseIterable, CustomTestStringConvertible {
+    case a, b, c
+
+    var testDescription: String {
+        switch self {
+        case .a: return "state-A (returningWithLocalSaves)"
+        case .b: return "state-B (savesElsewhere)"
+        case .c: return "state-C (firstTrip)"
+        }
+    }
+
+    @MainActor
+    func context() -> OnboardingContextDTO {
+        switch self {
+        case .a: return SampleData.onboardingAContext()
+        case .b: return SampleData.onboardingBContext()
+        case .c: return SampleData.onboardingCContext()
+        }
+    }
+}
 
 // MARK: - Helpers
 
@@ -57,89 +98,77 @@ struct OnboardingModelTests {
     @Suite("DTO round-trip — OnboardingContextDTO (Codable symmetry)")
     struct OnboardingContextDTORoundTripTests {
 
-        /// State A: returning visitor, local saves in Lisbon.
+        // MARK: JSON round-trips (A4 — table-driven)
+
+        /// All three A/B/C fixtures in one parameterized test.
         /// OnboardingContextDTO is a pure Codable seed with no domain-type twin —
         /// we assert JSON encode → decode recovers the exact value.
-        @Test("OnboardingContextDTO A: JSON round-trip is lossless")
-        func contextAJSONRoundTrip() throws {
-            let ctx = SampleData.onboardingAContext()
+        ///
+        /// State C-specific precondition: tasteDefaults is non-nil in state C and must
+        /// survive encode/decode intact. This guard is asserted inside the body for the
+        /// C fixture and is preserved from the original per-case test (plan A4).
+        @Test(
+            "OnboardingContextDTO: JSON round-trip is lossless",
+            arguments: OnboardingFixtureTag.allCases
+        )
+        @MainActor
+        func contextJSONRoundTrip(_ tag: OnboardingFixtureTag) throws {
+            let ctx = tag.context()
+            // State C carries a non-nil tasteDefaults — guard the fixture precondition.
+            // Keyed on onboardingState == .firstTrip (the C-branch identifier).
+            // Preserved from the original contextCJSONRoundTrip test (plan A4 — must not be dropped).
+            if tag == .c {
+                #expect(ctx.tasteDefaults != nil,
+                        "fixture precondition: state C carries a seed tasteDefaults")
+            }
             let recovered = try codableRoundTrip(ctx)
             #expect(recovered == ctx)
         }
 
-        /// State B: saves elsewhere (Tokyo), none in destination Kyoto.
-        @Test("OnboardingContextDTO B: JSON round-trip is lossless")
-        func contextBJSONRoundTrip() throws {
-            let ctx = SampleData.onboardingBContext()
-            let recovered = try codableRoundTrip(ctx)
-            #expect(recovered == ctx)
-        }
+        // MARK: onboardingState branch derivation (A4 — table-driven)
 
-        /// State C: first trip, nothing saved anywhere.
-        /// tasteDefaults is non-nil here — confirms optional fields survive the round-trip.
-        @Test("OnboardingContextDTO C: JSON round-trip is lossless (non-nil tasteDefaults)")
-        func contextCJSONRoundTrip() throws {
-            let ctx = SampleData.onboardingCContext()
-            // tasteDefaults is non-nil in state C — it must survive encode/decode intact.
-            #expect(ctx.tasteDefaults != nil,
-                    "fixture precondition: state C carries a seed tasteDefaults")
-            let recovered = try codableRoundTrip(ctx)
-            #expect(recovered == ctx)
-        }
-
-        /// onboardingState computed property derives the A/B/C branch from saved counts.
-        /// Guards that the branch driver is correct for each fixture without a network round-trip.
-        @Test("OnboardingContextDTO.onboardingState derives branch A from savedHere > 0")
-        func contextADerivesBranchA() {
-            let ctx = SampleData.onboardingAContext()
-            #expect(ctx.onboardingState == .returningWithLocalSaves)
-        }
-
-        @Test("OnboardingContextDTO.onboardingState derives branch B from savedAnywhere > 0, savedHere == 0")
-        func contextBDerivesBranchB() {
-            let ctx = SampleData.onboardingBContext()
-            #expect(ctx.onboardingState == .savesElsewhere)
-        }
-
-        @Test("OnboardingContextDTO.onboardingState derives branch C from savedAnywhere == 0")
-        func contextCDerivesBranchC() {
-            let ctx = SampleData.onboardingCContext()
-            #expect(ctx.onboardingState == .firstTrip)
+        /// All three A/B/C branch derivations in one parameterized test.
+        /// onboardingState is a computed property on OnboardingContextDTO that drives
+        /// the A/B/C branch from savedHere / savedAnywhere counts.
+        ///
+        /// A (savedHere: 23)              → .returningWithLocalSaves
+        /// B (savedHere: 0, anywhere: 29) → .savesElsewhere
+        /// C (savedHere: 0, anywhere: 0)  → .firstTrip
+        ///
+        /// Uses a single collection of tuples so Swift Testing pairs each tag with its
+        /// expected state element-wise (one invocation per tuple), not as a Cartesian product.
+        @Test(
+            "OnboardingContextDTO.onboardingState derives the correct branch",
+            arguments: [
+                (OnboardingFixtureTag.a, OnboardingState.returningWithLocalSaves),
+                (OnboardingFixtureTag.b, OnboardingState.savesElsewhere),
+                (OnboardingFixtureTag.c, OnboardingState.firstTrip),
+            ]
+        )
+        @MainActor
+        func contextDerivesBranch(_ tag: OnboardingFixtureTag, _ expected: OnboardingState) {
+            let ctx = tag.context()
+            #expect(ctx.onboardingState == expected)
         }
     }
 
     @Suite("DTO round-trip — TripDraftDTO ↔ TripDraftModel (lossless mapping)")
     struct TripDraftDTORoundTripTests {
 
-        /// Lossless mapping for a draft seeded from context A.
+        // MARK: Mapping round-trips (A4 — table-driven)
+
+        /// All three A/B/C mapping round-trips in one parameterized test.
         /// dto.toDomain() builds the reference model; .toDTO() snapshots it back.
         /// A field added to TripDraftModel without a TripDraftDTO mirror breaks this.
-        @Test("TripDraftDTO A: dto.toDomain().toDTO() == dto (mapping is lossless)")
+        ///
+        /// Note: `toDomain()` is @MainActor, so the entire test body runs on the main actor.
+        @Test(
+            "TripDraftDTO: dto.toDomain().toDTO() == dto (mapping is lossless for all three branches)",
+            arguments: OnboardingFixtureTag.allCases
+        )
         @MainActor
-        func tripDraftAMappingRoundTrip() {
-            let ctx = SampleData.onboardingAContext()
-            let draft = ctx.toDomain()
-            let dto = draft.toDTO()
-            let recovered = dto.toDomain().toDTO()
-            #expect(recovered == dto)
-        }
-
-        /// Lossless mapping for context B (no tasteDefaults, different city/neighborhood).
-        @Test("TripDraftDTO B: dto.toDomain().toDTO() == dto (mapping is lossless)")
-        @MainActor
-        func tripDraftBMappingRoundTrip() {
-            let ctx = SampleData.onboardingBContext()
-            let draft = ctx.toDomain()
-            let dto = draft.toDTO()
-            let recovered = dto.toDomain().toDTO()
-            #expect(recovered == dto)
-        }
-
-        /// Lossless mapping for context C (tasteDefaults is non-nil, shapeOptions is empty).
-        @Test("TripDraftDTO C: dto.toDomain().toDTO() == dto (tasteProfile survives the mapping)")
-        @MainActor
-        func tripDraftCMappingRoundTrip() {
-            let ctx = SampleData.onboardingCContext()
+        func tripDraftMappingRoundTrip(_ tag: OnboardingFixtureTag) {
+            let ctx = tag.context()
             let draft = ctx.toDomain()
             let dto = draft.toDTO()
             let recovered = dto.toDomain().toDTO()
@@ -734,5 +763,105 @@ struct OnboardingModelTests {
             #expect(draft.baseSelection?.id == ctx.recommendedBase.id)
             #expect(draft.selectedNeighborhoodID == nil)
         }
+    }
+}
+
+// MARK: - A1: CityMeta + DiagramSpec associated-value Codable round-trips
+
+/// Layer 1 — Unit: asserts the hand-written tag-keyed Codable implementations on CityMeta and
+/// DiagramSpec are lossless. Uses the plain symmetric coder (never APIJSON).
+///
+/// Both types are leaf value types used directly on the wire; neither has a separate DTO.
+/// Covering all cases guards against the hand-written Codable drifting when a case is added/renamed.
+@Suite("CityMeta + DiagramSpec — associated-value Codable symmetry")
+struct AssociatedValueCodableTests {
+
+    // MARK: CityMeta (4 cases)
+
+    /// All four CityMeta cases in one parameterized test.
+    /// CityMeta uses manual tag-keyed Codable (City.swift:38-85); this guards every branch.
+    @Test(
+        "CityMeta: encode → decode is lossless for all cases",
+        arguments: [
+            CityMeta.savedCount(23),
+            CityMeta.planStarted,
+            CityMeta.neighborhood("Alfama"),
+            CityMeta.medina,
+        ]
+    )
+    func cityMetaRoundTrips(_ meta: CityMeta) throws {
+        let recovered = try codableRoundTrip(meta)
+        #expect(recovered == meta)
+    }
+
+    // MARK: DiagramSpec (3 cases + all-nil-optional rankedBars)
+
+    /// All three DiagramSpec cases — including the encodeIfPresent/decodeIfPresent path for
+    /// the optional pickIndex and dimIndex fields (TripShapeStrategy.swift:72-73 / :90-91).
+    ///
+    /// The fourth argument covers the nil-optional path:
+    ///   .rankedBars(values: [0.5], pickIndex: nil, dimIndex: nil)
+    /// This exercises decodeIfPresent returning nil, which is a separate code path from the
+    /// non-nil case and has been zero-covered until this test.
+    @Test(
+        "DiagramSpec: encode → decode is lossless for all cases (incl. nil-optional rankedBars)",
+        arguments: [
+            DiagramSpec.fixedDays(filled: [0, 1, 2], dim: [3]),
+            DiagramSpec.coverBucket(dayCounts: [2, 3, 1]),
+            DiagramSpec.rankedBars(values: [0.8, 0.4, 0.2], pickIndex: 0, dimIndex: 2),
+            DiagramSpec.rankedBars(values: [0.5], pickIndex: nil, dimIndex: nil),
+        ]
+    )
+    func diagramSpecRoundTrips(_ spec: DiagramSpec) throws {
+        let recovered = try codableRoundTrip(spec)
+        #expect(recovered == spec)
+    }
+}
+
+// MARK: - A2: Wire decode — APIJSON snake_case path
+
+/// Layer 2 — Integration: proves the production APIJSON.decoder() (convertFromSnakeCase + iso8601)
+/// correctly decodes the OnboardingContextDTO wire payload.
+///
+/// This is the wire-path analog to the symmetric round-trips in OnboardingContextDTORoundTripTests.
+/// The symmetric tests (Group 1) use plain camelCase keys; this test uses the production decoder
+/// on a payload that was encoded with the production encoder (convertToSnakeCase), proving that
+/// the snake_case wire shape reaches the Swift model intact.
+///
+/// Key under test: `saved_here` → `savedHere` (a real production field the A-branch logic depends on).
+///
+/// Note on selectedNeighborhoodID: TripDraftDTO.selectedNeighborhoodID is a LOCAL-ONLY field —
+/// it is never received from the backend (GetOnboardingContextRequest returns OnboardingContextDTO,
+/// not TripDraftDTO). The acronym-suffix asymmetry (selected_neighborhood_id → selectedNeighborhoodId
+/// via convertFromSnakeCase, not selectedNeighborhoodID) is therefore harmless in production and is
+/// documented in the file header comment. The wire-path test targets the actual wire DTO.
+@Suite("Wire decode — APIJSON snake_case")
+struct APISNakeCaseDecodeTests {
+
+    /// Encode a real OnboardingContextDTO fixture via APIJSON.encoder() (produces snake_case JSON),
+    /// then decode via APIJSON.decoder() and assert the camelCase property `savedHere` was recovered.
+    ///
+    /// This test proves the full production encode → wire → decode cycle works for the key that
+    /// drives the A/B/C onboarding branch. If APIJSON.decoder() failed to map `saved_here` →
+    /// `savedHere`, the branch-selection logic would always see 0 and the B/C branch would fire.
+    @Test("APIJSON: OnboardingContextDTO saved_here decodes to savedHere via convertFromSnakeCase")
+    func savedHereDecodesViaAPICoder() throws {
+        let ctx = SampleData.onboardingAContext()
+        // State A fixture has savedHere == 23 (drives the returningWithLocalSaves branch).
+        let expectedSavedHere = ctx.savedHere
+        #expect(expectedSavedHere == 23, "fixture precondition: state A has savedHere == 23")
+
+        // Encode with the production encoder (convertToSnakeCase) — mirrors the wire payload shape.
+        let wireData = try APIJSON.encoder().encode(ctx)
+
+        // Decode with the production decoder (convertFromSnakeCase + iso8601) — mirrors the client receive path.
+        let decoded = try APIJSON.decoder().decode(OnboardingContextDTO.self, from: wireData)
+
+        // The camelCase property must hold the original value after the snake_case round-trip.
+        #expect(decoded.savedHere == expectedSavedHere)
+        // savedAnywhere should also survive (no ID-suffix asymmetry here).
+        #expect(decoded.savedAnywhere == ctx.savedAnywhere)
+        // onboardingState is derived from savedHere — transitively proves the branch fires correctly.
+        #expect(decoded.onboardingState == .returningWithLocalSaves)
     }
 }

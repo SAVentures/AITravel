@@ -12,9 +12,6 @@
 //   step-5  — stepIndex 5 (final, totalSteps default 6): five "done" tertiary segments, one "cur"
 //             ink segment, counter "06 / 06". Locks the six-segment default and the final-step state.
 //
-// NOTE: The existing step-0/2/4 baselines reference a prior 5-step default. The coordinator will
-// re-record them for the 6-segment (totalSteps: 6) default. Leave those cases as-is per the task contract.
-//
 // The bar is embedded in a surfacePage canvas matching the #Preview padding so the
 // PNG shows it in the context a real onboarding screen provides.
 //
@@ -40,8 +37,8 @@ struct OnboardingProgressBarSnapshotTests {
     // MARK: - step-0
 
     /// stepIndex 0: the first step. The current segment (index 0) renders in textPrimary ink;
-    /// the remaining four are the "todo" separatorOpaque color. Counter reads "01 / 05".
-    @Test("step-0 — first step: one ink segment, four todo segments, counter 01 / 05")
+    /// the remaining five are the "todo" separatorOpaque color. Counter reads "01 / 06".
+    @Test("step-0 — first step: one ink segment, five todo segments, counter 01 / 06")
     @MainActor func step0() {
         assertDesignSnapshot(
             canvas { OnboardingProgressBar(stepIndex: 0) },
@@ -52,9 +49,9 @@ struct OnboardingProgressBarSnapshotTests {
     // MARK: - step-2
 
     /// stepIndex 2: a mid-journey step. Segments 0 and 1 are textTertiary (done);
-    /// segment 2 is textPrimary (cur); segments 3 and 4 are separatorOpaque (todo).
-    /// Counter reads "03 / 05".
-    @Test("step-2 — mid step: two done segments, one ink segment, two todo segments, counter 03 / 05")
+    /// segment 2 is textPrimary (cur); segments 3, 4, and 5 are separatorOpaque (todo).
+    /// Counter reads "03 / 06".
+    @Test("step-2 — mid step: two done segments, one ink segment, three todo segments, counter 03 / 06")
     @MainActor func step2() {
         assertDesignSnapshot(
             canvas { OnboardingProgressBar(stepIndex: 2) },
@@ -64,9 +61,10 @@ struct OnboardingProgressBarSnapshotTests {
 
     // MARK: - step-4
 
-    /// stepIndex 4: the final step. Segments 0–3 are textTertiary (done); segment 4 is
-    /// textPrimary (cur). Counter reads "05 / 05".
-    @Test("step-4 — last step: four done segments, one ink segment, counter 05 / 05")
+    /// stepIndex 4: a late step (not the final step — totalSteps is 6). Segments 0–3 are
+    /// textTertiary (done); segment 4 is textPrimary (cur); segment 5 is separatorOpaque (todo).
+    /// Counter reads "05 / 06".
+    @Test("step-4 — late step: four done segments, one ink segment, one todo segment, counter 05 / 06")
     @MainActor func step4() {
         assertDesignSnapshot(
             canvas { OnboardingProgressBar(stepIndex: 4) },

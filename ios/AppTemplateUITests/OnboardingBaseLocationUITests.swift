@@ -42,6 +42,12 @@
 //   addresspicker.use         — "Use this location" confirm bar (line 173)
 //   addresspicker.result.<id> — result rows (live MKLocalSearch — NOT asserted in tests)
 //
+// C1 migration (Wave C): file-local makeLaunchedApp / scrollToElement / inline audit handler deleted;
+// all three replaced by OnboardingRobot. UITEST_STATIC_MAP=1 is forwarded via robot.launch(staticMap: true).
+// C5 (forwarding): UITEST_FAILURE_RATE is no longer forwarded locally; the robot owns it via its
+// optional failureRate param — passing nil (default) means the key is absent, which is the same
+// unconsumed-seam behavior as before (see docs/decisions.md Task C5 entry).
+//
 // See ios/docs/engineering/07-testing.md §7 for the full XCUITest layer contract.
 import XCTest
 
@@ -57,44 +63,25 @@ import XCTest
 @MainActor
 final class OnboardingBaseLocationUITests: XCTestCase {
 
+    private var robot: OnboardingRobot!
+
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
+        robot = OnboardingRobot()
     }
 
-    // MARK: - Launch helper
-
-    /// Launch the app with the given scenario and `UITEST_STATIC_MAP=1` so the live MapKit Map is
-    /// replaced by the deterministic static placeholder. Without the static map, MapKit injects its
-    /// own "Legal" attribution link and rendered place text into the accessibility tree, causing the
-    /// a11y audit to fail on elements the app does not own. Animations are slowed via
-    /// `-UIAnimationDragCoefficient 10` to prevent timing flakiness (§7.6).
-    @discardableResult
-    private func makeLaunchedApp(
-        scenario: String = "onboardingA",
-        failureRate: String = "0",
-        now: String = "2026-06-03T12:00:00Z"
-    ) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchEnvironment["UITEST_SCENARIO"] = scenario
-        app.launchEnvironment["UITEST_START_STEP"] = "baseLocation"
-        app.launchEnvironment["UITEST_FAILURE_RATE"] = failureRate
-        // Pin the clock — no live Date() in the UI layer (07-testing §3).
-        app.launchEnvironment["UITEST_NOW"] = now
-        // Force the deterministic static map — no live MapKit tiles, no "Legal" link, no live pins.
-        // The app reads this at the root (AppTemplateApp.swift) via \.mapSnapshotMode → BaseMapCard.
-        app.launchEnvironment["UITEST_STATIC_MAP"] = "1"
-        // Slow animations so waitForExistence beats spring transitions.
-        app.launchArguments += ["-UIAnimationDragCoefficient", "10"]
-        app.launch()
-        return app
+    override func tearDown() {
+        robot.app.terminate()
+        robot = nil
+        super.tearDown()
     }
 
     // MARK: - Shared: wait for the base-location step
 
     /// Returns the CTA element once it exists, proving the step is live and the draft is loaded.
-    private func waitForBaseLocationScreen(in app: XCUIApplication) -> XCUIElement {
-        let cta = app.buttons["baselocation.cta"]
+    private func waitForBaseLocationScreen() -> XCUIElement {
+        let cta = robot.app.buttons["baselocation.cta"]
         XCTAssertTrue(
             cta.waitForExistence(timeout: 8),
             "baselocation.cta must exist — the BaseLocation step always renders the OnboardingActionFloor"
@@ -109,8 +96,8 @@ final class OnboardingBaseLocationUITests: XCTestCase {
     // inside it and are swallowed by its combined accessibility element — no reach assertions here.
 
     func testScenarioARecCardAndModeSelector() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
-        let cta = waitForBaseLocationScreen(in: app)
+        robot.launch(scenario: "onboardingA", startStep: "baseLocation", staticMap: true)
+        let cta = waitForBaseLocationScreen()
 
         // ── CTA exists ──
         XCTAssertTrue(
@@ -119,15 +106,15 @@ final class OnboardingBaseLocationUITests: XCTestCase {
         )
 
         // ── Rec card exists ──
-        let recCard = app.otherElements["baselocation.rec"]
+        let recCard = robot.app.otherElements["baselocation.rec"]
         XCTAssertTrue(
             recCard.waitForExistence(timeout: 4),
             "[onboardingA] baselocation.rec must exist in smart mode (default)"
         )
 
         // ── Base-mode selector: both segments present ──
-        let smartSegment = app.buttons["basemode.smart"]
-        let manualSegment = app.buttons["basemode.manual"]
+        let smartSegment = robot.app.buttons["basemode.smart"]
+        let manualSegment = robot.app.buttons["basemode.manual"]
         XCTAssertTrue(
             smartSegment.waitForExistence(timeout: 4),
             "[onboardingA] basemode.smart must exist — SegmentedSelector with accessibilityIDPrefix='basemode'"
@@ -138,7 +125,7 @@ final class OnboardingBaseLocationUITests: XCTestCase {
         )
 
         // Attach screenshot — triage only (07-testing §7.5).
-        let shot = XCTAttachment(screenshot: app.screenshot())
+        let shot = XCTAttachment(screenshot: robot.app.screenshot())
         shot.name = "baselocation-scenarioA-rec-card"
         shot.lifetime = .keepAlways
         add(shot)
@@ -149,30 +136,30 @@ final class OnboardingBaseLocationUITests: XCTestCase {
     // Scenario B (Gion, savedHere=0): the CTA, rec card, and base-mode selector render.
 
     func testScenarioBRecCardAndModeSelector() throws {
-        let app = makeLaunchedApp(scenario: "onboardingB")
-        let cta = waitForBaseLocationScreen(in: app)
+        robot.launch(scenario: "onboardingB", startStep: "baseLocation", staticMap: true)
+        let cta = waitForBaseLocationScreen()
 
         XCTAssertTrue(
             cta.exists,
             "[onboardingB] baselocation.cta must exist"
         )
 
-        let recCard = app.otherElements["baselocation.rec"]
+        let recCard = robot.app.otherElements["baselocation.rec"]
         XCTAssertTrue(
             recCard.waitForExistence(timeout: 4),
             "[onboardingB] baselocation.rec must exist in smart mode"
         )
 
         XCTAssertTrue(
-            app.buttons["basemode.smart"].waitForExistence(timeout: 4),
+            robot.app.buttons["basemode.smart"].waitForExistence(timeout: 4),
             "[onboardingB] basemode.smart must exist"
         )
         XCTAssertTrue(
-            app.buttons["basemode.manual"].waitForExistence(timeout: 2),
+            robot.app.buttons["basemode.manual"].waitForExistence(timeout: 2),
             "[onboardingB] basemode.manual must exist"
         )
 
-        let shot = XCTAttachment(screenshot: app.screenshot())
+        let shot = XCTAttachment(screenshot: robot.app.screenshot())
         shot.name = "baselocation-scenarioB-rec-card"
         shot.lifetime = .keepAlways
         add(shot)
@@ -183,30 +170,30 @@ final class OnboardingBaseLocationUITests: XCTestCase {
     // Scenario C (Baixa, firstTrip, savedAnywhere=0): the CTA, rec card, and base-mode selector render.
 
     func testScenarioCRecCardAndModeSelector() throws {
-        let app = makeLaunchedApp(scenario: "onboardingC")
-        let cta = waitForBaseLocationScreen(in: app)
+        robot.launch(scenario: "onboardingC", startStep: "baseLocation", staticMap: true)
+        let cta = waitForBaseLocationScreen()
 
         XCTAssertTrue(
             cta.exists,
             "[onboardingC] baselocation.cta must exist"
         )
 
-        let recCard = app.otherElements["baselocation.rec"]
+        let recCard = robot.app.otherElements["baselocation.rec"]
         XCTAssertTrue(
             recCard.waitForExistence(timeout: 4),
             "[onboardingC] baselocation.rec must exist in smart mode"
         )
 
         XCTAssertTrue(
-            app.buttons["basemode.smart"].waitForExistence(timeout: 4),
+            robot.app.buttons["basemode.smart"].waitForExistence(timeout: 4),
             "[onboardingC] basemode.smart must exist"
         )
         XCTAssertTrue(
-            app.buttons["basemode.manual"].waitForExistence(timeout: 2),
+            robot.app.buttons["basemode.manual"].waitForExistence(timeout: 2),
             "[onboardingC] basemode.manual must exist"
         )
 
-        let shot = XCTAttachment(screenshot: app.screenshot())
+        let shot = XCTAttachment(screenshot: robot.app.screenshot())
         shot.name = "baselocation-scenarioC-rec-card"
         shot.lifetime = .keepAlways
         add(shot)
@@ -226,11 +213,11 @@ final class OnboardingBaseLocationUITests: XCTestCase {
     // correctly matches only baselocation.manual.<neighborhoodId> rows.
 
     func testManualModeShowsNeighborhoodPicker() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
-        let cta = waitForBaseLocationScreen(in: app)
+        robot.launch(scenario: "onboardingA", startStep: "baseLocation", staticMap: true)
+        let cta = waitForBaseLocationScreen()
 
         // ── Confirm smart mode is default — rec card exists ──
-        let recCard = app.otherElements["baselocation.rec"]
+        let recCard = robot.app.otherElements["baselocation.rec"]
         XCTAssertTrue(
             recCard.waitForExistence(timeout: 4),
             "baselocation.rec must exist in smart mode (default)"
@@ -238,7 +225,7 @@ final class OnboardingBaseLocationUITests: XCTestCase {
 
         // ── Tap the "Pick manually" segment ──
         // SegmentedSelector renders id = "basemode.\(option.id)" = "basemode.manual"
-        let manualSegment = app.buttons["basemode.manual"]
+        let manualSegment = robot.app.buttons["basemode.manual"]
         XCTAssertTrue(
             manualSegment.waitForExistence(timeout: 4),
             "basemode.manual must exist — SegmentedSelector with accessibilityIDPrefix='basemode'"
@@ -262,7 +249,7 @@ final class OnboardingBaseLocationUITests: XCTestCase {
         // We exclude the pinned row (baselocation.manual.pinned) which only appears after a specific
         // address has been chosen via the ghost sheet — not present at initial launch.
         let neighborhoodPredicate = NSPredicate(format: "identifier BEGINSWITH 'baselocation.manual.'")
-        let neighborhoodRows = app.descendants(matching: .any).matching(neighborhoodPredicate)
+        let neighborhoodRows = robot.app.descendants(matching: .any).matching(neighborhoodPredicate)
         // Wait for the first row to appear — this is the waitable sentinel that proves manual mode
         // rendered. The count check that follows is synchronous so we must wait first.
         // .any-type query: rows use .accessibilityElement(children: .combine) so XCUITest may
@@ -273,7 +260,7 @@ final class OnboardingBaseLocationUITests: XCTestCase {
             "At least one neighborhood row (id BEGINSWITH 'baselocation.manual.') must appear in manual mode"
         )
 
-        let manualPickerShot = XCTAttachment(screenshot: app.screenshot())
+        let manualPickerShot = XCTAttachment(screenshot: robot.app.screenshot())
         manualPickerShot.name = "baselocation-manual-mode-picker"
         manualPickerShot.lifetime = .keepAlways
         add(manualPickerShot)
@@ -304,10 +291,85 @@ final class OnboardingBaseLocationUITests: XCTestCase {
             )
         }
 
-        let postSelectionShot = XCTAttachment(screenshot: app.screenshot())
+        let postSelectionShot = XCTAttachment(screenshot: robot.app.screenshot())
         postSelectionShot.name = "baselocation-manual-mode-row-selected"
         postSelectionShot.lifetime = .keepAlways
         add(postSelectionShot)
+    }
+
+    // MARK: - testManualBaseCTADisabledBeforePick (C4)
+    //
+    // Asserts that baselocation.cta is DISABLED immediately after entering manual mode (basemode.manual)
+    // but BEFORE any baselocation.manual.<id> row is tapped. The CTA is gated by presenter.canContinue
+    // (BaseLocationStepView.swift line 29), which requires a neighborhood selection in manual mode.
+    //
+    // Manual-mode entry: tap "basemode.manual" — the SegmentedSelector segment confirmed in
+    // BaseLocationStepView.swift (line 116, accessibilityIDPrefix: "basemode"). "basemode.manual" is
+    // the stable existing a11y id; no new production id was needed (Track A is test-only).
+    //
+    // After confirming the disabled state, tapping the first available neighborhood row proves the gate
+    // becomes enabled (CTA.isEnabled transitions from false → true on pick).
+
+    func testManualBaseCTADisabledBeforePick() throws {
+        robot.launch(scenario: "onboardingA", startStep: "baseLocation", staticMap: true)
+
+        // ── Wait for the step to be live ──
+        let cta = robot.app.buttons["baselocation.cta"]
+        XCTAssertTrue(
+            cta.waitForExistence(timeout: 8),
+            "baselocation.cta must exist — BaseLocation step always renders the OnboardingActionFloor"
+        )
+
+        // ── Enter manual mode by tapping the "Pick manually" segment ──
+        // Confirmed in BaseLocationStepView.swift line 116: accessibilityIDPrefix "basemode",
+        // so the manual segment renders as "basemode.manual".
+        let manualSegment = robot.app.buttons["basemode.manual"]
+        XCTAssertTrue(
+            manualSegment.waitForExistence(timeout: 4),
+            "basemode.manual must exist — SegmentedSelector with accessibilityIDPrefix='basemode'"
+        )
+        XCTAssertTrue(manualSegment.isHittable, "basemode.manual segment must be hittable before tap")
+        manualSegment.tap()
+
+        // ── Wait for at least one neighborhood row to appear (manual mode rendered) ──
+        // This ensures we are in manual mode and the picker is present before checking CTA state.
+        let neighborhoodPredicate = NSPredicate(format: "identifier BEGINSWITH 'baselocation.manual.'")
+        let neighborhoodRows = robot.app.descendants(matching: .any).matching(neighborhoodPredicate)
+        XCTAssertTrue(
+            neighborhoodRows.firstMatch.waitForExistence(timeout: 4),
+            "At least one neighborhood row must appear — proves manual mode rendered before CTA check"
+        )
+
+        // ── Assert CTA exists but is DISABLED before any row pick ──
+        XCTAssertTrue(cta.exists, "baselocation.cta must still exist after entering manual mode")
+        XCTAssertFalse(
+            cta.isEnabled,
+            "baselocation.cta must be DISABLED in manual mode before any neighborhood row is tapped"
+        )
+
+        let prePickShot = XCTAttachment(screenshot: robot.app.screenshot())
+        prePickShot.name = "baselocation-manual-cta-disabled-pre-pick"
+        prePickShot.lifetime = .keepAlways
+        add(prePickShot)
+
+        // ── Tap the first neighborhood row — proves the gate (disabled → enabled transition) ──
+        let firstRow = neighborhoodRows.element(boundBy: 0)
+        XCTAssertTrue(firstRow.isHittable, "First neighborhood row must be hittable")
+        firstRow.tap()
+
+        XCTAssertTrue(
+            cta.waitForExistence(timeout: 2),
+            "baselocation.cta must remain after a neighborhood row tap"
+        )
+        XCTAssertTrue(
+            cta.isEnabled,
+            "baselocation.cta must be ENABLED after a neighborhood row is tapped"
+        )
+
+        let postPickShot = XCTAttachment(screenshot: robot.app.screenshot())
+        postPickShot.name = "baselocation-manual-cta-enabled-post-pick"
+        postPickShot.lifetime = .keepAlways
+        add(postPickShot)
     }
 
     // MARK: - testGhostButtonOpensAddressPickerSheet
@@ -323,11 +385,11 @@ final class OnboardingBaseLocationUITests: XCTestCase {
     // contract for L4.
 
     func testGhostButtonOpensAddressPickerSheet() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
-        _ = waitForBaseLocationScreen(in: app)
+        robot.launch(scenario: "onboardingA", startStep: "baseLocation", staticMap: true)
+        _ = waitForBaseLocationScreen()
 
         // ── Ghost button must exist ──
-        let ghostButton = app.buttons["baselocation.ghost"]
+        let ghostButton = robot.app.buttons["baselocation.ghost"]
         XCTAssertTrue(
             ghostButton.waitForExistence(timeout: 4),
             "baselocation.ghost must exist — OnboardingActionFloor ghost CTA"
@@ -341,12 +403,12 @@ final class OnboardingBaseLocationUITests: XCTestCase {
         // SearchWell uses .accessibilityElement(children: .combine) + .isSearchField, so XCUITest
         // surfaces it as a searchField element type. Mirror the pattern from OnboardingDestinationUITests:
         // try searchFields first, fall back to textFields in case a future SDK surfaces it differently.
-        let searchWellCandidate = app.searchFields["addresspicker.search"]
+        let searchWellCandidate = robot.app.searchFields["addresspicker.search"]
         let searchWell: XCUIElement
         if searchWellCandidate.waitForExistence(timeout: 6) {
             searchWell = searchWellCandidate
         } else {
-            let textFieldCandidate = app.textFields["addresspicker.search"]
+            let textFieldCandidate = robot.app.textFields["addresspicker.search"]
             XCTAssertTrue(
                 textFieldCandidate.waitForExistence(timeout: 3),
                 "addresspicker.search must exist as a searchField or textField after tapping baselocation.ghost"
@@ -359,13 +421,13 @@ final class OnboardingBaseLocationUITests: XCTestCase {
         // (the search-well block above). The map's visual fidelity is a render-snapshot concern (§6),
         // not an XCUITest assertion.
 
-        let sheetShot = XCTAttachment(screenshot: app.screenshot())
+        let sheetShot = XCTAttachment(screenshot: robot.app.screenshot())
         sheetShot.name = "baselocation-address-picker-sheet"
         sheetShot.lifetime = .keepAlways
         add(sheetShot)
 
         // ── Tap Cancel → sheet is dismissed ──
-        let cancelButton = app.buttons["addresspicker.cancel"]
+        let cancelButton = robot.app.buttons["addresspicker.cancel"]
         XCTAssertTrue(
             cancelButton.waitForExistence(timeout: 4),
             "addresspicker.cancel must exist in the sheet toolbar"
@@ -378,7 +440,7 @@ final class OnboardingBaseLocationUITests: XCTestCase {
             "addresspicker.search must be gone after tapping addresspicker.cancel"
         )
 
-        let postDismissShot = XCTAttachment(screenshot: app.screenshot())
+        let postDismissShot = XCTAttachment(screenshot: robot.app.screenshot())
         postDismissShot.name = "baselocation-address-picker-dismissed"
         postDismissShot.lifetime = .keepAlways
         add(postDismissShot)
@@ -386,11 +448,17 @@ final class OnboardingBaseLocationUITests: XCTestCase {
 
     // MARK: - testAccessibilityAudit
     //
-    // Runs the BROAD audit under scenario A (smart mode, static map) with the destination exemplar's
-    // handler verbatim. With UITEST_STATIC_MAP=1, the live MapKit "Legal" attribution link is absent,
-    // so the bespoke Legal suppression is no longer needed and has been removed.
+    // Runs the BROAD audit under scenario A (smart mode, static map) via the robot's centralized
+    // performOnboardingAudit(extraSuppressions:). The extra suppression for the decorative
+    // empty-id .elementDetection element on the static map placeholder is passed inline — it is
+    // NOT widened into the common suppression set (per OnboardingRobot design contract).
     //
-    // Suppressions (identical to OnboardingDestinationUITests.testAccessibilityAudit):
+    // Extra suppression (BaseLocation-specific):
+    //   • .elementDetection on an element with no id and no label — a decorative element on the
+    //     static map placeholder ("potentially inaccessible text"); it conveys no info the
+    //     surrounding labeled rows don't. Confirmed in the original inline audit handler.
+    //
+    // Common suppression set (centralized in OnboardingRobot.performOnboardingAudit):
     //   • .dynamicType — Font.custom(relativeTo:)/Font.system(.style) don't surface
     //     adjustsFontForContentSizeCategory to UIKit; text DOES scale (Typography.swift). Durable
     //     lock is an AX5 render snapshot. Re-confirm on any new fixed-size font.
@@ -402,49 +470,45 @@ final class OnboardingBaseLocationUITests: XCTestCase {
     // See docs/decisions.md for the compensating checks cited above.
 
     func testAccessibilityAudit() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        robot.launch(scenario: "onboardingA", startStep: "baseLocation", staticMap: true)
 
-        let cta = app.buttons["baselocation.cta"]
+        let cta = robot.app.buttons["baselocation.cta"]
         XCTAssertTrue(cta.waitForExistence(timeout: 8), "baselocation.cta must exist before audit")
 
-        let preAuditShot = XCTAttachment(screenshot: app.screenshot())
+        let preAuditShot = XCTAttachment(screenshot: robot.app.screenshot())
         preAuditShot.name = "baselocation-pre-audit"
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Broad audit with the documented narrow handler — never suppress by narrowing `for:`.
-        let suppressedTypes: XCUIAccessibilityAuditType = [.dynamicType, .contrast, .textClipped]
-        try app.performAccessibilityAudit { issue in
-            if suppressedTypes.contains(issue.auditType) { return true }
-            let id = issue.element?.identifier ?? ""
-            // Informational progress bar isn't an interaction target → its .hitRegion flag is expected.
-            if id == "onboarding.progress" && issue.auditType == .hitRegion { return true }
-            // A decorative element on the static map placeholder (no id, no label) trips .elementDetection
-            // ("potentially inaccessible text"); it conveys no info the surrounding labeled rows don't.
-            if issue.auditType == .elementDetection && id.isEmpty && (issue.element?.label ?? "").isEmpty { return true }
-            return false
+        // Broad audit via the robot — extra suppression for the decorative static-map placeholder element.
+        // The common suppression set (.dynamicType, .contrast, .textClipped, onboarding.progress .hitRegion)
+        // is centralized in OnboardingRobot.performOnboardingAudit; only the BaseLocation-specific
+        // exemption is passed here (07-testing §7.4 — never blanket-suppress).
+        try robot.performOnboardingAudit {
+            $0.auditType == .elementDetection
+                && ($0.element?.identifier ?? "").isEmpty
+                && ($0.element?.label ?? "").isEmpty
         }
 
         // Also exercise manual mode for the audit: switch to manual and re-audit the picker rows.
         // Manual mode is reachable from smart mode via the segment tap (same screen, no navigation).
-        let manualSegment = app.buttons["basemode.manual"]
+        let manualSegment = robot.app.buttons["basemode.manual"]
         if manualSegment.waitForExistence(timeout: 4), manualSegment.isHittable {
             manualSegment.tap()
             // baselocation.manualpicker (plain VStack) is not queryable; wait for the first
             // neighborhood row button instead — that's the real signal that manual mode rendered.
             let manualNeighborhoodPredicate = NSPredicate(format: "identifier BEGINSWITH 'baselocation.manual.'")
-            if app.descendants(matching: .any).matching(manualNeighborhoodPredicate).firstMatch.waitForExistence(timeout: 4) {
-                let postManualShot = XCTAttachment(screenshot: app.screenshot())
+            if robot.app.descendants(matching: .any).matching(manualNeighborhoodPredicate).firstMatch.waitForExistence(timeout: 4) {
+                let postManualShot = XCTAttachment(screenshot: robot.app.screenshot())
                 postManualShot.name = "baselocation-pre-audit-manual-mode"
                 postManualShot.lifetime = .keepAlways
                 add(postManualShot)
 
-                try app.performAccessibilityAudit { issue in
-                    if suppressedTypes.contains(issue.auditType) { return true }
-                    let id = issue.element?.identifier ?? ""
-                    if id == "onboarding.progress" && issue.auditType == .hitRegion { return true }
-                    if issue.auditType == .elementDetection && id.isEmpty && (issue.element?.label ?? "").isEmpty { return true }
-                    return false
+                // Second audit pass in manual mode — same extra suppression as the first pass.
+                try robot.performOnboardingAudit {
+                    $0.auditType == .elementDetection
+                        && ($0.element?.identifier ?? "").isEmpty
+                        && ($0.element?.label ?? "").isEmpty
                 }
             }
         }

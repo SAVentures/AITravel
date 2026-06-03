@@ -38,6 +38,12 @@
 // DayStepper accessibility ids confirmed against DayStepper.swift (lines 52/55/60):
 //   "daystepper.decrement" / "daystepper.value" / "daystepper.increment"
 //
+// Launch/scroll/audit are centralized in OnboardingRobot (C0/C1 migration).
+// The file-local makeLaunchedApp, scrollToElement, and inline audit handler have been deleted;
+// all are routed through OnboardingRobot. UITEST_FAILURE_RATE was never forwarded by this suite
+// (no local failureRate forwarding to remove). The robot's optional failureRate param is the
+// future hook for the onboarding write command (Task C5).
+//
 // See ios/docs/engineering/07-testing.md §7 for the full XCUITest layer contract.
 import XCTest
 
@@ -50,42 +56,25 @@ import XCTest
 @MainActor
 final class OnboardingTripShapeUITests: XCTestCase {
 
+    // MARK: - Robot
+
+    /// Shared robot — owns launch, scroll, and audit for all tests in this suite.
+    private var robot = OnboardingRobot()
+
     override func setUp() {
         super.setUp()
         // Stop on first failure — downstream assertions are meaningless if the step doesn't land.
         continueAfterFailure = false
-    }
-
-    // MARK: - Launch helper
-
-    /// Launch the app pinned to `scenario` with the start step forced to `tripShape`.
-    /// Mirrors the destination exemplar: slow animations + pinned clock.
-    @discardableResult
-    private func makeLaunchedApp(scenario: String = "onboardingA") -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchEnvironment["UITEST_SCENARIO"] = scenario
-        app.launchEnvironment["UITEST_START_STEP"] = "tripShape"
-        // Pin the clock — no live Date() in the UI layer (07-testing §3).
-        app.launchEnvironment["UITEST_NOW"] = "2026-06-03T12:00:00Z"
-        // Slow animations so waitForExistence beats spring transitions; not zero (system buttons).
-        app.launchArguments += ["-UIAnimationDragCoefficient", "10"]
-        app.launch()
-        return app
-    }
-
-    // MARK: - Scroll helper
-
-    /// Swipes up until `element` is realized into the accessibility tree, or `maxSwipes` is exhausted.
-    private func scrollToElement(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 6) {
-        var swipes = 0
-        while !element.exists && swipes < maxSwipes { app.swipeUp(); swipes += 1 }
+        // Fresh robot per test (XCTestCase creates a new instance per test method, so this
+        // also creates a fresh XCUIApplication — matches the prior makeLaunchedApp pattern).
+        robot = OnboardingRobot()
     }
 
     // MARK: - Shared: wait for the trip-shape CTA sentinel
 
     /// Returns the CTA element once it exists, or fails the test.
-    private func waitForTripShapeScreen(in app: XCUIApplication) -> XCUIElement {
-        let cta = app.buttons["tripshape.cta"]
+    private func waitForTripShapeScreen() -> XCUIElement {
+        let cta = robot.cta("tripshape.cta")
         XCTAssertTrue(
             cta.waitForExistence(timeout: 8),
             "tripshape.cta must exist — the TripShape step CTA is always rendered (07-testing §7.3)"
@@ -103,18 +92,18 @@ final class OnboardingTripShapeUITests: XCTestCase {
     // covered at L1 (presenter) and L3 (render snapshot). L4 exercises the card A interaction only.
 
     func testScenarioAShapeCards() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
-        let cta = waitForTripShapeScreen(in: app)
+        robot.launch(scenario: "onboardingA", startStep: "tripShape")
+        let cta = waitForTripShapeScreen()
 
         // ── Card A must exist (always above fold) ──
-        let cardA = app.buttons["tripshape.a"]
+        let cardA = robot.app.buttons["tripshape.a"]
         XCTAssertTrue(
             cardA.waitForExistence(timeout: 4),
             "tripshape.a must exist in scenario A (unlocked fixed-days card, above fold)"
         )
 
         // Attach a screenshot of the initial A state — triage aid (§7.5).
-        let initialShot = XCTAttachment(screenshot: app.screenshot())
+        let initialShot = XCTAttachment(screenshot: robot.app.screenshot())
         initialShot.name = "tripshape-scenarioA-initial"
         initialShot.lifetime = .keepAlways
         add(initialShot)
@@ -133,7 +122,7 @@ final class OnboardingTripShapeUITests: XCTestCase {
             "tripshape.cta must still exist after card A selection"
         )
 
-        let afterTapShot = XCTAttachment(screenshot: app.screenshot())
+        let afterTapShot = XCTAttachment(screenshot: robot.app.screenshot())
         afterTapShot.name = "tripshape-scenarioA-cardA-selected"
         afterTapShot.lifetime = .keepAlways
         add(afterTapShot)
@@ -149,32 +138,32 @@ final class OnboardingTripShapeUITests: XCTestCase {
     // not appear after maxSwipes=6, we fall back to asserting the CTA + card A as the minimum contract.
 
     func testScenarioBLockedCard() throws {
-        let app = makeLaunchedApp(scenario: "onboardingB")
-        let cta = waitForTripShapeScreen(in: app)
+        robot.launch(scenario: "onboardingB", startStep: "tripShape")
+        let cta = waitForTripShapeScreen()
 
         // ── Card A is unlocked and always above fold ──
-        let cardA = app.buttons["tripshape.a"]
+        let cardA = robot.app.buttons["tripshape.a"]
         XCTAssertTrue(
             cardA.waitForExistence(timeout: 4),
             "tripshape.a must exist in scenario B (unlocked fixed-days card)"
         )
 
         // Attach screenshot of initial B state.
-        let initialShot = XCTAttachment(screenshot: app.screenshot())
+        let initialShot = XCTAttachment(screenshot: robot.app.screenshot())
         initialShot.name = "tripshape-scenarioB-initial"
         initialShot.lifetime = .keepAlways
         add(initialShot)
 
         // ── Attempt to scroll to tripshape.b.locked ──
         // The locked card occupies the same vertical slot as card B; it may be below the fold.
-        let cardBLocked = app.otherElements["tripshape.b.locked"]
-        scrollToElement(cardBLocked, in: app)
+        let cardBLocked = robot.app.otherElements["tripshape.b.locked"]
+        robot.scrollToElement(cardBLocked)
 
         if cardBLocked.waitForExistence(timeout: 2) {
             // Confirmed: locked card is in the realized tree.
             // Confirm the unlocked variant does NOT exist.
             XCTAssertFalse(
-                app.buttons["tripshape.b"].exists,
+                robot.app.buttons["tripshape.b"].exists,
                 "tripshape.b (unlocked) must NOT exist in scenario B — the locked variant replaces it"
             )
             // The locked card has no button trait — it is inert.
@@ -182,7 +171,7 @@ final class OnboardingTripShapeUITests: XCTestCase {
                 cardBLocked.isHittable,
                 "tripshape.b.locked must NOT be hittable — locked cards carry no button trait"
             )
-            let lockedShot = XCTAttachment(screenshot: app.screenshot())
+            let lockedShot = XCTAttachment(screenshot: robot.app.screenshot())
             lockedShot.name = "tripshape-scenarioB-locked-cardB"
             lockedShot.lifetime = .keepAlways
             add(lockedShot)
@@ -199,13 +188,13 @@ final class OnboardingTripShapeUITests: XCTestCase {
 
         // ── Tap card A (above fold, always unlocked in B) to exercise the selection interaction ──
         // Scroll back to top first to ensure card A is realized.
-        app.swipeDown()
-        app.swipeDown()
+        robot.app.swipeDown()
+        robot.app.swipeDown()
         XCTAssertTrue(cardA.waitForExistence(timeout: 3), "tripshape.a must be present after scroll-back")
         XCTAssertTrue(cardA.isHittable, "tripshape.a must be hittable in scenario B")
         cardA.tap()   // exercises the affordance; select(strategy:) result is proven at L1 (see scenario A note)
 
-        let afterTapShot = XCTAttachment(screenshot: app.screenshot())
+        let afterTapShot = XCTAttachment(screenshot: robot.app.screenshot())
         afterTapShot.name = "tripshape-scenarioB-cardA-selected"
         afterTapShot.lifetime = .keepAlways
         add(afterTapShot)
@@ -222,27 +211,27 @@ final class OnboardingTripShapeUITests: XCTestCase {
     //   daystepper.decrement / .value / .increment — DayStepper.swift lines 52/55/60
 
     func testScenarioCTasteForm() throws {
-        let app = makeLaunchedApp(scenario: "onboardingC")
-        _ = waitForTripShapeScreen(in: app)
+        robot.launch(scenario: "onboardingC", startStep: "tripShape")
+        _ = waitForTripShapeScreen()
 
         // ── No shape cards in scenario C ──
         XCTAssertFalse(
-            app.buttons["tripshape.a"].exists,
+            robot.app.buttons["tripshape.a"].exists,
             "tripshape.a must NOT exist in scenario C — the taste form replaces the shape cards"
         )
         XCTAssertFalse(
-            app.buttons["tripshape.b"].exists,
+            robot.app.buttons["tripshape.b"].exists,
             "tripshape.b must NOT exist in scenario C"
         )
         XCTAssertFalse(
-            app.buttons["tripshape.c"].exists,
+            robot.app.buttons["tripshape.c"].exists,
             "tripshape.c must NOT exist in scenario C"
         )
 
         // ── DayStepper controls must exist ──
-        let decrementButton = app.buttons["daystepper.decrement"]
-        let incrementButton = app.buttons["daystepper.increment"]
-        let valueLabel = app.staticTexts["daystepper.value"]
+        let decrementButton = robot.app.buttons["daystepper.decrement"]
+        let incrementButton = robot.app.buttons["daystepper.increment"]
+        let valueLabel = robot.app.staticTexts["daystepper.value"]
 
         XCTAssertTrue(
             decrementButton.waitForExistence(timeout: 4),
@@ -258,62 +247,61 @@ final class OnboardingTripShapeUITests: XCTestCase {
         )
 
         // Attach initial taste-form screenshot.
-        let initialShot = XCTAttachment(screenshot: app.screenshot())
+        let initialShot = XCTAttachment(screenshot: robot.app.screenshot())
         initialShot.name = "tripshape-scenarioC-tasteform-initial"
         initialShot.lifetime = .keepAlways
         add(initialShot)
 
         // ── At least one seeded interest chip must exist ──
         // tasteDefaults seeds [.food, .history, .coffee] as selected. All nine interest chips render.
-        let foodChip = app.buttons["interest.food"]
+        let foodChip = robot.app.buttons["interest.food"]
         XCTAssertTrue(
             foodChip.waitForExistence(timeout: 4),
             "interest.food chip must exist in scenario C (taste form — Interest.allCases are always rendered)"
         )
         XCTAssertTrue(
-            app.buttons["interest.history"].waitForExistence(timeout: 2),
+            robot.app.buttons["interest.history"].waitForExistence(timeout: 2),
             "interest.history chip must exist in scenario C"
         )
         XCTAssertTrue(
-            app.buttons["interest.coffee"].waitForExistence(timeout: 2),
+            robot.app.buttons["interest.coffee"].waitForExistence(timeout: 2),
             "interest.coffee chip must exist in scenario C"
         )
 
         // ── Tap the "nightlife" chip to toggle it on (not selected in the seed) ──
-        let nightlifeChip = app.buttons["interest.nightlife"]
-        // The nightlife chip may be below the fold — scroll to realize it if needed.
-        var swipes = 0
-        while !nightlifeChip.exists && swipes < 4 {
-            app.swipeUp()
-            swipes += 1
-        }
+        // C2 fix: scroll to realize the chip unconditionally, then assert existence, hittability,
+        // tap, and post-tap selection — no `if isHittable` escape hatch (plan §C2).
+        // An element that scrolls off must FAIL, not silently pass.
+        let nightlifeChip = robot.app.buttons["interest.nightlife"]
+        robot.scrollToElement(nightlifeChip)
         XCTAssertTrue(
             nightlifeChip.waitForExistence(timeout: 4),
             "interest.nightlife chip must exist in scenario C (Interest.allCases)"
         )
-        // Only tap if hittable — if the chip is obscured by a container after scroll, assert existence only.
-        if nightlifeChip.isHittable {
-            nightlifeChip.tap()
+        XCTAssertTrue(
+            nightlifeChip.isHittable,
+            "interest.nightlife must be hittable after scrollToElement — an obscured chip is a test failure"
+        )
+        nightlifeChip.tap()
 
-            // After tap, the chip should have isSelected=true (store.onboarding?.toggleInterest(.nightlife))
-            let selectedPredicate = NSPredicate(format: "isSelected == true")
-            let selectedExpectation = XCTNSPredicateExpectation(predicate: selectedPredicate, object: nightlifeChip)
-            let result = XCTWaiter.wait(for: [selectedExpectation], timeout: 4)
-            XCTAssertEqual(
-                result, .completed,
-                "interest.nightlife must have isSelected=true after tap"
-            )
-        }
+        // After tap, the chip should have isSelected=true (store.onboarding?.toggleInterest(.nightlife))
+        let selectedPredicate = NSPredicate(format: "isSelected == true")
+        let selectedExpectation = XCTNSPredicateExpectation(predicate: selectedPredicate, object: nightlifeChip)
+        let result = XCTWaiter.wait(for: [selectedExpectation], timeout: 4)
+        XCTAssertEqual(
+            result, .completed,
+            "interest.nightlife must have isSelected=true after tap"
+        )
 
-        let afterChipShot = XCTAttachment(screenshot: app.screenshot())
+        let afterChipShot = XCTAttachment(screenshot: robot.app.screenshot())
         afterChipShot.name = "tripshape-scenarioC-nightlife-chip-selected"
         afterChipShot.lifetime = .keepAlways
         add(afterChipShot)
 
         // ── Tap increment to increment the day stepper ──
         // Scroll back to the top to ensure the stepper is in view.
-        app.swipeDown()
-        app.swipeDown()
+        robot.app.swipeDown()
+        robot.app.swipeDown()
         XCTAssertTrue(
             incrementButton.waitForExistence(timeout: 4),
             "daystepper.increment must still exist after scrolling back"
@@ -323,7 +311,7 @@ final class OnboardingTripShapeUITests: XCTestCase {
 
         // The CTA label reflects the day count (ctaTitle = "Continue · \(tasteDays) days").
         // After one increment from 4, it should say "5 days". Wait via predicate.
-        let cta = app.buttons["tripshape.cta"]
+        let cta = robot.cta("tripshape.cta")
         let daysPredicate = NSPredicate(format: "label CONTAINS[cd] '5 days'")
         let daysExpectation = XCTNSPredicateExpectation(predicate: daysPredicate, object: cta)
         let daysResult = XCTWaiter.wait(for: [daysExpectation], timeout: 4)
@@ -332,7 +320,7 @@ final class OnboardingTripShapeUITests: XCTestCase {
             "tripshape.cta label must reflect the updated day count after increment; got '\(cta.label)'"
         )
 
-        let afterStepperShot = XCTAttachment(screenshot: app.screenshot())
+        let afterStepperShot = XCTAttachment(screenshot: robot.app.screenshot())
         afterStepperShot.name = "tripshape-scenarioC-stepper-incremented"
         afterStepperShot.lifetime = .keepAlways
         add(afterStepperShot)
@@ -340,12 +328,15 @@ final class OnboardingTripShapeUITests: XCTestCase {
 
     // MARK: - testAccessibilityAudit
     //
-    // Runs the BROAD audit under scenario A (shape-cards body) with the destination exemplar's
-    // handler verbatim: the handler suppresses only the documented systemic FPs for this custom
+    // Runs the BROAD audit under scenario A (shape-cards body) via the centralized robot helper.
+    // The robot's performOnboardingAudit suppresses only the documented systemic FPs for this custom
     // design (.dynamicType, .contrast, .textClipped, and onboarding.progress .hitRegion), and
     // hard-fails every other type/element combination.
     //
-    // Suppressions (identical to OnboardingDestinationUITests.testAccessibilityAudit):
+    // This suite needs no screen-specific suppression beyond the common set — the default
+    // extraSuppressions: { _ in false } no-op is used (no trailing closure passed).
+    //
+    // Common suppressions (centralized in OnboardingRobot.performOnboardingAudit):
     //   • .dynamicType — Font.custom(relativeTo:)/Font.system(.style) don't surface
     //     adjustsFontForContentSizeCategory to UIKit; text DOES scale (Typography.swift). Durable
     //     lock is an AX5 render snapshot. Re-confirm on any new fixed-size font.
@@ -357,24 +348,18 @@ final class OnboardingTripShapeUITests: XCTestCase {
     // See docs/decisions.md for the compensating checks cited above.
 
     func testAccessibilityAudit() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        robot.launch(scenario: "onboardingA", startStep: "tripShape")
 
         // Wait for the step to be live before auditing.
-        let cta = app.buttons["tripshape.cta"]
+        let cta = robot.cta("tripshape.cta")
         XCTAssertTrue(cta.waitForExistence(timeout: 8), "tripshape.cta must exist before audit")
 
-        let preAuditShot = XCTAttachment(screenshot: app.screenshot())
+        let preAuditShot = XCTAttachment(screenshot: robot.app.screenshot())
         preAuditShot.name = "tripshape-pre-audit"
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Broad audit with the documented narrow handler — never suppress by narrowing `for:`.
-        let suppressedTypes: XCUIAccessibilityAuditType = [.dynamicType, .contrast, .textClipped]
-        try app.performAccessibilityAudit { issue in
-            if suppressedTypes.contains(issue.auditType) { return true }
-            // Informational progress bar isn't an interaction target → its .hitRegion flag is expected.
-            if issue.element?.identifier == "onboarding.progress" && issue.auditType == .hitRegion { return true }
-            return false
-        }
+        // Broad audit with the common documented suppression set — no extra suppressions for this suite.
+        try robot.performOnboardingAudit()
     }
 }

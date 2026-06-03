@@ -41,33 +41,26 @@ import XCTest
 /// button). Does NOT assert individual checklist rows or the handoff card — those are below-fold and
 /// covered at L1 and L3. Covers A/B/C scenarios and includes the accessibility audit with documented
 /// suppressions.
+///
+/// Launch-environment injection is delegated to `OnboardingRobot.launch(scenario:startStep:)`.
+/// This suite never sets `UITEST_FAILURE_RATE` — `robot.launch` forwards the key only when
+/// `failureRate:` is non-nil (the default `nil` matches the prior absent-key behavior).
 @MainActor
 final class OnboardingGeneratingUITests: XCTestCase {
+
+    private var robot: OnboardingRobot!
 
     override func setUp() {
         super.setUp()
         // Stop on first failure — subsequent assertions are meaningless if the step fails to load.
         continueAfterFailure = false
+        robot = OnboardingRobot()
     }
 
-    // MARK: - Launch helper
-
-    /// Launch the app pinned to the `generating` step in the given scenario. Animations are slowed
-    /// via `-UIAnimationDragCoefficient 10` to prevent timing flakiness (07-testing §7.6).
-    /// `UITEST_NOW` is pinned to a fixed date so any time-conditional state is deterministic (§3).
-    @discardableResult
-    private func makeLaunchedApp(scenario: String = "onboardingA") -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchEnvironment["UITEST_SCENARIO"] = scenario
-        app.launchEnvironment["UITEST_START_STEP"] = "generating"
-        // Pin the clock — no live Date() in the UI layer (07-testing §3).
-        app.launchEnvironment["UITEST_NOW"] = "2026-06-03T12:00:00Z"
-        // Slow animations so waitForExistence beats them; not zero (system buttons use spring).
-        // The HeartbeatSweep is continuous motion: slowing the coefficient also slows the sweep's
-        // .repeatForever animation — it will not complete during the test, which is correct.
-        app.launchArguments += ["-UIAnimationDragCoefficient", "10"]
-        app.launch()
-        return app
+    override func tearDown() {
+        robot.app.terminate()
+        robot = nil
+        super.tearDown()
     }
 
     // MARK: - Shared: wait for the generating screen
@@ -75,8 +68,8 @@ final class OnboardingGeneratingUITests: XCTestCase {
     /// Waits for `generation.eta` and returns it once it exists, or fails the test.
     /// The eta line is the most reliable sentinel: it is always present and outside the progress
     /// container (so it is not masked by the heartbeat sweep overlay).
-    private func waitForGeneratingScreen(in app: XCUIApplication) -> XCUIElement {
-        let eta = app.staticTexts["generation.eta"]
+    private func waitForGeneratingScreen() -> XCUIElement {
+        let eta = robot.app.staticTexts["generation.eta"]
         XCTAssertTrue(
             eta.waitForExistence(timeout: 8),
             "generation.eta must exist — UITEST_START_STEP=generating must land on step 05"
@@ -101,10 +94,9 @@ final class OnboardingGeneratingUITests: XCTestCase {
         let scenarios = ["onboardingA", "onboardingB", "onboardingC"]
 
         for scenario in scenarios {
-            let app = makeLaunchedApp(scenario: scenario)
-            defer { app.terminate() }
+            robot.launch(scenario: scenario, startStep: "generating")
 
-            let eta = waitForGeneratingScreen(in: app)
+            let eta = waitForGeneratingScreen()
 
             // ── ETA text must be present (it is always in the view tree) ──
             // GeneratingStepPresenter.eta = "Usually ready in about \(seconds) seconds"
@@ -115,7 +107,7 @@ final class OnboardingGeneratingUITests: XCTestCase {
             )
 
             // ── Cancel button must exist and be hittable ──
-            let cancel = app.buttons["onboarding.cancel"]
+            let cancel = robot.app.buttons["onboarding.cancel"]
             XCTAssertTrue(
                 cancel.waitForExistence(timeout: 4),
                 "[\(scenario)] onboarding.cancel must exist — the floating × is the only affordance"
@@ -126,24 +118,26 @@ final class OnboardingGeneratingUITests: XCTestCase {
             )
 
             // ── Progress container must exist ──
-            let progressContainer = app.otherElements["generation.progress"]
+            let progressContainer = robot.app.otherElements["generation.progress"]
             XCTAssertTrue(
                 progressContainer.waitForExistence(timeout: 4),
                 "[\(scenario)] generation.progress container must exist"
             )
 
             // ── Onboarding step progress bar must exist ──
-            let stepBar = app.otherElements["onboarding.progress"]
+            let stepBar = robot.app.otherElements["onboarding.progress"]
             XCTAssertTrue(
                 stepBar.waitForExistence(timeout: 3),
                 "[\(scenario)] onboarding.progress bar must exist on step 05"
             )
 
             // ── Attach screenshot — triage only (07-testing §7.5) ──
-            let shot = XCTAttachment(screenshot: app.screenshot())
+            let shot = XCTAttachment(screenshot: robot.app.screenshot())
             shot.name = "generating-initial-\(scenario)"
             shot.lifetime = .keepAlways
             add(shot)
+
+            robot.app.terminate()
         }
     }
 
@@ -168,25 +162,23 @@ final class OnboardingGeneratingUITests: XCTestCase {
     // See docs/decisions.md (2026-06-03). Every other type/element hard-fails.
 
     func testAccessibilityAudit() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        robot.launch(scenario: "onboardingA", startStep: "generating")
 
-        let eta = app.staticTexts["generation.eta"]
+        let eta = robot.app.staticTexts["generation.eta"]
         XCTAssertTrue(eta.waitForExistence(timeout: 8), "generation.eta must exist before audit")
 
-        let preAuditShot = XCTAttachment(screenshot: app.screenshot())
+        let preAuditShot = XCTAttachment(screenshot: robot.app.screenshot())
         preAuditShot.name = "generating-pre-audit"
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Audit types unreliable on this custom design (custom fonts / OKLCH inks / glass / heartbeat).
-        let suppressedTypes: XCUIAccessibilityAuditType = [.dynamicType, .contrast, .textClipped]
-        try app.performAccessibilityAudit { issue in
-            if suppressedTypes.contains(issue.auditType) { return true }
-            // Informational progress bar isn't an interaction target → its .hitRegion flag is expected.
-            if issue.element?.identifier == "onboarding.progress" && issue.auditType == .hitRegion { return true }
-            // HandoffPeekCard has allowsHitTesting(false) by design — it is a non-interactive preview.
-            if issue.element?.identifier == "generation.handoff" && issue.auditType == .hitRegion { return true }
-            return false
+        // Common suppression set (.dynamicType, .contrast, .textClipped, onboarding.progress .hitRegion)
+        // is handled by the robot. The extra suppression below is specific to this screen:
+        //   generation.handoff .hitRegion — HandoffPeekCard has allowsHitTesting(false) by design;
+        //   it is a peek preview (not a control). The element is in the a11y tree for VoiceOver
+        //   reading-order but is never tappable. See docs/decisions.md (2026-06-03).
+        try robot.performOnboardingAudit {
+            $0.element?.identifier == "generation.handoff" && $0.auditType == .hitRegion
         }
     }
 }
