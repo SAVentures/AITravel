@@ -8,6 +8,9 @@ import Foundation
 /// The `Response` is `Decodable & Sendable` because it is decoded off the main actor by
 /// `LiveProvider` and crosses back as a value; the reference domain models never appear
 /// here — responses representing them use their `*DTO` (`04-networking.md §3`).
+// Each requirement is `nonisolated` individually, NOT `nonisolated protocol APIRequest`. The whole-protocol
+// cascade (SE-0449) is the cleaner spec-ideal, but on this Xcode 26 toolchain it spuriously infers unrelated
+// call sites (APIClient.mock) as nonisolated and breaks the build (forums.swift.org/t/80430). Revisit when fixed.
 protocol APIRequest: Sendable {
     associatedtype Response: Decodable & Sendable
 

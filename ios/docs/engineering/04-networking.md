@@ -82,26 +82,12 @@ protocol APIRequest: Sendable {
 }
 ```
 
-> ### ⚠️ The wire boundary is `nonisolated` — not just `Sendable` (the single most-repeated build break)
-> The project is **MainActor-by-default** (`SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, `01-architecture.md
-> §9`), so *every* type, protocol, and protocol requirement is MainActor-isolated **unless you mark it
-> otherwise**. `Sendable` alone does **not** opt a declaration out of the actor — it only says the value is
-> safe to pass. Because `LiveProvider.send` decodes **off the main actor** (`@concurrent`), every
-> declaration it touches on that path must be explicitly **`nonisolated`**, or the compiler rejects the
-> mismatch — and it fails at the *use site* (the off-main decode), so each layer breaks independently:
->
-> | Mark `nonisolated` | Why |
-> |---|---|
-> | every **`APIRequest` protocol requirement** (`var path`, `method`, `queryItems`, `body`, `mockLatency`, `func mockResponse`) — and the same default-impl members in the `extension` | the requirements are read from the nonisolated `send` |
-> | `APIClientProtocol.send` | it's the `@concurrent` entry point |
-> | every **request struct** — `nonisolated struct GetXRequest: APIRequest` | its conformance must satisfy the nonisolated requirements |
-> | every **DTO and every leaf value type it composes** (`Codable`) — see `02-models.md §9` | `Response: Decodable & Sendable` is decoded off-main; a MainActor-isolated `Decodable` conformance can't satisfy it |
-> | `LiveProvider`, and the JSON codec helper (`nonisolated enum APIJSON`) | they run the off-main build/decode |
->
-> The `@MainActor func toDomain()` mapping (built on the main actor) and the providers' `Sendable`
-> conformance **stay** — only the wire-path declarations opt out of the default actor. Rule of thumb: *if it
-> crosses to the background, it carries the `nonisolated` keyword; `Sendable` is necessary but not
-> sufficient.*
+> **The wire boundary is `nonisolated`, not just `Sendable`.** Under MainActor-by-default, a bare
+> `Codable` type is MainActor-isolated and can't decode off-main (`Sendable` doesn't opt it out). So mark
+> `nonisolated`: each `APIRequest` requirement (+ its `extension` defaults), each request struct, each DTO
+> and the leaf value types it composes, `LiveProvider`, and `enum APIJSON`. `@MainActor func toDomain()`
+> stays. (Use per-requirement `nonisolated`, not `nonisolated protocol` — the cascade mis-compiles on
+> Xcode 26, [forums 80430](https://forums.swift.org/t/80430).)
 
 `MockProvider` and `LiveProvider` are **generic shells** that dispatch on the request — they hold no
 per-endpoint code. `MockProvider.send` injects failure / sleeps `mockLatency`, then calls

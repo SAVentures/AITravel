@@ -48,14 +48,10 @@ the coordinator — don't add it here.
 
 ## Rules
 
-- **⚠️ The request struct is `nonisolated` (MainActor-by-default — the most-repeated build break).**
-  The project sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`; the conformance is exercised on
-  `LiveProvider`'s **off-main** (`@concurrent`) decode path, so a plain `struct GetXRequest: APIRequest {}`
-  fails with *"conformance crosses into main actor-isolated code."* Declare it **`nonisolated struct`**.
-  The `APIRequest` protocol's requirements are already `nonisolated` (don't re-declare them on the struct;
-  just conform). Its `Response` must be a **`nonisolated`** `*DTO`/leaf value type (the model agent's job —
-  if it isn't, report it). A request struct that is not `nonisolated` is a **defect** (`04-networking.md
-  §2` callout).
+- **Declare the request `nonisolated struct GetXRequest: APIRequest`** — MainActor-by-default makes a
+  plain `struct` fail with *"conformance crosses into main actor-isolated code"* on the off-main decode.
+  Its `Response` must be a `nonisolated` `*DTO`/leaf type (model agent's job — report it if not).
+  Non-`nonisolated` request = defect (`04-networking.md §2`).
 - **Navigate with SwiftLSP** (the `LSP` tool — see `.claude/agents/README.md` § "Navigating code"):
   `documentSymbol` on an existing request file to copy its conformance pattern; `goToDefinition` from its
   lines to reuse the `Response` DTO. Confirm a request/DTO name isn't already taken with a `Grep` (a

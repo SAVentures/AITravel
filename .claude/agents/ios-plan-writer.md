@@ -48,24 +48,15 @@ barrier explicit: Phase 0 design-system tasks (tokens → modifiers → componen
 complete + design-reviewed + snapshot-locked **before any Phase 2 screen task is dispatched**. Then
 models+networking, then screens (each → consistency + fidelity review), then tests, then the gate.
 
-### ⚠️ First feature → emit an explicit "Wave 0: bootstrap the skeleton" before the feature waves
+### First feature → emit a "Wave 0: bootstrap the skeleton" before the feature waves
 
-**Before writing tasks that reference `APIClient` / `AppStore` / `MockProvider` / `MockScenario` /
-`SampleData` / `LoadState`, confirm those exist.** On the *first* feature of a fresh app they do **not** —
-the template ships the docs + design system, but the networking/store/sample-data substrate is created by
-the first feature. **Detection:** check whether `ios/AppTemplate/Networking/` and `ios/AppTemplate/Store/`
-exist and are non-empty (a `Glob`/`ls`); if either is absent, this is a first-feature bootstrap. When it
-is, the plan's **Wave 0** explicitly scaffolds the substrate before any feature task builds on it:
+If `ios/AppTemplate/Networking/` or `Store/` is absent (`Glob`/`ls`), this is the first feature — the
+substrate doesn't exist yet. Don't write tasks assuming `APIClient`/`AppStore`/`MockProvider`/`SampleData`;
+emit a **Wave 0** that scaffolds them first, gating the feature waves behind it:
 
-- **Networking:** `APIRequest` (protocol — `nonisolated` requirements), `APIClientProtocol`, `APIClient`
-  (+ `nonisolated enum APIJSON`), `MockProvider`, `LiveProvider` (`nonisolated`), `MockSeed`,
-  `MockScenario`, `APIError`, `HTTPMethod`.
-- **Store:** `AppStore` (`@Observable`, `init(api:)`, `static func preview`), `LoadState`.
-- **Models/seed core:** `SampleData` composer + `AppDate`/`DateFormatters` (the `simulatedNow` seam).
-
-Mark Wave 0 as `swift-networking-endpoint` / `swift-model-scaffold` / hand-coordinated bootstrap tasks,
-and gate the feature waves behind it. A plan that silently assumes the substrate is the defect this
-prevents (it cost a mid-build bootstrap detour on the first feature).
+- **Networking:** `APIRequest`, `APIClientProtocol`, `APIClient` (+`APIJSON`), `MockProvider`, `LiveProvider`, `MockSeed`, `MockScenario`, `APIError`, `HTTPMethod`.
+- **Store:** `AppStore` (`@Observable`, `init(api:)`, `preview`), `LoadState`.
+- **Models/seed core:** `SampleData` composer + `DateFormatters` (`simulatedNow` seam).
 
 ## Hold the line on the non-negotiables
 

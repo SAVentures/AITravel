@@ -87,15 +87,10 @@ extension file (a new file, or an addition to its domain's existing file — **n
 
 ## Rules
 
-- **⚠️ Every wire value type is `nonisolated` (MainActor-by-default — the most-repeated build break).**
-  The project sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so a bare `struct XDTO: Codable, Sendable
-  {}` is **MainActor-isolated** and its off-main `Decodable` conformance **won't compile** against
-  `APIRequest.Response: Decodable & Sendable`. So: **every `*DTO` and every leaf value type a DTO composes
-  is declared `nonisolated struct`/`nonisolated enum`.** `Sendable` is necessary but NOT sufficient. The
-  `@MainActor func toDomain()` mapping stays MainActor (it builds the reference graph on main); only the
-  *type* opts out. A DTO or leaf value type that is not `nonisolated` is a **defect** (`02-models.md §1.2`,
-  `04-networking.md §2`). Reference models stay `@MainActor` and are NOT `Codable` — they never get
-  `nonisolated`.
+- **Every `*DTO` and every leaf value type a DTO composes is `nonisolated struct`/`nonisolated enum`**
+  (MainActor-by-default → a bare `Codable` type can't decode off-main; `Sendable` isn't enough — a
+  non-`nonisolated` wire type is a defect). `@MainActor func toDomain()` stays; reference models stay
+  `@MainActor` and never get `nonisolated`. See `02-models.md §1.2`.
 - **Navigate with SwiftLSP** (the `LSP` tool — see `.claude/agents/README.md` § "Navigating code"):
   `documentSymbol` on a neighboring model (`BookModel`, `Author`, `Format`) to copy its conformance set,
   `*.ID` pattern, and init shape exactly; its line numbers give you positions for `goToDefinition`.

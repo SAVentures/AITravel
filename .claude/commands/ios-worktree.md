@@ -20,22 +20,15 @@ units built against that worktree's absolute paths. Copying the main checkout's 
 `goToDefinition`/`findReferences` on the worktree unresolved. The background build is what produces
 resolvable units; the global Swift/clang module cache keeps it far cheaper than a cold build.
 
-**⚠️ Each worktree builds into its OWN DerivedData — never `find … | head -1`.** A git worktree compiles
-to a *distinct* `~/Library/Developer/Xcode/DerivedData/AppTemplate-<hash>` keyed by its absolute path, so
-the main checkout and every worktree have separate build products. To install / launch / screenshot the
-app you just built **in this worktree**, resolve the real path — never grab "the first AppTemplate-* dir":
+**Each worktree builds into its own DerivedData** (`AppTemplate-<hash>`, keyed by absolute path), so to
+install/screenshot the binary you just built here, resolve the real path — `find … | head -1` returns a
+sibling worktree's stale build:
 
 ```
 BUILT=$(xcodebuild -project ios/AppTemplate.xcodeproj -scheme AppTemplate \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.4.1' \
-  -showBuildSettings 2>/dev/null | awk '/ BUILT_PRODUCTS_DIR =/{print $3; exit}')
-# → "$BUILT/AppTemplate.app"  (this worktree's binary, not a stale Phase-0 build)
+  -showBuildSettings -json 2>/dev/null | /usr/bin/python3 -c 'import json,sys;print(json.load(sys.stdin)[0]["buildSettings"]["BUILT_PRODUCTS_DIR"])')
 ```
-
-`find … DerivedData/AppTemplate-* | head -1` silently returns the **stale main-checkout build** — you'll
-install a months-old binary and chase phantom "it didn't change" bugs through every rebuild cycle. Always
-resolve `BUILT_PRODUCTS_DIR` (or pass `-derivedDataPath` to pin it). See `ios-subagent-development`
-(coordinator setup) for the same rule in the run/verify step.
 
 **Then** follow the hard workflow rule: worktree → `ios-plan-writer` (architect) →
 `ios-subagent-development` (coordinate execution, with the foundation-freeze barrier) → finish-branch.

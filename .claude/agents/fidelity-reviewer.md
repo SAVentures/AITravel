@@ -39,15 +39,11 @@ Read both, side by side, at the same state (seed + scenario).
 5. **The visual non-negotiables** — glass on chrome only; Dynamic Type holds; no literal/off-token
    spacing; and **no slop tells** (`08-slop.md` — side-tab borders, gradient text, glassmorphism
    decoration, reflex defaults). Cite J-rules / slop ids.
-6. **Interactive affordances are real, not painted** — every element that *looks* tappable in the mockup
-   (a pill, a chip, a card tile, a search field, a stepper, a row with a chevron) maps to a real action in
-   the View: a `Button` / `.onTapGesture` / an editable `TextField` / a focusable control — **not a
-   display-only `HStack`/`Text` or an `onTap: {}` stub.** A control that renders correctly but does
-   nothing is **fidelity drift, not a deferred detail** — it reads as "done" in a screenshot and a render
-   snapshot (both prove *appearance*, not *wiring*), so it slips every other gate and only a live tap or an
-   XCUITest catches it. For each such element, confirm the action exists and name it; call out any
-   read-only stub **explicitly** (and whether a contract scope-note deliberately deferred it). This is the
-   class of bug the render-snapshot lock structurally cannot see.
+6. **Interactive affordances are real, not painted** — every element that *looks* tappable (pill, chip,
+   tile, search field, stepper) maps to a real `Button`/`.onTapGesture`/editable `TextField`, not a
+   display-only `HStack`/`Text` or `onTap: {}` stub. Snapshots prove appearance, not wiring, so a
+   renders-fine-but-dead control slips every other gate — confirm each action exists and name any
+   read-only stub explicitly.
 
 ## Substrate vs. drift — don't cry wolf
 
