@@ -1,0 +1,35 @@
+import Foundation
+import Observation
+
+/// `AppStore` — the single source of truth the whole UI reads (`01-architecture.md §5`,
+/// `03-store.md §1`).
+///
+/// `@MainActor` puts every mutation and observable read on the main thread (no manual
+/// `DispatchQueue.main`); `@Observable` makes each stored property individually observable, so
+/// SwiftUI re-renders only the views that read a changed property; `final` prevents subclassing.
+///
+/// **Ownership.** The App root owns the one instance — `AppTemplateApp` holds
+/// `@State private var store = AppStore()` and injects it via `.environment(store)`. Previews and
+/// tests construct their *own* local instance and seed it. There is **no `.shared` singleton and no
+/// parallel stores**; `init` is non-private precisely so every context (app, preview, test, UI-test)
+/// owns its instance (`03-store.md §1`).
+///
+/// **Extending this core.** This file stays CORE/minimal: the injected `api`, the init, and shared
+/// conveniences. Feature state and the async command wrappers are added by feature agents — a new
+/// stored property is the one serialized edit to this file (`01-architecture.md §11`), while commands
+/// land in their own `AppStore+<Feature>.swift` extension (whose methods inherit this type's
+/// `@MainActor` isolation for free, `03-store.md §7`).
+@MainActor
+@Observable
+final class AppStore {
+    /// The injected client every read/write goes through. Screens depend on `APIClient`, never a
+    /// concrete provider; the mock/live swap happens here at the store boundary
+    /// (`01-architecture.md §7`, `04-networking.md`).
+    let api: APIClient
+
+    /// The App root owns one instance (defaulting to `.live`); previews and tests pass their own
+    /// `.mock(...)` client. No singleton — see the type doc.
+    init(api: APIClient = .live) {
+        self.api = api
+    }
+}
