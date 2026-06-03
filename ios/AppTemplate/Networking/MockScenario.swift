@@ -8,4 +8,10 @@ import Foundation
 /// returns an empty `MockSeed()`.
 enum MockScenario: Sendable, CaseIterable {
     case empty
+    /// Onboarding state A — returning user with local saves (Lisbon, 23 saved).
+    case onboardingA
+    /// Onboarding state B — saves elsewhere, none in the chosen city (Kyoto).
+    case onboardingB
+    /// Onboarding state C — first trip, nothing saved anywhere (Lisbon).
+    case onboardingC
 }

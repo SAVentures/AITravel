@@ -29,6 +29,12 @@ enum SampleData {
         switch scenario {
         case .empty:
             MockSeed()
+        case .onboardingA:
+            MockSeed(onboardingContext: onboardingAContext())
+        case .onboardingB:
+            MockSeed(onboardingContext: onboardingBContext())
+        case .onboardingC:
+            MockSeed(onboardingContext: onboardingCContext())
         }
     }
 }
