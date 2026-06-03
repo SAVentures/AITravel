@@ -23,44 +23,44 @@ struct FilterChipModel: Identifiable {
 struct FilterChip: View {
     /// The chip's label — a short noun phrase ("By day", "By type"). UI family, never caps body (J-3.5).
     let label: String
+    /// An optional leading category glyph (e.g. a transport mode). When present it shows in both states and
+    /// selection is carried by the ink fill (mirrors the icon-bearing SegmentedSelector); when absent, the
+    /// leading slot is the selection check.
+    let systemImage: String?
     /// Whether this chip is the selected one in its group. The caller enforces one-selected-per-group.
     let isSelected: Bool
     /// Toggle action — the caller flips its own selection model.
     let action: () -> Void
 
+    init(label: String, systemImage: String? = nil, isSelected: Bool, action: @escaping () -> Void) {
+        self.label = label
+        self.systemImage = systemImage
+        self.isSelected = isSelected
+        self.action = action
+    }
+
     var body: some View {
         Button(action: action) {
-            Label {
+            HStack(spacing: Spacing.sm) {
+                leadingGlyph
                 Text(label)
-            } icon: {
-                // The non-color half of the selection signal: a check appears only when selected, so the
-                // state survives grayscale (02-color §6). Hidden (not removed) when unselected keeps the
-                // label baseline steady across the toggle.
-                Image(systemName: "checkmark")
-                    .opacity(isSelected ? 1 : 0)
-                    .accessibilityHidden(true)
             }
-            .labelStyle(FilterChipLabelStyle(showsIcon: isSelected))
         }
         .buttonStyle(FilterChipButtonStyle(isSelected: isSelected))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
-}
 
-// MARK: - Label layout (icon ↔ label pairing)
-
-/// Lays the optional check glyph at `Spacing.sm` from the label — the icon↔label rung (J-1). When unselected
-/// the icon slot is collapsed so the chip hugs its label, matching the mockup's two widths.
-private struct FilterChipLabelStyle: LabelStyle {
-    let showsIcon: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: Spacing.sm) {
-            if showsIcon {
-                configuration.icon
-                    .font(Typography.footnote) // glyph scales with Dynamic Type (no fixed pt; J-0.3)
-            }
-            configuration.title
+    // A category icon (always shown) takes precedence; otherwise the check is the non-color selection
+    // signal, shown only when selected so the chip hugs its label when not (02-color §6).
+    @ViewBuilder private var leadingGlyph: some View {
+        if let systemImage {
+            Image(systemName: systemImage)
+                .font(Typography.footnote)
+                .accessibilityHidden(true)
+        } else if isSelected {
+            Image(systemName: "checkmark")
+                .font(Typography.footnote)
+                .accessibilityHidden(true)
         }
     }
 }

@@ -16,10 +16,21 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
     let systemImage: (Option) -> String?
     /// Each segment becomes `\(accessibilityIDPrefix).\(option.id)`.
     let accessibilityIDPrefix: String
+    /// When `true`, segments size to their content and the track scrolls horizontally — for option sets
+    /// that won't fit the width without wrapping the labels (the transport `.mostly` row).
+    var scrollable: Bool = false
     let onSelect: (Option) -> Void
 
     var body: some View {
-        // The quiet pill track: a hairline inset keeps the selected pill off the track edge.
+        if scrollable {
+            ScrollView(.horizontal, showsIndicators: false) { track }
+        } else {
+            track
+        }
+    }
+
+    // The quiet pill track: a hairline inset keeps the selected pill off the track edge.
+    private var track: some View {
         HStack(spacing: Spacing.xs) {
             ForEach(options) { option in
                 Button {
@@ -30,7 +41,7 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
                         systemImage: systemImage(option)
                     )
                 }
-                .buttonStyle(SegmentButtonStyle(isSelected: option == selection))
+                .buttonStyle(SegmentButtonStyle(isSelected: option == selection, equalWidth: !scrollable))
                 .accessibilityIdentifier("\(accessibilityIDPrefix).\(option.id)")
                 .accessibilityAddTraits(option == selection ? [.isSelected] : [])
             }
@@ -62,6 +73,8 @@ private struct SegmentLabel: View {
 
 private struct SegmentButtonStyle: ButtonStyle {
     let isSelected: Bool
+    /// Equal-width fills the track (fixed segmented control); content-width lets a scrollable row hug labels.
+    var equalWidth: Bool = true
     @Environment(\.isEnabled) private var isEnabled
 
     // @ScaledMetric so the tap floor holds at large text — a bare literal would not (J-0.3).
@@ -70,8 +83,9 @@ private struct SegmentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Typography.subhead)
+            .lineLimit(equalWidth ? nil : 1) // scrollable segments stay one line (they scroll, not wrap)
             .foregroundStyle(labelColor)
-            .frame(maxWidth: .infinity) // equal-width segments
+            .frame(maxWidth: equalWidth ? .infinity : nil)
             .padding(.vertical, Spacing.sm)
             .padding(.horizontal, Spacing.md)
             .frame(minHeight: minTapTarget)

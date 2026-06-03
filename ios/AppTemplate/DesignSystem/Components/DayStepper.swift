@@ -74,11 +74,21 @@ struct DayStepper: View {
 
     private var valueFace: some View {
         HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-            Text("\(clamped)")
+            // Reserve the widest value's width (monospacedDigit alone only steadies same-digit-count
+            // values — 9→10 still grows a glyph and shifts the ± buttons). A hidden sizer holds the slot;
+            // the live value renders inside it, so the capsule width is constant across the whole range.
+            Text(String(range.upperBound))
                 .font(Typography.title)
                 .tracking(Typography.titleTracking)
-                .monospacedDigit() // tabular numerals so the width is steady across values (J-7.2)
-                .foregroundStyle(ColorRole.textPrimary)
+                .monospacedDigit()
+                .hidden()
+                .overlay {
+                    Text("\(clamped)")
+                        .font(Typography.title)
+                        .tracking(Typography.titleTracking)
+                        .monospacedDigit() // tabular numerals so the width is steady across values (J-7.2)
+                        .foregroundStyle(ColorRole.textPrimary)
+                }
             Text(unit)
                 .font(Typography.footnote) // mono — the unit reads as measurement (T-1.2)
                 .foregroundStyle(ColorRole.textSecondary)

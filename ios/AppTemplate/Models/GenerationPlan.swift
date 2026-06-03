@@ -73,12 +73,13 @@ nonisolated enum OnboardingState: String, Codable, Equatable, Hashable, Sendable
 nonisolated enum OnboardingStep: Int, CaseIterable, Codable, Equatable, Hashable, Sendable {
     case destination    = 0
     case tripShape      = 1
-    case baseLocation   = 2
-    case gettingAround  = 3
-    case generating     = 4
+    case when           = 2
+    case baseLocation   = 3
+    case gettingAround  = 4
+    case generating     = 5
 
     var index: Int { rawValue }
     static var totalSteps: Int { allCases.count }
 
-    var progressCount: String { "\(index + 1) / \(OnboardingStep.totalSteps)" }  // "1 / 5"
+    var progressCount: String { "\(index + 1) / \(OnboardingStep.totalSteps)" }  // "1 / 6"
 }

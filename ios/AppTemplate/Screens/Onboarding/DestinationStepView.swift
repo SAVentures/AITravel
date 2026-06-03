@@ -13,6 +13,7 @@ import SwiftUI
 struct DestinationStepView: View {
 
     @Environment(AppStore.self) private var store
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
@@ -42,7 +43,9 @@ struct DestinationStepView: View {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 OnboardingProgressBar(stepIndex: 0)
                 if !isSearching {
+                    /* Hero slides up + out as the well rises to the top — the "lift into search" move. */
                     hero(presenter)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 /*
                  Render the well exactly once at a stable .id: placing the same focusable TextField in
@@ -52,13 +55,20 @@ struct DestinationStepView: View {
                     .id("destination.searchwell")
                 if isSearching {
                     resultsList(presenter)
+                        .transition(.opacity)
                 } else {
-                    aiVoice(presenter)
-                    recentRail(presenter)
-                    grid(presenter)
+                    /* Grouped so the default-layout block fades as one unit while the well lifts. */
+                    VStack(alignment: .leading, spacing: Spacing.xl) {
+                        aiVoice(presenter)
+                        recentRail(presenter)
+                        grid(presenter)
+                    }
+                    .transition(.opacity)
                 }
             }
             .padding(.top, topChrome)   // clear the floating × overlay
+            /* Large automatic move → the emphasis curve; nil under Reduce Motion (caller owns degrade). */
+            .animation(reduceMotion ? nil : Motion.emph(), value: isSearching)
             .onChange(of: searchFocused) { _, focused in
                 if focused { store.onboarding?.clearDestination() }   // search drops the prior selection
             }
@@ -98,7 +108,7 @@ struct DestinationStepView: View {
     // MARK: - Search well
 
     private func searchWell() -> some View {
-        SearchWell(text: $searchText, placeholder: "Search a city", kbdHint: "return ↵", focused: $searchFocused)
+        SearchWell(text: $searchText, placeholder: "Search a city", kbdHint: nil, focused: $searchFocused)
             .accessibilityIdentifier("destination.search")   // screen-contract id the tests assert on
     }
 
@@ -122,6 +132,7 @@ struct DestinationStepView: View {
             store.onboarding?.select(city: city)
             searchFocused = false   // commit + leave search mode
             searchText = ""
+            store.advanceOnboardingStep()   // picking a result commits + moves to the next step
         } label: {
             HStack(spacing: Spacing.lg) {
                 Image(systemName: "mappin.and.ellipse")
@@ -175,11 +186,12 @@ struct DestinationStepView: View {
             store.onboarding?.select(city: tile.city)
         } label: {
             HStack(spacing: Spacing.sm) {
-                Image(systemName: "photo")
+                Image(systemName: tile.isSelected ? "checkmark" : "photo")
                     .font(Typography.footnote)
-                    .foregroundStyle(ColorRole.textTertiary)
+                    .fontWeight(tile.isSelected ? .bold : .regular)
+                    .foregroundStyle(tile.isSelected ? ColorRole.surfacePage : ColorRole.textTertiary)
                     .padding(Spacing.sm)
-                    .background(ColorRole.fillTertiary, in: .circle)
+                    .background(tile.isSelected ? ColorRole.textPrimary : ColorRole.fillTertiary, in: .circle)
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(tile.city.name)
                         .font(Typography.name)
@@ -194,6 +206,13 @@ struct DestinationStepView: View {
             .padding(.vertical, Spacing.sm)
             .padding(.horizontal, Spacing.lg)
             .background(ColorRole.fillTertiary, in: .capsule)
+            /* Selection = ink ring on the capsule, never the accent (J-2.4) — matches the grid tile. */
+            .overlay {
+                if tile.isSelected {
+                    Capsule()
+                        .strokeBorder(ColorRole.textPrimary, lineWidth: selectionRingWidth)
+                }
+            }
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)

@@ -19,6 +19,7 @@ struct TripShapeStepView: View {
         ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
             OnboardingActionFloor(
                 primaryTitle: p.ctaTitle,
+                primaryEnabled: p.canContinue,
                 primaryAccessibilityID: "tripshape.cta",
                 primaryAction: { store.advanceOnboardingStep() }
             )

@@ -27,8 +27,12 @@ final class TripDraftModel: Identifiable {
     var destination: City?
     var shapeStrategy: TripShapeStrategy?
     var tripDays: Int
+    var tripWhen: TripWhen
     var tasteProfile: TasteProfile?
     var baseSelection: BaseLocation?
+    // The manually-picked neighborhood (baseMode == .manual). Neighborhoods carry no coordinates, so the
+    // pick is captured by id, not as a BaseLocation.
+    var selectedNeighborhoodID: String?
     var baseMode: BaseSelectionMode
     var transport: TransportSelection
     var currentStep: OnboardingStep
@@ -43,8 +47,10 @@ final class TripDraftModel: Identifiable {
         destination: City?,
         shapeStrategy: TripShapeStrategy?,
         tripDays: Int,
+        tripWhen: TripWhen = .seedDefault,
         tasteProfile: TasteProfile?,
         baseSelection: BaseLocation?,
+        selectedNeighborhoodID: String? = nil,
         baseMode: BaseSelectionMode,
         transport: TransportSelection,
         currentStep: OnboardingStep,
@@ -56,8 +62,10 @@ final class TripDraftModel: Identifiable {
         self.destination = destination
         self.shapeStrategy = shapeStrategy
         self.tripDays = tripDays
+        self.tripWhen = tripWhen
         self.tasteProfile = tasteProfile
         self.baseSelection = baseSelection
+        self.selectedNeighborhoodID = selectedNeighborhoodID
         self.baseMode = baseMode
         self.transport = transport
         self.currentStep = currentStep
@@ -91,6 +99,48 @@ extension TripDraftModel {
         tripDays = days
     }
 
+    // MARK: - When (month-led travel dates)
+
+    func setTripMonth(year: Int, month: Int) {
+        tripWhen.year = year
+        tripWhen.month = month
+    }
+
+    func setDatePrecision(_ precision: DatePrecision) {
+        tripWhen.precision = precision
+        switch precision {
+        case .exactDates:
+            // Seed a concrete range from the chosen month, spanning at least the chosen trip length.
+            if tripWhen.startDate == nil {
+                let start = AppDate.make(y: tripWhen.year, m: tripWhen.month, d: 1)
+                tripWhen.startDate = start
+                tripWhen.endDate = minimumExactEnd(from: start)
+            }
+        case .justMonth:
+            tripWhen.startDate = nil
+            tripWhen.endDate = nil
+        }
+    }
+
+    func setExactStart(_ date: Date) {
+        tripWhen.startDate = date
+        // Keep the range at least `tripDays` long when the start moves.
+        let minEnd = minimumExactEnd(from: date)
+        if let end = tripWhen.endDate, end >= minEnd { return }
+        tripWhen.endDate = minEnd
+    }
+
+    func setExactEnd(_ date: Date) {
+        guard let start = tripWhen.startDate else { tripWhen.endDate = date; return }
+        // The range can't be shorter than the trip length chosen on the Trip Shape step.
+        tripWhen.endDate = max(date, minimumExactEnd(from: start))
+    }
+
+    /// The earliest end date that still spans `tripDays` (inclusive) from `start`.
+    private func minimumExactEnd(from start: Date) -> Date {
+        AppDate.calendar.date(byAdding: .day, value: max(tripDays - 1, 0), to: start) ?? start
+    }
+
     // Seeds an empty balanced profile first if none exists yet.
     func toggleInterest(_ interest: Interest) {
         var profile = tasteProfile ?? TasteProfile(days: tripDays, interests: [], pace: .balanced)
@@ -110,6 +160,18 @@ extension TripDraftModel {
 
     func select(base: BaseLocation) {
         baseSelection = base
+    }
+
+    // Manual mode: a neighborhood pick and a specific-address pin are mutually exclusive — choosing one
+    // clears the other so the CTA reads a single base.
+    func selectNeighborhood(_ id: String) {
+        selectedNeighborhoodID = id
+        baseSelection = nil
+    }
+
+    func selectSpecificBase(_ base: BaseLocation) {
+        baseSelection = base
+        selectedNeighborhoodID = nil
     }
 
     func setBaseMode(_ mode: BaseSelectionMode) {
@@ -155,8 +217,10 @@ extension TripDraftModel {
         destination = dto.destination
         shapeStrategy = dto.shapeStrategy
         tripDays = dto.tripDays
+        tripWhen = dto.tripWhen
         tasteProfile = dto.tasteProfile
         baseSelection = dto.baseSelection
+        selectedNeighborhoodID = dto.selectedNeighborhoodID
         baseMode = dto.baseMode
         transport = dto.transport
         currentStep = dto.currentStep

@@ -30,6 +30,8 @@ enum AppDate {
 
     static let full: DateFormatter = make(format: "EEEE, MMM d")       // e.g. "Sunday, Jun 1"
 
+    static let monthYear: DateFormatter = make(format: "LLLL yyyy")    // e.g. "June 2026"
+
     // MARK: Deterministic construction
 
     /// The only sanctioned way to construct a `Date` in seeds and tests — never reaches

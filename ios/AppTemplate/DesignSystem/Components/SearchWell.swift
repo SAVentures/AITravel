@@ -10,6 +10,7 @@ struct SearchWell: View {
     @Binding var text: String
     let placeholder: String
     let kbdHint: String?
+    let showsClearButton: Bool
 
     /* Focus owned by the CALLER: the screen drives this `@FocusState` to switch into search-results
        mode and hide the bottom CTA. The well treatment is identical focused or not. */
@@ -18,10 +19,17 @@ struct SearchWell: View {
     // A floor, not a fixed size; `@ScaledMetric` grows it with the body text so it holds at AX sizes (J-0.3).
     @ScaledMetric(relativeTo: .body) private var wellMinHeight: CGFloat = Sizing.Component.searchWellHeight
 
-    init(text: Binding<String>, placeholder: String, kbdHint: String? = "return ↵", focused: FocusState<Bool>.Binding) {
+    init(
+        text: Binding<String>,
+        placeholder: String,
+        kbdHint: String? = "return ↵",
+        showsClearButton: Bool = false,
+        focused: FocusState<Bool>.Binding
+    ) {
         self._text = text
         self.placeholder = placeholder
         self.kbdHint = kbdHint
+        self.showsClearButton = showsClearButton
         self.focused = focused
     }
 
@@ -43,8 +51,20 @@ struct SearchWell: View {
                 .focused(focused)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Shown only while empty so a typed value gets the full width.
-            if let kbdHint, text.isEmpty {
+            // A clear affordance once there's text to clear; the mono hint shows only while empty.
+            if showsClearButton, !text.isEmpty {
+                Button {
+                    text = ""
+                    focused.wrappedValue = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(Typography.body)
+                        .foregroundStyle(ColorRole.textTertiary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Clear search"))
+                .accessibilityIdentifier("searchwell.clear")
+            } else if let kbdHint, text.isEmpty {
                 Text(kbdHint)
                     .font(Typography.caption)
                     .foregroundStyle(ColorRole.textTertiary)

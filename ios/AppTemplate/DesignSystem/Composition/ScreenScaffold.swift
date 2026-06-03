@@ -20,30 +20,46 @@ struct ScreenScaffold<Content: View, Actions: View>: View {
     private let content: Content
     private let actions: Actions
 
+    private let scrollDisabled: Bool
+
     init(
         _ chrome: ScreenChrome,
         background: Color = ColorRole.surfacePage,
+        scrollDisabled: Bool = false,
         @ViewBuilder actions: () -> Actions = { EmptyView() },
         @ViewBuilder content: () -> Content
     ) {
         self.chrome = chrome
         self.background = background
+        self.scrollDisabled = scrollDisabled
         self.actions = actions()
         self.content = content()
     }
 
     var body: some View {
-        ScrollView(.vertical) {
+        container
+            .background(background)
+            .modifier(ScreenChromeModifier(chrome: chrome))
+            // The bar owns its own thumb-zone padding, so no extra spacing token is introduced here.
+            .safeAreaInset(edge: .bottom) { actions }
+    }
+
+    @ViewBuilder private var container: some View {
+        if scrollDisabled {
+            // Passive screens (no CTA to reach, no overflow) lay out statically — no ScrollView, so there's
+            // no scroll indicator and nothing drifts on appear. Same horizontal inset as the scrolling path.
             content
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, Spacing.screenInset)
+        } else {
+            ScrollView(.vertical) {
+                content
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .contentMargins(.horizontal, Spacing.screenInset, for: .scrollContent)
+            .scrollEdgeEffectStyle(.soft, for: .all)
+            .scrollContentBackground(.hidden)
         }
-        .contentMargins(.horizontal, Spacing.screenInset, for: .scrollContent)
-        .scrollEdgeEffectStyle(.soft, for: .all)
-        .scrollContentBackground(.hidden)
-        .background(background)
-        .modifier(ScreenChromeModifier(chrome: chrome))
-        // The bar owns its own thumb-zone padding, so no extra spacing token is introduced here.
-        .safeAreaInset(edge: .bottom) { actions }
     }
 }
 

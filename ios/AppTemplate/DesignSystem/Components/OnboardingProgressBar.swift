@@ -1,5 +1,5 @@
 /*
- In-content onboarding step progress: 5 neutral segments + a mono `NN / 05` counter. Ports the mockup
+ In-content onboarding step progress: 6 neutral segments + a mono `NN / 06` counter. Ports the mockup
  `.ob-progress`/`.ob-seg`/`.ob-counter` (mockups/screens/onboarding/screen-shell.css).
 
  Resting content, NOT chrome — no glass, no × (the dismiss × is a separate floating GlassCircleButton).
@@ -11,7 +11,7 @@ struct OnboardingProgressBar: View {
 
     let stepIndex: Int  // 0-based; segments at or before this index read as done/cur
 
-    var totalSteps: Int = 5
+    var totalSteps: Int = 6
 
     @ScaledMetric(relativeTo: .caption) private var segmentHeight: CGFloat = Sizing.Component.progressSegment
 

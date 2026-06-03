@@ -33,6 +33,7 @@ struct OnboardingFlowView: View {
         switch step {
         case .destination:   DestinationStepView()
         case .tripShape:     TripShapeStepView()
+        case .when:          WhenStepView()
         case .baseLocation:  BaseLocationStepView()
         case .gettingAround: GettingAroundStepView()
         case .generating:    GeneratingStepView()

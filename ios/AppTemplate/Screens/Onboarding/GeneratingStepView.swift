@@ -20,7 +20,7 @@ struct GeneratingStepView: View {
     var body: some View {
         let presenter = GeneratingStepPresenter(store: store)
 
-        ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped) {
+        ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, scrollDisabled: true) {
             VStack(alignment: .leading, spacing: Spacing.`2xl`) {
                 OnboardingProgressBar(stepIndex: OnboardingStep.generating.index)
 

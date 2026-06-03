@@ -14,6 +14,9 @@ struct BaseLocationStepView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.mapSnapshotMode) private var mapSnapshotMode   // L3 snapshots force the static map
 
+    // Ephemeral UI state: whether the specific-address map sheet is up (OPEN DECISION 5).
+    @State private var showingAddressPicker = false
+
     private var presenter: BaseLocationStepPresenter { BaseLocationStepPresenter(store: store) }
 
     // Clearance band pinning scroll content below the floating back glyph so nothing collides at rest.
@@ -23,14 +26,20 @@ struct BaseLocationStepView: View {
         ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
             OnboardingActionFloor(
                 primaryTitle: presenter.ctaTitle,
+                primaryEnabled: presenter.canContinue,
                 primaryAccessibilityID: "baselocation.cta",
                 ghostTitle: "Pick a specific hotel or address",
                 ghostAccessibilityID: "baselocation.ghost",
                 ghostAction: {
-                    // TODO: manual base picker — present the specific-hotel/address picker (OPEN DECISION 5).
+                    // A specific address is a base override, independent of the smart/manual segment.
+                    showingAddressPicker = true
                 },
                 primaryAction: {
-                    if let base = presenter.selectedBase {
+                    // A pinned address / manual neighborhood is already captured on the draft; only the
+                    // smart segment (with no override) needs to commit its recommended base on continue.
+                    if presenter.pinnedBaseName == nil,
+                       presenter.baseMode == .smart,
+                       let base = presenter.selectedBase {
                         store.onboarding?.select(base: base)
                     }
                     store.advanceOnboardingStep()
@@ -38,17 +47,22 @@ struct BaseLocationStepView: View {
             )
         }) {
             ScreenSection {
-                OnboardingProgressBar(stepIndex: 2)
+                OnboardingProgressBar(stepIndex: OnboardingStep.baseLocation.index)
 
                 hero
 
                 baseModeSelector
 
+                // A specific pinned address overrides the segment; show it above whichever body is active.
+                if let pinned = presenter.pinnedBaseName {
+                    pinnedAddressRow(pinned)
+                }
+
                 switch presenter.baseMode {
                 case .smart:
                     smartRecommendation
                 case .manual:
-                    manualStub
+                    manualPicker
                 }
             }
             .padding(.top, topChrome)
@@ -63,6 +77,12 @@ struct BaseLocationStepView: View {
             .padding(.leading, Spacing.screenInset)
             .padding(.top, Spacing.sm)
             .accessibilityIdentifier("onboarding.back")
+        }
+        .sheet(isPresented: $showingAddressPicker) {
+            ManualAddressPickerSheet(initialRegion: presenter.pickerRegion) { base in
+                store.onboarding?.selectSpecificBase(base)
+                store.onboarding?.setBaseMode(.manual)   // land on the manual segment showing the pick
+            }
         }
     }
 
@@ -153,15 +173,107 @@ struct BaseLocationStepView: View {
         }
     }
 
-    // MARK: - Manual stub (OPEN DECISION 5 — the picker is not yet built)
+    // MARK: - Manual picker
 
-    private var manualStub: some View {
-        EmptyStateView(
-            systemImage: "mappin.and.ellipse",
-            message: "Manual base picker coming soon."
-        )
-        .accessibilityIdentifier("baselocation.manualstub")
+    // Every neighborhood as a selectable row; the pick is captured on the draft (selectedNeighborhoodID).
+    // A specific hotel/address still routes through the ghost button (OPEN DECISION 5).
+    private var manualPicker: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            ForEach(presenter.manualOptions) { option in
+                manualRow(option)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityIdentifier("baselocation.manualpicker")
     }
+
+    // Tapping the pinned address reopens the map sheet to change it.
+    private func pinnedAddressRow(_ name: String) -> some View {
+        Button {
+            showingAddressPicker = true
+        } label: {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: "mappin.circle.fill")
+                    .font(Typography.title)
+                    .foregroundStyle(ColorRole.textPrimary)
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(name)
+                        .font(Typography.name)
+                        .foregroundStyle(ColorRole.textPrimary)
+                    Text("Specific address · tap to change")
+                        .font(Typography.caption)
+                        .tracking(Typography.trackEyebrowCaption)
+                        .textCase(.uppercase)
+                        .foregroundStyle(ColorRole.textTertiary)
+                }
+                Spacer(minLength: Spacing.md)
+                Image(systemName: "checkmark")
+                    .font(Typography.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(ColorRole.surfacePage)
+                    .padding(Spacing.sm)
+                    .background(ColorRole.textPrimary, in: .circle)
+            }
+            .padding(Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
+            .overlay {
+                RoundedRectangle(cornerRadius: Radius.row)
+                    .strokeBorder(ColorRole.textPrimary, lineWidth: selectionRingWidth)
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("baselocation.manual.pinned")
+        .accessibilityAddTraits([.isButton, .isSelected])
+    }
+
+    private func manualRow(_ option: BaseLocationStepPresenter.AltModel) -> some View {
+        let isSelected = presenter.selectedNeighborhoodID == option.id
+        return Button {
+            store.onboarding?.selectNeighborhood(option.id)
+        } label: {
+            HStack(spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(option.name)
+                        .font(Typography.name)
+                        .foregroundStyle(ColorRole.textPrimary)
+                    Text(option.meta)
+                        .font(Typography.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(ColorRole.textSecondary)
+                }
+                Spacer(minLength: Spacing.md)
+                // Selection = ink ring + ink check, never the accent (J-2.4) — consistent with the other steps.
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(Typography.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(ColorRole.surfacePage)
+                        .padding(Spacing.sm)
+                        .background(ColorRole.textPrimary, in: .circle)
+                }
+            }
+            .padding(Spacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: Radius.row)
+                        .strokeBorder(ColorRole.textPrimary, lineWidth: selectionRingWidth)
+                }
+            }
+            .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("baselocation.manual.\(option.id)")
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+    }
+
+    /// The ink ring thickness (mockup's 2pt ring), scaled with Dynamic Type so it holds at large sizes (J-0.3).
+    @ScaledMetric(relativeTo: .body) private var selectionRingWidth: CGFloat = Stroke.selected
 }
 
 // MARK: - Base-mode option

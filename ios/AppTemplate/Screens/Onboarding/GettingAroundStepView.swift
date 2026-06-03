@@ -165,6 +165,7 @@ struct GettingAroundStepView: View {
                     label: \.label,
                     systemImage: { $0.systemImage },
                     accessibilityIDPrefix: "transport.mostly",
+                    scrollable: true,   // icon+label modes hug their content and scroll, never wrap to 2 lines
                     onSelect: { mode in store.onboarding?.setPrimaryMode(mode) }
                 )
 
@@ -239,6 +240,7 @@ private struct AlsoOKChipRow: View {
             ForEach(modes, id: \.self) { mode in
                 FilterChip(
                     label: mode.label,
+                    systemImage: mode.systemImage,
                     isSelected: selected.contains(mode),
                     action: { onToggle(mode) }
                 )

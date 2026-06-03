@@ -14,8 +14,10 @@ nonisolated struct TripDraftDTO: Codable, Equatable, Sendable {
     var destination: City?
     var shapeStrategy: TripShapeStrategy?
     var tripDays: Int
+    var tripWhen: TripWhen
     var tasteProfile: TasteProfile?
     var baseSelection: BaseLocation?
+    var selectedNeighborhoodID: String?
     var baseMode: BaseSelectionMode
     var transport: TransportSelection
     var currentStep: OnboardingStep
@@ -28,8 +30,10 @@ nonisolated struct TripDraftDTO: Codable, Equatable, Sendable {
         destination: City?,
         shapeStrategy: TripShapeStrategy?,
         tripDays: Int,
+        tripWhen: TripWhen = .seedDefault,
         tasteProfile: TasteProfile?,
         baseSelection: BaseLocation?,
+        selectedNeighborhoodID: String? = nil,
         baseMode: BaseSelectionMode,
         transport: TransportSelection,
         currentStep: OnboardingStep,
@@ -41,8 +45,10 @@ nonisolated struct TripDraftDTO: Codable, Equatable, Sendable {
         self.destination = destination
         self.shapeStrategy = shapeStrategy
         self.tripDays = tripDays
+        self.tripWhen = tripWhen
         self.tasteProfile = tasteProfile
         self.baseSelection = baseSelection
+        self.selectedNeighborhoodID = selectedNeighborhoodID
         self.baseMode = baseMode
         self.transport = transport
         self.currentStep = currentStep
@@ -62,8 +68,10 @@ extension TripDraftModel {
             destination: destination,
             shapeStrategy: shapeStrategy,
             tripDays: tripDays,
+            tripWhen: tripWhen,
             tasteProfile: tasteProfile,
             baseSelection: baseSelection,
+            selectedNeighborhoodID: selectedNeighborhoodID,
             baseMode: baseMode,
             transport: transport,
             currentStep: currentStep,
@@ -85,8 +93,10 @@ extension TripDraftDTO {
             destination: destination,
             shapeStrategy: shapeStrategy,
             tripDays: tripDays,
+            tripWhen: tripWhen,
             tasteProfile: tasteProfile,
             baseSelection: baseSelection,
+            selectedNeighborhoodID: selectedNeighborhoodID,
             baseMode: baseMode,
             transport: transport,
             currentStep: currentStep,

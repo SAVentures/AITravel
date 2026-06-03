@@ -160,9 +160,55 @@ struct BaseLocationStepPresenter {
         }
     }
 
+    // MARK: - Manual picker (baseMode == .manual)
+
+    // Every neighborhood (recommended + weighed) as a selectable row — manual mode lets the user override
+    // the smart pick with any one of them.
+    var manualOptions: [AltModel] {
+        (draft?.context.neighborhoods ?? []).map { neighborhood in
+            AltModel(
+                id: neighborhood.id,
+                name: neighborhood.name,
+                meta: altMeta(for: neighborhood)
+            )
+        }
+    }
+
+    var selectedNeighborhoodID: String? { draft?.selectedNeighborhoodID }
+
+    private var manualSelectedName: String? {
+        guard let id = selectedNeighborhoodID else { return nil }
+        return draft?.context.neighborhoods.first { $0.id == id }?.name
+    }
+
+    // A specific hotel/address pinned via the map sheet (mutually exclusive with a neighborhood pick).
+    var pinnedBaseName: String? { draft?.baseSelection?.neighborhoodName }
+
+    // The region the address-picker sheet opens on — the destination framing from the recommended base.
+    var pickerRegion: MKCoordinateRegion { mapModel.region }
+
     // MARK: - CTA
 
-    var ctaTitle: String { "Use \(neighborhoodName) as base" }
+    var ctaTitle: String {
+        // A pinned specific address overrides whichever segment is showing.
+        if let name = pinnedBaseName { return "Use \(name) as base" }
+        switch baseMode {
+        case .smart:
+            return "Use \(neighborhoodName) as base"
+        case .manual:
+            if let name = manualSelectedName { return "Use \(name) as base" }
+            return "Pick a neighborhood"
+        }
+    }
+
+    // A pinned address always continues; otherwise smart has the recommendation, manual needs a pick.
+    var canContinue: Bool {
+        if pinnedBaseName != nil { return true }
+        switch baseMode {
+        case .smart:  return true
+        case .manual: return selectedNeighborhoodID != nil
+        }
+    }
 
     // MARK: - Constants
 

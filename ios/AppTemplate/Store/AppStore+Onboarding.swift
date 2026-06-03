@@ -27,6 +27,7 @@ extension AppStore {
     private static var uiTestStartStep: OnboardingStep? {
         switch ProcessInfo.processInfo.environment["UITEST_START_STEP"] {
         case "tripShape":     .tripShape
+        case "when":          .when
         case "baseLocation":  .baseLocation
         case "gettingAround": .gettingAround
         case "generating":    .generating

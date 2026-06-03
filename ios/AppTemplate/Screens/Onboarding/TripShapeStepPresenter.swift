@@ -118,7 +118,38 @@ struct TripShapeStepPresenter {
 
     // MARK: CTA
 
-    var ctaTitle: String { "Continue · \(tasteDays) days" }
+    /// State-driven so the CTA tracks the selection: a prompt while nothing is picked (paired with the
+    /// disabled floor), then the chosen shape once a card is selected. C's taste form is day-led.
+    var ctaTitle: String {
+        switch step02Mode {
+        case .tasteForm:
+            return "Continue · \(tasteDays) days"
+        case .shapeCards:
+            guard let selected = shapeCards.first(where: { $0.isSelected }) else {
+                return "Choose a trip shape"
+            }
+            // The fixed-days card embeds the stepper, so its CTA is day-led; the others name the shape.
+            if selected.strategy == .fixedDays {
+                return "Continue · \(tasteDays) days"
+            }
+            return "Continue · \(shortLabel(selected.eyebrow))"
+        }
+    }
+
+    /// A/B require an explicit shape pick before advancing (no card is preselected); C's taste form is
+    /// valid from its defaults, so it's always continuable.
+    var canContinue: Bool {
+        switch step02Mode {
+        case .shapeCards: selectedStrategy != nil
+        case .tasteForm:  true
+        }
+    }
+
+    /// The card eyebrow is "A · Fixed days" / "B · Cover the bucket" — drop the "X · " index prefix so the
+    /// CTA reads the shape's name, not its slot letter.
+    private func shortLabel(_ eyebrow: String) -> String {
+        eyebrow.components(separatedBy: " · ").last ?? eyebrow
+    }
 
     // MARK: - Private mapping helpers
 
