@@ -246,6 +246,11 @@ search bar and recent pills shipped dead exactly this way.)
   sink, or it must not look tappable.
 - The sink is a model method / store command / route (§4) — never inline logic in the view.
 
+**An affordance whose sink is a screen that doesn't exist yet is a *new story*, not part of this one.**
+Wire the navigation (the route), but do not invent the destination in the same task. If the docs/mockup
+specify that screen, schedule it as its own screen task and build it per the docs; if they don't specify
+it, **stop and surface it for a decision** rather than guessing what the new screen should be.
+
 Gates: `swift-screen-builder` produces the inventory and wires each element; `fidelity-reviewer` checks
 every mockup affordance maps to a real action; the XCUITest layer proves the wiring at runtime (a snapshot
 proves appearance, not wiring — `07-testing.md §7`).

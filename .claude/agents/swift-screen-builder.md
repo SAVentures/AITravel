@@ -39,6 +39,9 @@ identifiers, the **exemplar to mirror**, and the **Done-when acceptance criteria
     `TextField` hits a sink; an empty closure, a read-only field bound to nothing, or a tappable-looking
     `HStack` with no gesture is a **defect**. (This is the search-bar/recent-pills miss; it's invisible to
     the build and the snapshot — only the inventory + an XCUITest catch it.)
+  - **An affordance that opens a screen you weren't asked to build is a separate story — never invent it.**
+    Wire the route, but don't author the destination here. If the contract/docs specify it, **report it as
+    a needed follow-up screen task**; if they don't, **stop and flag it for a decision** (don't guess).
 - **`ios/AppTemplate/Screens/<Name>/<Name>Presenter.swift`** — a **stateless value type** over
   `(store, …ids)` that returns data/view-models (never `View`s). All screen-specific derivation lives
   here (keep it cheap — rebuilt each `body` pass). A trivial screen needs no presenter.

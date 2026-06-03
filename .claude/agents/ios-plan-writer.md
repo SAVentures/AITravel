@@ -48,6 +48,11 @@ barrier explicit: Phase 0 design-system tasks (tokens → modifiers → componen
 complete + design-reviewed + snapshot-locked **before any Phase 2 screen task is dispatched**. Then
 models+networking, then screens (each → consistency + fidelity review), then tests, then the gate.
 
+**One screen = one task.** An affordance that opens another screen (the interactivity inventory,
+`06-screens.md §4.1`) spawns its **own** screen task — never fold an invented destination into the
+triggering screen's task. If that destination isn't specified by the docs/mockup, list it as an **open
+decision** for the user rather than scoping a guessed screen.
+
 ### First feature → emit a "Wave 0: bootstrap the skeleton" before the feature waves
 
 If `ios/AppTemplate/Networking/` or `Store/` is absent (`Glob`/`ls`), this is the first feature — the
