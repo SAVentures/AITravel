@@ -48,6 +48,9 @@ enum Motion {
     /// Full-screen / cover transitions — the slowest rung.
     static let slow: Double = Primitive.durSlow
 
+    /// The one continuous AI sweep (04-motion §4).
+    static let think: Double = Primitive.durThink
+
     // MARK: - Easings (the one personality · §1, §3)
 
     /// The house curve — a critically-damped ease-out, app-wide (§1; `--ease-standard`). Use for

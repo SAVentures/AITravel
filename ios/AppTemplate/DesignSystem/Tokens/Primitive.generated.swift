@@ -65,6 +65,7 @@ enum Primitive {
     static let rRow: CGFloat = 12
     static let rCard: CGFloat = 16
     static let rPill: CGFloat = 999
+    static let strokeSelected: CGFloat = 2
 
     static let weightRegular: Double = 400
     static let weightMedium: Double = 500
@@ -74,4 +75,5 @@ enum Primitive {
     static let durStandard: Double = 0.22
     static let durSheet: Double = 0.32
     static let durSlow: Double = 0.42
+    static let durThink: Double = 1.7
 }
