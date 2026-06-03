@@ -115,8 +115,10 @@ extension View {
         // Step 1 — register fonts (idempotent; safe to call per-snapshot).
         FontRegistry.registerEmbeddedFonts()
 
-        // Step 2 — settle any entrance / continuous motion to rest before capture.
+        // Step 2 — settle any entrance / continuous motion to rest before capture, and force the
+        // deterministic MapKit placeholder (no network tiles) for any screen with a map (07-testing §6.4).
         return self
             .environment(\.disablesOneShotMotion, true)
+            .environment(\.mapSnapshotMode, true)
     }
 }

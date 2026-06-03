@@ -12,6 +12,7 @@ import SwiftUI
 struct BaseLocationStepView: View {
 
     @Environment(AppStore.self) private var store
+    @Environment(\.mapSnapshotMode) private var mapSnapshotMode   // L3 snapshots force the static map
 
     private var presenter: BaseLocationStepPresenter { BaseLocationStepPresenter(store: store) }
 
@@ -105,7 +106,7 @@ struct BaseLocationStepView: View {
         VStack(alignment: .leading, spacing: Spacing.sectionGap) {
 
             VStack(alignment: .leading, spacing: Spacing.cardInset) {
-                BaseMapCard(model: presenter.mapModel)
+                BaseMapCard(model: presenter.mapModel, snapshotMode: mapSnapshotMode)
 
                 VStack(alignment: .leading, spacing: Spacing.cardInset) {
                     AIVoice(eyebrow: presenter.whyEyebrow, line: presenter.whyVoice)

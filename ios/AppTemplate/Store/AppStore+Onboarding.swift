@@ -14,10 +14,24 @@ extension AppStore {
         onboardingLoadState = .loading
         do {
             let dto = try await api.send(GetOnboardingContextRequest())
-            setOnboarding(dto.toDomain())
+            let draft = dto.toDomain()
+            // Test seam: UITEST_START_STEP lets a UI test launch directly into any step (no effect unset).
+            if let step = Self.uiTestStartStep { draft.currentStep = step }
+            setOnboarding(draft)
             onboardingLoadState = .loaded
         } catch {
             onboardingLoadState = .failed(String(describing: error))
+        }
+    }
+
+    private static var uiTestStartStep: OnboardingStep? {
+        switch ProcessInfo.processInfo.environment["UITEST_START_STEP"] {
+        case "tripShape":     .tripShape
+        case "baseLocation":  .baseLocation
+        case "gettingAround": .gettingAround
+        case "generating":    .generating
+        case "destination":   .destination
+        default:              nil
         }
     }
 
