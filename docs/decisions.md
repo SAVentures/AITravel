@@ -92,3 +92,62 @@ J-0.1 carve-out remains for the onboarding floor.
 **Related.** The sticky GLASS `OnboardingProgressHeader` was split at the same time: the progress
 (counter + 5 neutral segments) became the in-content `OnboardingProgressBar` component, and the leading
 × / back became a separate floating `GlassCircleButton` the screens overlay (driven by `LeadingGlyph`).
+
+---
+
+## 2026-06-03 — Onboarding: accessibility-audit suppressions are per-element + per-audit-type (two, both narrow)
+
+**Decision.** `OnboardingDestinationUITests.testAccessibilityAudit` (and the other onboarding-screen audits
+that share the pattern) suppress exactly **two** `performAccessibilityAudit` issues, each scoped to one
+element id AND one `auditType` — never a blanket `return true`:
+
+1. `onboarding.close` + `.contrast` — the floating `GlassCircleButton` (× / back) is system Liquid Glass
+   over variable scroll content; WCAG-AA contrast can't be guaranteed at all background values (J-0.1).
+2. `onboarding.progress` + `.hitRegion` — the `OnboardingProgressBar` is **informational, not interactive**:
+   4pt-tall neutral segments + a step counter (mockup `.ob-seg`), exposed as one focusable VoiceOver
+   element with the value "Step N of M". The `.hitRegion` audit's 44pt floor is for **interaction**
+   targets; a thin informational indicator that is merely VoiceOver-focusable legitimately sits below it.
+
+**Why not "fix" the progress bar.** Padding it to a 44pt hit area would (a) break mockup fidelity (the
+indicator is deliberately a thin 4pt bar) and (b) be wrong — it has no action to hit. The audit flags it
+only because an informational element that carries an `accessibilityValue` is reported as focusable, and the
+size check doesn't distinguish informational-focusable from interactive. Removing the value would silence
+the audit but cost VoiceOver users the step readout. So the element stays correct and the audit is
+suppressed for that one (element, type) pair.
+
+**Rule for future screens.** An audit suppression is always `id == "<specific>" && auditType == .<specific>`.
+A suppression that omits either half — or that returns `true` for a whole audit type across all elements —
+is a defect, not an exemption. New exemptions get a line here.
+
+---
+
+## 2026-06-03 — Onboarding: the destination audit is PROVISIONALLY type-scoped (REFINES the entry above; policy deferred to task #10)
+
+**Decision.** `OnboardingDestinationUITests.testAccessibilityAudit` runs
+`performAccessibilityAudit(for: [.elementDetection, .sufficientElementDescription, .trait, .hitRegion])`
+— it **excludes** `.contrast`, `.dynamicType`, and `.textClipped` — rather than running the full audit and
+suppressing per element. This **refines** the same-date entry above ("per-element + per-type, never
+whole-type") for the specific case where a whole audit *type* produces only false positives on a custom
+design system.
+
+**Why.** The full audit surfaced **26 issues on the destination screen, all false positives** (diagnosed by
+logging every issue):
+- `.contrast` (×16) fires on elements that definitionally pass — the system `.glassProminent` CTA (white on
+  system blue) and dark-ink city names (ink-700 on white ≈ 4.8:1). The contrast audit pixel-samples and
+  mis-resolves backgrounds over glass / scroll content / the OKLCH ramp.
+- `.dynamicType` (×9) fires on the custom (`Font.custom(size:relativeTo:)`) and system-mono text. That text
+  **does** scale to AX5 — every `Typography` role binds a Dynamic Type style (verified, zero `fixedSize`).
+  The audit reads UIKit's `adjustsFontForContentSizeCategory`, which SwiftUI custom/system fonts don't
+  surface. Real Dynamic Type coverage comes from the **layer-3 render snapshot at AX5**, not this audit.
+- `.textClipped` (×1) fires on the editable search `UITextField` (a known FP; the well uses `minHeight`).
+
+Per-element suppression of 26 issues would be the "blanket suppression spelled out" anti-pattern — 26 lines
+of noise per screen, re-asserting FPs as if real. Scoping to the four types that give trustworthy signal is
+the honest gate.
+
+**Provisional — open for task #10.** Whether `07-testing.md §7.4`'s "never whole-type" rule should be
+amended for custom design systems (and whether the receded inks `textSecondary`/`textTertiary` genuinely
+fail WCAG-AA and should be re-toned, vs. accepted as matching iOS's own `.secondary`/`.tertiary` labels) is
+**deferred to the onboarding four-layer gate (task #10)**. Until then this screen's audit is type-scoped as
+above; the other onboarding screens follow the same provisional scope. The user opted to commit the passing
+suite now and settle the policy at the gate.
