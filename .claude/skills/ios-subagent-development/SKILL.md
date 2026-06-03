@@ -51,6 +51,14 @@ the freeze passes (`foundation-freeze` skill). It's the structural fix for the p
   the wave finish before the next.
 - Give each agent its task's **contract** (from the plan) — the interface, the exemplar to mirror, the
   Done-when. Agents don't invent; if one reports a missing token/symbol/mockup, resolve it and re-dispatch.
+- **Worktree-ABSOLUTE paths, and verify every wave.** A `cd <worktree>` in the prompt is **not** enough —
+  subagents' Read/Edit can resolve a bare or main-absolute path to the **main checkout** and silently
+  leak edits there (this has bitten real waves). Give every file as a full
+  `.claude/worktrees/<name>/…` path and tell the agent to confirm each edit landed under the worktree.
+  After each wave: grep the **worktree** for the expected change **and** `git status` the **main**
+  checkout (it must stay clean). If edits leaked, `cp` them into the worktree and `git checkout --`
+  revert main. Re-verify after *any* agent that may run codegen/git — even a read-only reviewer once
+  reverted `Primitive.generated.swift`; re-run the generator and rebuild before trusting state.
 
 ## You own every build and the index
 
