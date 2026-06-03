@@ -37,6 +37,14 @@ enum Primitive {
     static let day3 = Color(.sRGB, red: 0.3123, green: 0.5122, blue: 0.6313, opacity: 1.0000)
     static let day4 = Color(.sRGB, red: 0.5717, green: 0.4299, blue: 0.6160, opacity: 1.0000)
 
+    static let typeTitleLargeSize: CGFloat = 34
+    static let typeTitleSize: CGFloat = 22
+    static let typeNameSize: CGFloat = 17
+    static let typeBodySize: CGFloat = 17
+    static let typeCalloutSize: CGFloat = 16
+    static let typeSubheadSize: CGFloat = 15
+    static let typeFootnoteSize: CGFloat = 13
+    static let typeCaptionSize: CGFloat = 11
     static let s1: CGFloat = 4
     static let s2: CGFloat = 8
     static let s3: CGFloat = 16
@@ -57,6 +65,10 @@ enum Primitive {
     static let rCard: CGFloat = 16
     static let rPill: CGFloat = 999
 
+    static let weightRegular: Double = 400
+    static let weightMedium: Double = 500
+    static let weightSemibold: Double = 600
+    static let weightBold: Double = 700
     static let durTap: Double = 0.1
     static let durStandard: Double = 0.22
     static let durSheet: Double = 0.32

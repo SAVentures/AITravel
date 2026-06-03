@@ -74,10 +74,30 @@
   --day-3: oklch(0.585 0.072 236);  /* slate blue                            */
   --day-4: oklch(0.590 0.082 318);  /* muted violet                          */
 
-  /* ── TYPE families ─ one role each ────────────────────────────────────────*/
+  /* ── TYPE families ─ one role each (01-typography T-1) ────────────────────*/
   --font-display: "Schibsted Grotesk", -apple-system, system-ui, sans-serif;
   --font-ui: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* ── TYPE weights ─ named rungs · reach for weight before size (T-2.1) ────*/
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ── TYPE scale ─ semantic roles · the contract (01-typography T-2/T-3) ────
+     Each role binds to a Dynamic Type text style (noted) — the size is the @Large
+     reference, used as `Font.custom(family, size:, relativeTo: <style>)` for the
+     custom display/UI faces so they still scale (T-6.1). A screen spends ≤4 roles;
+     hierarchy is weight-before-size — name/body/headline all sit at 17 (T-2.1). */
+  --type-title-large-size:   34px;  --type-title-large-weight: var(--weight-bold);      /* display · .largeTitle  */
+  --type-title-size:         22px;  --type-title-weight:       var(--weight-semibold);  /* display · .title2      */
+  --type-name-size:          17px;  --type-name-weight:        var(--weight-semibold);  /* display · .headline    */
+  --type-body-size:          17px;  --type-body-weight:        var(--weight-regular);   /* ui · .body             */
+  --type-callout-size:       16px;  --type-callout-weight:     var(--weight-regular);   /* ui · .callout          */
+  --type-subhead-size:       15px;  --type-subhead-weight:     var(--weight-regular);   /* ui · .subheadline      */
+  --type-footnote-size:      13px;  --type-footnote-weight:    var(--weight-regular);   /* mono · .footnote       */
+  --type-caption-size:       11px;  --type-caption-weight:     var(--weight-regular);   /* mono · .caption1/.caption2 */
 
   /* ── SPACING ─ 8pt spine · 4pt sub-step ───────────────────────────────────*/
   --s-1: 4px;  --s-2: 8px;  --s-3: 16px; --s-4: 24px;
@@ -115,7 +135,9 @@
   --dur-sheet:    320ms;  /* sheet present        */
   --dur-slow:     420ms;  /* full-screen cover    */
 
-  /* ── TRACKING ─ loose only on short mono eyebrows ────────────────────────*/
-  --track-eyebrow: 0.085em;
-  --track-tight:  -0.015em;
+  /* ── TRACKING ─ size-specific; loose only on short mono caps (T-5) ───────*/
+  --track-display:  -0.02em;   /* titleLarge hero — tighten the big display    */
+  --track-tight:   -0.015em;   /* title / dense display                        */
+  --track-caps:     0.06em;    /* mono caption caps (DAY 2 · DEFINITIVE)       */
+  --track-eyebrow:  0.085em;   /* short mono eyebrow — the loosest, caps only  */
 }

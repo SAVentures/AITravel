@@ -5,6 +5,8 @@ import SwiftUI
 /// See ios/docs/engineering/01-architecture.md §4.
 @main
 struct AppTemplateApp: App {
+    init() { FontRegistry.registerEmbeddedFonts() }   // embed + register the custom faces (01-arch §4)
+
     var body: some Scene {
         WindowGroup {
             RootView()
