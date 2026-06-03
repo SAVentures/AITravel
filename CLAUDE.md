@@ -67,7 +67,7 @@ no screen is scaffolded until the design system is locked.
 
 | Prior failure | Gate | Where |
 |---|---|---|
-| Foundation built too fast | **Foundation-freeze** — design system locked + design-reviewed before any screen | `engineering/05 §10` |
+| Foundation built too fast / token model incomplete | **Foundation-freeze** — design system locked + design-reviewed before any screen; the token model must be *complete* (every value-kind has a home, incl. component **dimensions** via `Grid`/`Sizing` — not just gaps/color/type) | `engineering/05 §10`–`§10.1` |
 | Screens inconsistent with each other | **Composition primitives** — every screen composes `ScreenScaffold`/`ScreenSection`/… | `engineering/06 §2` |
 | Mockup → Swift drift | **Fidelity-reviewer** — each screen names its mockup, is reviewed against it, then snapshot-locked | `engineering/06 §9` |
 | Scaffolder slop | **Coverage gate + design-reviewer + craft criteria + slop scan** — "green build ≠ done" | `engineering/07 §9`, `05 §11`, `design-docs/08-slop.md` |

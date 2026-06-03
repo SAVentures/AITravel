@@ -273,6 +273,26 @@ It exists because the prior app built screens on a half-formed system and inheri
 everywhere. Freezing the foundation first means every screen ports onto something solid and consistent —
 "build it right the first time, and it's locked."
 
+### 10.1 The freeze checks the model is COMPLETE — not just that tokens exist
+
+"Reviewed + snapshot-locked" is necessary, not sufficient. The freeze must confirm **every value-kind a
+component will reach for has a defined home** — or a screen hits a wall mid-build and a literal/bespoke
+primitive creeps in. Before freezing, verify:
+
+| Value kind | Home |
+|---|---|
+| gaps / padding | `Spacing` t-shirt scale (`xs…4xl`) + named layout roles |
+| color · type · radius · stroke · elevation · motion | their semantic tiers |
+| **component dimensions** (width / height / diameter) | **`Grid.x(n)` via `Sizing`** — a bounded 4pt multiple, never a bespoke `--size-*` primitive |
+
+> **Prior failure (why §10.1 exists).** A foundation was reviewed and "frozen" with a *sparse, gap-only*
+> spacing ladder and **no dimension story** — and it passed the gate. Then, building components, every
+> fixed size (a map well, a card min-width) had nowhere to live, so per-value `--size-*` primitives were
+> minted ad-hoc, duplicating the scale and polluting the primitive tier — caught only *during component
+> construction*. **Stress-test the model against the hardest real components before freezing:** "what
+> gaps and dimensions will they need, and does each already have a home?" A model that can't size a
+> component without inventing a primitive is not frozen-ready.
+
 ---
 
 ## 11. Beauty is craft, not tokens — the criteria the gate enforces
