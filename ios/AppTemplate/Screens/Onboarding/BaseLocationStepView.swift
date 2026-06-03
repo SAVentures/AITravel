@@ -184,7 +184,6 @@ struct BaseLocationStepView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityIdentifier("baselocation.manualpicker")
     }
 
     // Tapping the pinned address reopens the map sheet to change it.
