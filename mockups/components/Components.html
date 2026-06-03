@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Components</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-ui);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 72px 40px 120px; }
+
+/* atoms */
+.eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.disp { font-family: var(--font-display); }
+.ink900 { color: var(--ink-900); }
+
+/* masthead */
+.mast { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 32px;
+  padding-bottom: var(--gap-section); }
+.mast .crumbs { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.mast .crumbs .dot { width: 3px; height: 3px; border-radius: 999px; background: var(--ink-300); }
+.mast h1 { font-family: var(--font-display); font-weight: 700; font-size: 58px;
+  line-height: 0.98; letter-spacing: -0.03em; margin: 0 0 14px; color: var(--ink-900); }
+.mast h1 .v { color: var(--accent-600); }
+.mast .lede { font-size: 16px; line-height: 1.5; color: var(--text-secondary); max-width: 52ch; text-wrap: pretty; }
+.mast .meta { text-align: right; line-height: 1.9; }
+.mast .meta .mono { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.02em; }
+.mast .meta b { color: var(--text-secondary); font-weight: 600; }
+
+/* section scaffold */
+.sec { margin-top: 84px; }
+.sec > .head { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: baseline;
+  padding-bottom: 14px; margin-bottom: var(--gap-section); }
+.sec > .head .num { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.06em; }
+.sec > .head .ttl { font-family: var(--font-display); font-weight: 600; font-size: 28px; letter-spacing: -0.02em; color: var(--ink-900); }
+.sec > .head .note { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--text-tertiary); }
+
+.cap { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); max-width: 72ch; text-wrap: pretty; margin: 0 0 22px; }
+.cap b { color: var(--ink-800); font-weight: 600; }
+.cap code { font-family: var(--font-mono); font-size: 0.92em; color: var(--ink-700); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.grid2.wide { gap: 44px; }
+
+/* a demo bed — where a component sits for display */
+.bed { background: var(--surface-grouped); border-radius: var(--r-card); padding: 28px;
+  box-shadow: var(--shadow-rest); }
+.bed.tight { padding: 20px; }
+.row-wrap { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.demo-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 14px; }
+
+/* ── BUTTONS ───────────────────────────────────────────────────────────── */
+.btn { font-family: var(--font-ui); font-size: 15px; font-weight: 600; border: 0; cursor: pointer; white-space: nowrap;
+  border-radius: var(--r-pill); padding: 12px 22px; display: inline-flex; align-items: center; gap: 8px;
+  letter-spacing: -0.01em; }
+.btn.primary { background: var(--action-primary); color: var(--text-on-accent); }
+.btn.secondary { background: var(--paper-200); color: var(--ink-800); }
+.btn.ghost { background: transparent; color: var(--ink-700); padding: 12px 6px; }
+.btn.destructive { background: color-mix(in oklch, var(--destructive) 9%, transparent); color: var(--destructive); }
+.btn.disabled { background: var(--fill-tertiary); color: var(--text-tertiary); cursor: not-allowed; }
+.btn .ar { width: 15px; height: 15px; }
+.spin { width: 15px; height: 15px; border-radius: 999px; border: 2px solid var(--on-accent);
+  border-right-color: transparent; display: inline-block; animation: sp 0.7s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+
+/* glass circle bar buttons */
+.glassbar { display: flex; gap: 12px; padding: 14px; border-radius: var(--r-pill);
+  background: oklch(0.99 0 0 / 0.55); backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4); box-shadow: var(--shadow-glass); width: max-content; }
+.gbtn { width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+  color: var(--ink-700); background: oklch(1 0 0 / 0.4); }
+.gbtn.sel { color: var(--accent-600); }
+.gbtn svg { width: 20px; height: 20px; }
+
+/* a faux photo strip so glass translucency reads */
+.glass-stage { position: relative; border-radius: var(--r-card); overflow: hidden; padding: 26px;
+  background:
+    radial-gradient(60% 90% at 20% 10%, var(--paper-300), transparent 70%),
+    repeating-linear-gradient(115deg, var(--paper-100) 0 13px, var(--paper-200) 13px 26px);
+  display: flex; align-items: center; justify-content: center; min-height: 120px; }
+
+/* ── CARDS — definitive vs fuzzy ───────────────────────────────────────── */
+.pcard { background: var(--surface-grouped); border-radius: var(--r-card); padding: 14px;
+  box-shadow: var(--shadow-rest); width: 100%; }
+.pcard .photo { height: 116px; border-radius: 9px; background: var(--paper-200); display: flex;
+  align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--text-tertiary);
+  margin-bottom: 13px; }
+.pcard .photo .mono { font-size: 9.5px; letter-spacing: 0.08em; }
+.pcard .photo svg { width: 26px; height: 26px; opacity: 0.5; }
+.pcard .nm { font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.015em;
+  color: var(--ink-900); margin-bottom: 5px; }
+.pcard .meta { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em; color: var(--ink-600); }
+.pcard .tags { display: flex; gap: 6px; margin-top: 12px; }
+
+.pcard.fuzzy { background: var(--paper-100); box-shadow: none; }
+.pcard.fuzzy .photo { background: var(--paper-200); }
+.pcard.fuzzy .photo .ring { width: 20px; height: 20px; border-radius: 999px; background: var(--ink-200); }
+.pcard.fuzzy .nm { font-style: italic; font-weight: 500; color: var(--ink-600); }
+.pcard.fuzzy .meta { color: var(--ink-400); }
+.pcard .flexmark { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono);
+  font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-500); margin-top: 10px; }
+.pcard .flexmark .r { width: 8px; height: 8px; border-radius: 999px; background: var(--ink-300); }
+
+.tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--ink-600); background: var(--fill-tertiary); border-radius: var(--r-tag); padding: 4px 8px; }
+
+/* ── ROWS ──────────────────────────────────────────────────────────────── */
+.rows { background: var(--surface-grouped); border-radius: var(--r-card); box-shadow: var(--shadow-rest);
+  overflow: hidden; }
+.lrow { display: grid; grid-template-columns: 30px 1fr auto; gap: 13px; align-items: center;
+  padding: 14px 16px; min-height: 56px; }
+.lrow .time { font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); text-align: right; line-height: 1.2; }
+.lrow .pri { font-size: 15px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
+.lrow .sec2 { font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); margin-top: 2px; }
+.lrow .acc { color: var(--ink-300); display: flex; align-items: center; }
+.lrow .acc svg { width: 18px; height: 18px; }
+.lrow .inline-act { font-size: 13px; font-weight: 600; color: var(--accent-600); }
+.lrow .toggle { width: 40px; height: 24px; border-radius: 999px; background: var(--ink-900); position: relative; }
+.lrow .toggle.off { background: var(--fill-secondary); }
+.lrow .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+  border-radius: 999px; background: var(--paper-0); box-shadow: 0 1px 2px oklch(0 0 0 / 0.2); transition: left .2s; }
+.lrow .toggle.off::after { left: 2px; } .lrow .toggle:not(.off)::after { left: 18px; }
+.lrow .check { color: var(--accent-600); }
+.lrow.done .pri { color: var(--ink-400); } .lrow.done .time { color: var(--ink-300); }
+.lrow .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--ink-900); }
+.lrow .dot.now { background: var(--state-now); box-shadow: 0 0 0 4px color-mix(in oklch, var(--state-now) 16%, transparent); }
+.lrow .dot.done { background: var(--paper-300); }
+
+/* timeline with transit connectors */
+.tl { position: relative; background: var(--surface-grouped); border-radius: var(--r-card); box-shadow: var(--shadow-rest); padding: 6px 16px; }
+.tl::before { content: ""; position: absolute; left: 30px; top: 30px; bottom: 30px; width: 1.5px; background: var(--ink-200); }
+.tlstop { position: relative; padding: 13px 0 13px 38px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.tlstop .d { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px;
+  border-radius: 999px; background: var(--ink-800); box-shadow: 0 0 0 4px var(--surface-grouped); }
+.tlstop .d.now { background: var(--state-now); box-shadow: 0 0 0 4px var(--surface-grouped), 0 0 0 7px color-mix(in oklch, var(--state-now) 16%, transparent); }
+.tlstop .d.fuzzy { background: var(--paper-300); }
+.tlstop .pri { font-size: 15px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
+.tlstop .pri.it { font-style: italic; font-weight: 500; color: var(--ink-600); }
+.tlstop .sec2 { font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); margin-top: 2px; }
+.tlstop .t { font-family: var(--font-mono); font-size: 11px; color: var(--ink-500); }
+.tlleg { position: relative; padding: 2px 0 2px 38px; }
+.leg { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--ink-500); flex-wrap: wrap; }
+.leg svg { width: 14px; height: 14px; color: var(--ink-600); flex: none; }
+.leg .arr { color: var(--ink-300); }
+.modes { display: inline-flex; gap: 6px; align-items: center; }
+.modes .ml { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-400); margin-right: 2px; }
+.mode { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10px;
+  padding: 4px 9px; border-radius: 999px; background: var(--paper-200); color: var(--ink-600); }
+.mode svg { width: 12px; height: 12px; }
+.mode.sel { background: var(--ink-900); color: var(--paper-0); box-shadow: none; }
+
+/* ── CHIPS ─────────────────────────────────────────────────────────────── */
+.chip { font-family: var(--font-ui); font-size: 13px; font-weight: 600; border-radius: var(--r-pill);
+  padding: 8px 15px; background: var(--paper-200); color: var(--ink-700);
+  display: inline-flex; align-items: center; gap: 7px; }
+.chip.sel { background: var(--ink-900); color: var(--paper-0); }
+.chip svg { width: 14px; height: 14px; }
+.hint { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-600);
+  background: var(--fill-quaternary); border-radius: var(--r-pill); padding: 8px 14px; }
+.hint .mono { font-size: 11px; color: var(--ink-700); }
+.hint svg { width: 14px; height: 14px; color: var(--ink-500); }
+
+/* ── AI SURFACE ────────────────────────────────────────────────────────── */
+.ai { background: var(--fill-quaternary); border-radius: var(--r-row); padding: 16px 18px; }
+.ai .lab { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 10px; }
+.ai .lab .mk { width: 7px; height: 7px; border-radius: 999px; background: var(--accent-500); }
+.ai .line { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 19px;
+  line-height: 1.32; letter-spacing: -0.01em; color: var(--ink-800); text-wrap: pretty; }
+
+/* ── BARS ──────────────────────────────────────────────────────────────── */
+.navbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 8px;
+  border-radius: var(--r-card); background: oklch(0.99 0 0 / 0.6); backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4); box-shadow: var(--shadow-glass); }
+.tabsearch { width: 52px; height: 52px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+  color: var(--ink-600); background: oklch(0.99 0 0 / 0.6); backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4); box-shadow: var(--shadow-glass); }
+.tabsearch svg { width: 22px; height: 22px; }
+
+.navbar .back { display: flex; align-items: center; gap: 2px; color: var(--accent-600); font-size: 16px; font-weight: 500; padding: 6px 6px; }
+.navbar .back svg { width: 17px; height: 17px; }
+.navbar .ttl { font-size: 17px; font-weight: 600; color: var(--ink-900); white-space: nowrap; }
+.navbar .more { width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: var(--ink-600); }
+
+.tabbar { display: flex; gap: 4px; padding: 9px 12px; border-radius: var(--r-pill); width: max-content;
+  background: oklch(0.99 0 0 / 0.6); backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4); box-shadow: var(--shadow-glass); }
+.tabbar .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 17px;
+  color: var(--ink-400); font-family: var(--font-ui); font-size: 10.5px; font-weight: 500; letter-spacing: 0; }
+.tabbar .tab svg { width: 22px; height: 22px; }
+.tabbar .tab.sel { color: var(--accent-600); }
+
+/* ── SHEET ─────────────────────────────────────────────────────────────── */
+.phone { width: 264px; border-radius: 38px; background: var(--ink-900); padding: 7px;
+  box-shadow: var(--shadow-hero); }
+.phone .screen { border-radius: 31px; background: var(--surface-page); height: 420px; overflow: hidden; position: relative; }
+.phone .behind { padding: 18px 16px; filter: brightness(0.97); }
+.phone .behind .h { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--ink-900); margin-bottom: 12px; }
+.phone .behind .ph { height: 12px; border-radius: 999px; background: var(--paper-200); margin-bottom: 9px; }
+.phone .behind .ph.s { width: 60%; }
+.phone .scrim { position: absolute; inset: 0; background: oklch(0.2 0 0 / 0.22); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface-page);
+  border-radius: 22px 22px 0 0; padding: 8px 18px 22px; box-shadow: 0 -8px 30px oklch(0.2 0 0 / 0.16); }
+.sheet .grab { width: 36px; height: 5px; border-radius: 999px; background: var(--ink-200); margin: 0 auto 14px; }
+.sheet .shead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.sheet .shead .c { font-size: 13px; color: var(--ink-500); font-weight: 600; }
+.sheet .shead .t { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--ink-900); }
+.sheet .shead .d { font-size: 13px; color: var(--accent-600); font-weight: 600; }
+.sheet .scs { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── PINS ──────────────────────────────────────────────────────────────── */
+.mapbed { border-radius: var(--r-card); min-height: 150px; position: relative; overflow: hidden;
+  background: repeating-linear-gradient(0deg, var(--paper-100) 0 22px, var(--paper-50) 22px 44px),
+              repeating-linear-gradient(90deg, var(--paper-100) 0 22px, transparent 22px 44px);
+  display: flex; align-items: center; justify-content: space-around; padding: 0 20px; }
+.pin { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+.pin .mk { width: 26px; height: 26px; border-radius: 999px 999px 999px 2px; transform: rotate(45deg);
+  display: flex; align-items: center; justify-content: center; }
+.pin .mk span { transform: rotate(-45deg); font-family: var(--font-mono); font-size: 11px; font-weight: 600; }
+.pin.def .mk { background: var(--ink-900); } .pin.def .mk span { color: var(--paper-0); }
+.pin.fuzzy .mk { background: var(--paper-300); }
+.pin.fuzzy .mk span { color: var(--ink-500); transform: rotate(-45deg); font-style: italic; }
+.pin.now .mk { background: var(--state-now); box-shadow: 0 0 0 6px color-mix(in oklch, var(--state-now) 16%, transparent); }
+.pin.now .mk span { color: var(--on-accent); }
+.pin .pl { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-500); }
+
+/* ── EMPTY / LOADING ───────────────────────────────────────────────────── */
+.empty { background: var(--surface-grouped); border-radius: var(--r-card); box-shadow: var(--shadow-rest);
+  padding: 40px 28px; text-align: center; }
+.empty .g { width: 44px; height: 44px; margin: 0 auto 16px; color: var(--ink-300); }
+.empty .g svg { width: 44px; height: 44px; }
+.empty .ln { font-family: var(--font-display); font-weight: 500; font-size: 17px; color: var(--ink-700); margin-bottom: 16px; }
+.skel { background: var(--surface-grouped); border-radius: var(--r-card); box-shadow: var(--shadow-rest); overflow: hidden; }
+.skrow { display: grid; grid-template-columns: 44px 1fr; gap: 13px; padding: 14px 16px; align-items: center; }
+.skel .b { background: var(--paper-200); border-radius: 6px; height: 12px; position: relative; overflow: hidden; }
+.skel .b.sq { width: 44px; height: 44px; border-radius: 9px; }
+.skel .b.w1 { width: 55%; } .skel .b.w2 { width: 80%; height: 9px; margin-top: 7px; }
+.skel .b::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.6), transparent); animation: shim 1.3s infinite; }
+@keyframes shim { to { transform: translateX(100%); } }
+
+/* states grid */
+.states { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+.state .demo-label { margin-bottom: 10px; }
+
+.foot { margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--ink-800);
+  display: flex; justify-content: space-between; align-items: baseline; }
+.foot span { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-tertiary); }
+
+@media (max-width: 820px) {
+  .wrap { padding: 48px 22px 80px; }
+  .mast { grid-template-columns: 1fr; } .mast .meta { text-align: left; }
+  .mast h1 { font-size: 42px; }
+  .grid2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div>
+      <div class="crumbs">
+        <span class="eyebrow">AI Travel</span><span class="dot"></span>
+        <span class="eyebrow">Components</span><span class="dot"></span>
+        <span class="eyebrow" style="color: var(--accent-600);">Gate 3 · v2.0</span>
+      </div>
+      <h1>How the tokens <span class="v">compose</span>.</h1>
+      <p class="lede">Component anatomy on the v2 foundations. Buttons, cards, rows, chips, the AI voice, bars, sheets, and map pins — each shown with the states it must render. The product's one idea runs through all of it: a <b>definitive</b> thing looks solid and certain; a <b>fuzzy</b> one looks soft and open.</p>
+    </div>
+    <div class="meta">
+      <div class="mono"><b>Schibsted · Hanken</b></div>
+      <div class="mono">Soft mono · one blue</div>
+      <div class="mono">Glass = chrome only</div>
+      <div class="mono">Jun 2, 2026</div>
+    </div>
+  </header>
+
+  <!-- 01 BUTTONS -->
+  <section class="sec">
+    <div class="head"><div class="num">01</div><div class="ttl">Buttons</div><div class="note">tier → style · one prominent per region</div></div>
+    <p class="cap"><b>Pick by hierarchy tier, not by look.</b> One prominent button per region — the blue primary is the accent's budgeted appearance. Secondary is a hairline outline; ghost is inline text; destructive is the only place a true red appears. Labels lead with a verb the user owns.</p>
+    <div class="grid2 wide">
+      <div class="bed">
+        <div class="demo-label">Tiers</div>
+        <div class="row-wrap">
+          <button class="btn primary">Open today's map</button>
+          <button class="btn secondary">Preview</button>
+          <button class="btn ghost">See all
+            <svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+          <button class="btn destructive">Remove stop</button>
+        </div>
+        <div class="demo-label" style="margin-top: 24px;">Primary · states</div>
+        <div class="row-wrap">
+          <button class="btn primary">Save</button>
+          <button class="btn primary" style="transform: scale(0.985); filter: brightness(0.94);">Save</button>
+          <button class="btn primary disabled">Save</button>
+          <button class="btn primary"><span class="spin"></span> Saving</button>
+        </div>
+      </div>
+      <div class="bed">
+        <div class="demo-label">Glass circle buttons — bar chrome only</div>
+        <div class="glass-stage">
+          <div class="glassbar">
+            <div class="gbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+            <div class="gbtn sel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg></div>
+            <div class="gbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></div>
+          </div>
+        </div>
+        <p class="cap" style="margin: 16px 0 0;">A single SF Symbol on the system glass material, 44×44 hit target. Tint conveys meaning — the one selected glyph carries blue; tinting all of them kills the signal.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 ACTION BAR -->
+  <section class="sec">
+    <div class="head"><div class="num">02</div><div class="ttl">Action bar</div><div class="note">thumb-zone CTA · glass · floats over content</div></div>
+    <p class="cap">The screen's primary action, pinned in the bottom thumb zone — a glass bar holding the prominent blue CTA and an optional outline secondary. Content scrolls <i>under</i> it. The bar is chrome-thin; it hosts an action and recedes.</p>
+    <div class="bed">
+      <div class="glass-stage" style="min-height: 150px; align-items: flex-end;">
+        <div class="glassbar" style="width: 100%; max-width: 420px; justify-content: space-between; border-radius: var(--r-card);">
+          <button class="btn secondary" style="background: oklch(1 0 0 / 0.5);">Add to day</button>
+          <button class="btn primary" style="flex: 1; justify-content: center; margin-left: 10px;">Open today's map</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 CARDS -->
+  <section class="sec">
+    <div class="head"><div class="num">03</div><div class="ttl">Place cards</div><div class="note">definitive vs fuzzy · the product's one idea</div></div>
+    <p class="cap"><b>The distinction the whole product turns on.</b> A <b>definitive</b> place is solid and lifted: a white card with a rest shadow, a photo, a roman name, exact mono facts. A <b>fuzzy</b> place recedes: a flat grey surface, a glyph instead of a photo, an italic name, lighter ink. No borders anywhere — certainty is carried by elevation, weight, and italic.</p>
+    <div class="grid2">
+      <div>
+        <div class="demo-label">Definitive</div>
+        <div class="pcard">
+          <div class="photo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>
+            <span class="mono">PLACE PHOTO</span>
+          </div>
+          <div class="nm">Tsuta</div>
+          <div class="meta">08:00 · 8 MIN WALK · ¥1,200</div>
+          <div class="tags"><span class="tag">Ramen</span><span class="tag">Michelin</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="demo-label">Fuzzy</div>
+        <div class="pcard fuzzy">
+          <div class="photo"><div class="ring"></div></div>
+          <div class="nm">somewhere for lunch</div>
+          <div class="meta">~ 13:00 · NEAR YANAKA</div>
+          <div class="flexmark"><span class="r"></span> AI suggested · flexible</div>
+        </div>
+      </div>
+    </div>
+    <p class="cap" style="margin-top: 22px;">No nesting, no hairlines — one elevation per card (a rest shadow, never a border). Selected state is a single mark, never an accent fill.</p>
+  </section>
+
+  <!-- 04 ROWS -->
+  <section class="sec">
+    <div class="head"><div class="num">04</div><div class="ttl">Timeline rows</div><div class="note">scan · trailing accessory = behavior contract</div></div>
+    <p class="cap">The workhorse for the day's stops. Leading mark → primary line + mono meta → a trailing accessory whose shape is a promise: <b>chevron</b> drills in, <b>switch</b> toggles in place, <b>inline action</b> does one thing, <b>check</b> selects. Between stops a <b>transit connector</b> rides the rail — a single mode (8 min walk), a multi-leg chain (train → walk), or a set of <b>ways</b> the AI weighs. Past stops fade — never strikethrough.</p>
+    <div class="grid2">
+      <div>
+        <div class="demo-label">Day timeline — stops + transit connectors</div>
+        <div class="tl">
+          <div class="tlstop"><span class="d"></span><div><div class="pri">Tsuta ramen</div><div class="sec2">OPENS 08:00 · RAMEN</div></div><span class="t">08:00</span></div>
+          <div class="tlleg"><div class="leg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4.5" r="1.6"/><path d="M13 8l-2.5 4 1.5 5M13 8l2.5 2.5 3 1M10.5 12l-2.5 5"/></svg> 8 min · walk</div></div>
+          <div class="tlstop"><span class="d now"></span><div><div class="pri">Yanaka cemetery walk</div><div class="sec2">NOW · QUIET MORNING</div></div><span class="t">now</span></div>
+          <div class="tlleg"><div class="leg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="13" rx="2.5"/><path d="M6 11h12M9 19l-2 2M15 19l2 2"/></svg> Rossio → Sintra · 40 min <span class="arr">→</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4.5" r="1.6"/><path d="M13 8l-2.5 4 1.5 5M13 8l2.5 2.5 3 1M10.5 12l-2.5 5"/></svg> 15 min · uphill</div></div>
+          <div class="tlstop"><span class="d"></span><div><div class="pri">Quinta da Regaleira</div><div class="sec2">TIMED ENTRY · 11:00</div></div><span class="t">11:00</span></div>
+          <div class="tlleg"><div class="modes"><span class="ml">Ways</span><span class="mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4.5" r="1.6"/><path d="M13 8l-2.5 4 1.5 5M13 8l2.5 2.5 3 1M10.5 12l-2.5 5"/></svg>12</span><span class="mode sel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="12" rx="2.5"/><path d="M4 11h16M8 19v-3M16 19v-3"/></svg>6</span><span class="mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l1.8-4.5a2 2 0 0 1 1.9-1.3h8.6a2 2 0 0 1 1.9 1.3L20 12M4 12h16v4H4zM7 16v2M17 16v2"/></svg>4</span></div></div>
+          <div class="tlstop"><span class="d fuzzy"></span><div><div class="pri it">somewhere for lunch</div><div class="sec2">~ 13:00 · FLEXIBLE</div></div><span class="t">~1:00</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="demo-label">Accessory contract</div>
+        <div class="rows">
+          <div class="lrow"><span class="time">→</span><div><div class="pri">Chevron</div><div class="sec2">DRILLS INTO A CHILD</div></div><div class="acc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div></div>
+          <div class="lrow"><span class="time">⇄</span><div><div class="pri">Switch</div><div class="sec2">TOGGLES IN PLACE</div></div><div class="toggle"></div></div>
+          <div class="lrow"><span class="time">·</span><div><div class="pri">Inline action</div><div class="sec2">ONE DISCRETE ACTION</div></div><span class="inline-act">Remove</span></div>
+          <div class="lrow"><span class="time">✓</span><div><div class="pri">Check</div><div class="sec2">SELECTED, IN A CHOICE</div></div><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M5 12l5 5L20 6"/></svg></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 CHIPS -->
+  <section class="sec">
+    <div class="head"><div class="num">05</div><div class="ttl">Chips &amp; tags</div><div class="note">read-only tags · interactive filters · hints</div></div>
+    <div class="grid2">
+      <div class="bed">
+        <div class="demo-label">Tags — read-only state</div>
+        <div class="row-wrap" style="margin-bottom: 26px;"><span class="tag">Ramen</span><span class="tag">Open now</span><span class="tag">Reserved · 8 PM</span></div>
+        <div class="demo-label">Filter chips — one selected per group</div>
+        <div class="row-wrap">
+          <span class="chip sel">By day</span><span class="chip">By type</span><span class="chip">Orphans</span>
+        </div>
+      </div>
+      <div class="bed">
+        <div class="demo-label">Time-conditional hint</div>
+        <div class="row-wrap" style="margin-bottom: 18px;">
+          <span class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg> Best light <span class="mono">7:30–8:30</span></span>
+        </div>
+        <p class="cap" style="margin: 0;">A selected filter is a solid ink pill, not the accent — the blue stays reserved for the action and the now-state. Color-coded status is always paired with the label so it survives grayscale.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 AI SURFACE -->
+  <section class="sec">
+    <div class="head"><div class="num">06</div><div class="ttl">The AI voice</div><div class="note">italic display + one blue mark · never a gradient</div></div>
+    <p class="cap">The model speaks in <b>one editorial italic line</b> on a quiet inset, marked by a single small blue dot — the signature the old version faked with an iridescent gradient. Here the voice is type and restraint, not decoration.</p>
+    <div class="grid2">
+      <div class="bed tight">
+        <div class="ai">
+          <div class="lab"><span class="mk"></span> Why this is here</div>
+          <div class="line">“Quiet before the crowds — and it lines up with your 10:30 walk through Yanaka.”</div>
+        </div>
+      </div>
+      <div class="bed tight">
+        <div class="ai">
+          <div class="lab"><span class="mk"></span> Smart base</div>
+          <div class="line">“Most of your saved places sit within a 12-minute walk of here.”</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 BARS -->
+  <section class="sec">
+    <div class="head"><div class="num">07</div><div class="ttl">Bars</div><div class="note">iOS 26 native · large-title nav · floating glass tab capsule</div></div>
+    <div class="grid2">
+      <div class="bed">
+        <div class="demo-label">Nav bar — large title collapses to inline on scroll</div>
+        <div class="glass-stage" style="min-height: 150px; padding: 0; align-items: stretch;">
+          <div style="width: 100%; display: flex; flex-direction: column; background: var(--surface-page); border-radius: var(--r-card); overflow: hidden;">
+            <div class="navbar" style="width: 100%; border-radius: var(--r-card) var(--r-card) 0 0;">
+              <div class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg> Lisbon</div>
+              <div class="ttl"></div>
+              <div class="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></div>
+            </div>
+            <div style="padding: 16px 18px 22px;">
+              <div class="disp" style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; color: var(--ink-900); line-height: 1;">Day 2</div>
+              <div class="mono" style="font-size: 11px; color: var(--ink-500); margin-top: 7px;">YANAKA · 5 STOPS</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bed">
+        <div class="demo-label">Tab bar — floating glass capsule + search role</div>
+        <div class="glass-stage" style="min-height: 150px;">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="tabbar">
+              <div class="tab sel"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3z"/></svg>Today</div>
+              <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Saved</div>
+              <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Wallet</div>
+              <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>You</div>
+            </div>
+            <div class="tabsearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="cap" style="margin-top: 22px;">Authentic iOS 26: the tab bar is an <b>inset floating Liquid Glass capsule</b> with title-case SF labels; the <b>search</b> role floats as its own circle, separated by glass. The nav <b>large title</b> (34pt) collapses to an inline 17pt centered title on scroll; the back control carries the tint and labels the <i>parent</i>, never generic “Back.” Never a hand-rolled translucency, never glass on glass.</p>
+  </section>
+
+  <!-- 08 SHEET + PINS -->
+  <section class="sec">
+    <div class="head"><div class="num">08</div><div class="ttl">Sheet &amp; map pins</div><div class="note">solid at rest · pin states match the rail</div></div>
+    <div class="grid2">
+      <div>
+        <div class="demo-label">Sheet — solid surface, grabber is the only chrome</div>
+        <div class="phone" style="margin: 0 auto;">
+          <div class="screen">
+            <div class="behind"><div class="h">Day 2</div><div class="ph"></div><div class="ph s"></div><div class="ph"></div><div class="ph s"></div></div>
+            <div class="scrim"></div>
+            <div class="sheet">
+              <div class="grab"></div>
+              <div class="shead"><span class="c">Cancel</span><span class="t">Filter</span><span class="d">Done</span></div>
+              <div class="scs"><span class="chip sel">By day</span><span class="chip">By type</span><span class="chip">Orphans</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="demo-label">Map pins — definitive · fuzzy · now</div>
+        <div class="mapbed">
+          <div class="pin def"><div class="mk"><span>2</span></div><div class="pl">Definitive</div></div>
+          <div class="pin fuzzy"><div class="mk"><span>~</span></div><div class="pl">Fuzzy</div></div>
+          <div class="pin now"><div class="mk"><span>●</span></div><div class="pl">Now</div></div>
+        </div>
+        <p class="cap" style="margin: 18px 0 0;">Pins carry the same three registers as the timeline: solid ink for a fixed stop, a soft grey marker for a flexible one, the blue pulse for now. The grabber on the sheet is the only glass; the sheet body is a solid surface.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 EMPTY + LOADING -->
+  <section class="sec">
+    <div class="head"><div class="num">09</div><div class="ttl">Empty &amp; loading</div><div class="note">the same editorial care as the happy path</div></div>
+    <div class="grid2">
+      <div>
+        <div class="demo-label">Empty — a glyph, one line, one action</div>
+        <div class="empty">
+          <div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div>
+          <div class="ln">No saved places in Lisbon yet.</div>
+          <button class="btn secondary">Add a place</button>
+        </div>
+      </div>
+      <div>
+        <div class="demo-label">Loading — redacted at the real footprint, one shimmer</div>
+        <div class="skel">
+          <div class="skrow"><div class="b sq"></div><div><div class="b w1"></div><div class="b w2"></div></div></div>
+          <div class="skrow"><div class="b sq"></div><div><div class="b w1"></div><div class="b w2"></div></div></div>
+          <div class="skrow"><div class="b sq"></div><div><div class="b w1"></div><div class="b w2"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>AI Travel · Components v2.0</span>
+    <span>9 component families · states per the §1–9 anatomy · awaiting sign-off</span>
+  </footer>
+
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#ededed" />
+    <rect x="24" y="26" width="52" height="20" rx="10" fill="#2f2f2f" />
+    <rect x="24" y="56" width="34" height="8" rx="4" fill="#b9b9b9" />
+    <circle cx="70" cy="60" r="6" fill="#0a84ff" />
+  </svg>
+</template>
+
+</body>
+</html>

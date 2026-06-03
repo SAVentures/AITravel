@@ -1,0 +1,121 @@
+/* ============================================================================
+   AI Travel — foundations.css
+   The TOKEN CONTRACT (single source of truth). v2.0 · fresh system.
+
+   Authority: design-docs decide the numbers; this file is where they live.
+   Rules honored: 02-color (OKLCH ramps, one accent, warm neutrals, no gradient),
+   01-typography (family-per-role), 03-layout-spacing (8pt grid, gap ladder,
+   radius ladder), 04-motion (one easing personality, duration ladder),
+   03 §9 (three-tier elevation). Light mode only; dark mode is a token swap.
+   ========================================================================== */
+
+:root {
+
+  /* ── ACCENT ─ iMessage blue · the one earned accent ───────────────────────────
+     oklch hue ~257. Marks the primary action + the now/badge state ONLY.
+     The iOS system blue — the iMessage sent-bubble blue, on a white/grey field.
+     Budget: at most twice per screen. Never chrome, never a decorative fill. */
+  --accent-700: oklch(0.480 0.170 258);  /* pressed                           */
+  --accent-600: oklch(0.575 0.208 256);  /* actionPrimary — CTA, link, focus  */
+  --accent-500: oklch(0.625 0.210 255);  /* now / badge mark                  */
+  --accent-300: oklch(0.800 0.100 256);  /* faint accent line on tint         */
+  --accent-100: oklch(0.930 0.048 256);  /* accent tint ground (sparingly)    */
+  --accent-50:  oklch(0.966 0.024 257);  /* faintest accent wash              */
+  --on-accent:  oklch(0.992 0.006 256);  /* label on an accent fill           */
+
+  /* ── INK ramp ─ cool-neutral · text + separators ──────────────────────────
+     Low chroma (~0.012 → 0.004), tinted a whisper toward the accent so the
+     greys harmonize but still read neutral. Never pure black. */
+  --ink-900: oklch(0.285 0.007 250);   /* textPrimary — soft near-black      */
+  --ink-800: oklch(0.375 0.006 250);
+  --ink-700: oklch(0.460 0.006 248);   /* strong body                        */
+  --ink-600: oklch(0.525 0.005 248);   /* textSecondary — meta, sub copy     */
+  --ink-500: oklch(0.620 0.005 246);
+  --ink-400: oklch(0.700 0.004 245);   /* textTertiary — placeholder/past    */
+  --ink-300: oklch(0.795 0.004 245);
+  --ink-200: oklch(0.880 0.003 245);   /* opaque separator                   */
+  --ink-100: oklch(0.930 0.003 245);   /* faint hairline                     */
+  --ink-50:  oklch(0.962 0.002 245);
+
+  /* ── PAPER ramp ─ cool off-white surfaces ─────────────────────────────────
+     Tinted faintly toward the accent, very low chroma. A precise architectural
+     off-white — not pure #fff (clinical), not cream-beige (slop C-5). */
+  --paper-0:   oklch(1.000 0.000 256);  /* white — cards, sheets, elevated    */
+  --paper-50:  oklch(0.990 0.001 256);  /* barely-grey alt surface            */
+  --paper-100: oklch(0.968 0.003 256);  /* subtle grey ground (surfacePage)   */
+  --paper-200: oklch(0.948 0.004 256);  /* wells, input grounds               */
+  --paper-300: oklch(0.928 0.005 256);  /* pressed well                       */
+
+  /* ── SEMANTIC ROLES ─ reference these, never a ramp stop at a call site ───*/
+  --text-primary:     var(--ink-700);
+  --text-secondary:   var(--ink-400);
+  --text-tertiary:    var(--ink-400);
+  --text-on-accent:   var(--on-accent);
+
+  --surface-page:     var(--paper-100);  /* subtle grey ground             */
+  --surface-grouped:  var(--paper-0);    /* white — cards, cells, sheets   */
+  --surface-elevated: var(--paper-0);    /* white                          */
+
+  --fill-secondary:   oklch(0.62 0.010 243 / 0.12);  /* switch ground         */
+  --fill-tertiary:    oklch(0.62 0.010 243 / 0.07);  /* input/search well     */
+  --fill-quaternary:  oklch(0.62 0.010 243 / 0.045); /* grouped backing       */
+
+  --separator:        oklch(0.45 0.012 243 / 0.16);  /* default hairline      */
+  --separator-opaque: var(--ink-200);               /* over opaque surfaces  */
+
+  --action-primary:   var(--accent-600);
+  --state-now:        var(--accent-500);
+  --destructive:      oklch(0.55 0.20 27);  /* true red — irreversible confirms only, never the accent */
+
+  /* ── CATEGORICAL day marks ─ state/category only, never chrome ────────────
+     Equal L & C, hue varied. One per context; a mark, never a fill of size. */
+  --day-1: oklch(0.640 0.090 55);   /* amber                                 */
+  --day-2: oklch(0.605 0.072 156);  /* sage                                  */
+  --day-3: oklch(0.585 0.072 236);  /* slate blue                            */
+  --day-4: oklch(0.590 0.082 318);  /* muted violet                          */
+
+  /* ── TYPE families ─ one role each ────────────────────────────────────────*/
+  --font-display: "Schibsted Grotesk", -apple-system, system-ui, sans-serif;
+  --font-ui: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* ── SPACING ─ 8pt spine · 4pt sub-step ───────────────────────────────────*/
+  --s-1: 4px;  --s-2: 8px;  --s-3: 16px; --s-4: 24px;
+  --s-5: 32px; --s-6: 40px; --s-7: 48px; --s-8: 56px;
+
+  /* gap ladder — named rungs (03 §2). Pull these, never a raw number. */
+  --gap-hairline: 4px;   /* eyebrow ↔ title          */
+  --gap-paired:   8px;   /* icon ↔ label             */
+  --gap-sibling:  12px;  /* title ↔ subtitle         */
+  --gap-card:     16px;  /* card padding, row pad    */
+  --gap-section:  24px;  /* section header ↔ content */
+  --gap-breath:   32px;  /* hero ↔ first control     */
+
+  /* ── RADIUS ladder ─ chrome = pill · content = rounded-rect ──────────────*/
+  --r-tag:   6px;    /* tags, smallest chips      */
+  --r-thumb: 8px;    /* thumbnails               */
+  --r-row:   12px;   /* rows, wells              */
+  --r-card:  16px;   /* cards, sheets (the cap)  */
+  --r-pill:  999px;  /* chrome, buttons, chips   */
+
+  /* ── ELEVATION ─ three tiers, restrained (03 §9) ─────────────────────────*/
+  --shadow-rest:  0 1px 2px oklch(0.30 0.02 245 / 0.05),
+                  0 4px 14px oklch(0.30 0.02 245 / 0.055);
+  --shadow-hero:  0 2px 6px oklch(0.30 0.02 245 / 0.07),
+                  0 14px 34px oklch(0.30 0.02 245 / 0.10);
+  --shadow-glass: inset 0 0.5px 0 oklch(1 0 0 / 0.55),
+                  0 1px 1px oklch(0.30 0.02 245 / 0.04),
+                  0 10px 28px oklch(0.30 0.02 245 / 0.12);
+
+  /* ── MOTION ─ one easing personality · duration ladder (04) ──────────────*/
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);  /* critically-damped out */
+  --ease-emph:     cubic-bezier(0.22, 1, 0.36, 1);  /* settle, no overshoot  */
+  --dur-tap:      100ms;  /* tap response ceiling */
+  --dur-standard: 220ms;  /* the default          */
+  --dur-sheet:    320ms;  /* sheet present        */
+  --dur-slow:     420ms;  /* full-screen cover    */
+
+  /* ── TRACKING ─ loose only on short mono eyebrows ────────────────────────*/
+  --track-eyebrow: 0.085em;
+  --track-tight:  -0.015em;
+}

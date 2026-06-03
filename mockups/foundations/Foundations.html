@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="foundations.css" />
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-ui);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+/* A flat surface-page ground — no gradient anywhere on this page, by pledge. */
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 72px 40px 120px; }
+
+/* ── shared atoms ──────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: var(--track-eyebrow); text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.disp { font-family: var(--font-display); }
+
+/* ── masthead ──────────────────────────────────────────────────────────── */
+.mast { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 32px;
+  padding-bottom: var(--gap-section); }
+.mast .crumbs { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.mast .crumbs .dot { width: 3px; height: 3px; border-radius: 999px; background: var(--ink-300); }
+.mast h1 {
+  font-family: var(--font-display); font-weight: 700; font-size: 60px;
+  line-height: 0.98; letter-spacing: -0.03em; margin: 0 0 14px;
+}
+.mast h1 .v { color: var(--accent-600); }
+.mast .lede { font-size: 17px; line-height: 1.5; color: var(--text-secondary); max-width: 50ch; text-wrap: pretty; }
+.mast .meta { text-align: right; line-height: 1.9; }
+.mast .meta .mono { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.02em; }
+.mast .meta b { color: var(--text-secondary); font-weight: 600; }
+
+/* one-accent rule strip */
+.pov { margin-top: 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+.pov .item { padding: 0; background: transparent; }
+.pov .item .k { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.pov .item .vv { font-family: var(--font-display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em;
+  line-height: 1.15; margin-bottom: 6px; }
+.pov .item .d { font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
+
+/* ── section scaffold ──────────────────────────────────────────────────── */
+.sec { margin-top: 88px; }
+.sec > .head { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: baseline;
+  padding-bottom: 0; margin-bottom: var(--gap-section); }
+.sec > .head .num { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  letter-spacing: 0.06em; }
+.sec > .head .ttl { font-family: var(--font-display); font-weight: 600; font-size: 30px; letter-spacing: -0.02em; }
+.sec > .head .note { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--text-tertiary); }
+
+.plate { background: transparent; border-radius: 0; padding: 0;
+  box-shadow: none; margin-bottom: 28px; }
+.plate .cap { font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); max-width: 70ch;
+  text-wrap: pretty; margin: 0 0 22px; }
+.plate .cap b { color: var(--text-primary); font-weight: 600; }
+.plate .cap code { font-family: var(--font-mono); font-size: 0.92em; background: var(--fill-tertiary);
+  padding: 1px 5px; border-radius: 5px; color: var(--ink-700); }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }
+
+/* ── TYPE ───────────────────────────────────────────────────────────────── */
+.fam { display: grid; grid-template-columns: 110px 1fr; gap: 22px; align-items: center;
+  padding: 16px 0; }
+.fam .role { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--text-tertiary); line-height: 1.6; }
+.fam .role b { display: block; color: var(--text-secondary); font-size: 12px; }
+.fam .spec { font-size: 38px; line-height: 1.1; letter-spacing: -0.01em; }
+.fam .spec small { font-size: 13px; color: var(--text-tertiary); font-family: var(--font-mono);
+  letter-spacing: 0; display: block; margin-top: 8px; }
+
+.scale { display: flex; flex-direction: column; }
+.scale .row { display: grid; grid-template-columns: 92px 1fr auto; gap: 20px; align-items: baseline;
+  padding: 11px 0; }
+.scale .row .tk { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.03em; }
+.scale .row .sample { color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scale .row .px { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums; text-align: right; }
+
+.editorial { display: grid; grid-template-columns: 1fr; gap: 0; padding: 8px 4px 4px; }
+.editorial .line { font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1.08;
+  letter-spacing: -0.025em; }
+.editorial .line em { font-style: italic; font-weight: 500; color: var(--ink-700); }
+
+/* ── COLOR ─────────────────────────────────────────────────────────────── */
+.ramp { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border-radius: var(--r-row);
+  overflow: hidden; gap: 1px; background: var(--paper-300); }
+.ramp .stop { aspect-ratio: 1 / 1.15; display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 10px 10px; }
+.ramp .stop .lab { font-family: var(--font-mono); font-size: 10px; line-height: 1.4; letter-spacing: 0.01em; }
+.swrap { margin-top: 10px; }
+.swrap .name { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 8px; }
+
+.roles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 28px; }
+.roles .r { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center;
+  padding: 8px 0; }
+.roles .r .chip { width: 24px; height: 24px; border-radius: 7px; box-shadow: 0 1px 2px oklch(0 0 0 / 0.10); }
+.roles .r .nm { font-size: 13px; color: var(--text-primary); }
+.roles .r .nm small { display: block; color: var(--text-tertiary); font-size: 11.5px; }
+.roles .r .vl { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+
+.daymarks { display: flex; gap: 28px; flex-wrap: wrap; }
+.daymarks .dm { display: flex; align-items: center; gap: 10px; }
+.daymarks .dm .o { width: 14px; height: 14px; border-radius: 999px; }
+.daymarks .dm .t { font-size: 12.5px; color: var(--text-secondary); }
+.daymarks .dm .t b { color: var(--text-primary); font-weight: 600; }
+
+/* accent budget demo — a tiny phone surface */
+.budget { display: grid; grid-template-columns: 248px 1fr; gap: 28px; align-items: center; }
+.mini { background: var(--paper-0); border-radius: 22px; padding: 18px 16px 16px;
+  box-shadow: var(--shadow-hero); }
+.mini .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.mini .top .h { font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.01em; }
+.mini .top .now { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent-600); }
+.mini .top .now .pulse { width: 7px; height: 7px; border-radius: 999px; background: var(--state-now); }
+.mini .card2 { background: var(--surface-grouped); border-radius: 13px; padding: 12px 13px;
+  box-shadow: var(--shadow-rest); margin-bottom: 9px; }
+.mini .card2 .l1 { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.mini .card2 .l2 { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); margin-top: 3px; }
+.mini .cta { margin-top: 13px; background: var(--action-primary); color: var(--text-on-accent);
+  border-radius: 999px; text-align: center; padding: 11px; font-size: 13.5px; font-weight: 600; }
+.budget .legend .li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; font-size: 13px;
+  color: var(--text-secondary); line-height: 1.45; }
+.budget .legend .li .n { font-family: var(--font-mono); font-size: 11px; color: var(--accent-600);
+  font-weight: 600; flex: none; width: 18px; }
+
+/* ── SPACING ───────────────────────────────────────────────────────────── */
+.gridruler { display: flex; gap: 0; align-items: flex-end; height: 72px; margin-bottom: 18px; }
+.gridruler .u { background: var(--ink-100); border-right: 1px solid var(--paper-0); position: relative; }
+.gridruler .u span { position: absolute; top: -18px; left: 0; font-family: var(--font-mono);
+  font-size: 9.5px; color: var(--text-tertiary); }
+.ladder { display: flex; flex-direction: column; gap: 0; }
+.ladder .lr { display: grid; grid-template-columns: 120px 1fr 64px; gap: 18px; align-items: center;
+  padding: 10px 0; }
+.ladder .lr .rk { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
+.ladder .lr .rk small { color: var(--text-tertiary); display: block; font-size: 10.5px; margin-top: 2px;
+  text-transform: none; letter-spacing: 0; }
+.ladder .lr .bar { height: 12px; border-radius: 3px; background: var(--ink-400); }
+.ladder .lr .vv { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); text-align: right; }
+
+/* ── RADIUS / ELEVATION ────────────────────────────────────────────────── */
+.radrow { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-end; }
+.radrow .ri { text-align: center; }
+.radrow .ri .box { width: 96px; height: 70px; background: var(--paper-200); }
+.radrow .ri .pill { width: 110px; height: 44px; border-radius: 999px; background: var(--paper-200);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-secondary); }
+.radrow .ri .lb { margin-top: 9px; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+.radrow .ri .lb b { display: block; color: var(--text-secondary); font-size: 11px; }
+
+.concentric { width: 150px; height: 110px; border-radius: var(--r-card); background: var(--paper-200);
+  padding: 12px; }
+.concentric .inner { width: 100%; height: 100%; border-radius: 4px; background: var(--paper-0);
+  box-shadow: var(--shadow-rest); }
+/* inner radius = outer(16) − padding(12) = 4 */
+
+.elev { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.elev .e { background: var(--paper-0); border-radius: var(--r-card); height: 132px; display: flex;
+  flex-direction: column; justify-content: flex-end; padding: 16px; }
+.elev .e.rest { box-shadow: var(--shadow-rest); }
+.elev .e.hero { box-shadow: var(--shadow-hero); }
+.elev .e.glass { background: oklch(0.99 0.002 240 / 0.7); backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4); box-shadow: var(--shadow-glass); }
+.elev .e .et { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+.elev .e .ed { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4; }
+
+/* ── MOTION ────────────────────────────────────────────────────────────── */
+.motion { display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; align-items: center; }
+.track { position: relative; height: 44px; background: var(--paper-200); border-radius: 999px;
+  overflow: hidden; cursor: pointer; }
+.track .ball { position: absolute; top: 7px; left: 7px; width: 30px; height: 30px; border-radius: 999px;
+  background: var(--accent-500); }
+.track.run .ball { animation: slide 1.4s var(--ease-standard) infinite alternate; }
+@keyframes slide { to { left: calc(100% - 37px); } }
+.durs { display: flex; flex-direction: column; }
+.durs .dr { display: grid; grid-template-columns: 130px 1fr 56px; gap: 16px; align-items: center;
+  padding: 9px 0; }
+.durs .dr .nm { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
+.durs .dr .nm small { display: block; color: var(--text-tertiary); font-size: 10.5px; }
+.durs .dr .bar { height: 8px; border-radius: 999px; background: var(--ink-300); }
+.durs .dr .vv { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); text-align: right; }
+
+/* ── REFUSE ────────────────────────────────────────────────────────────── */
+.refuse { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 30px; }
+.refuse .x { display: grid; grid-template-columns: 18px 1fr; gap: 12px; padding: 10px 0; align-items: start; }
+.refuse .x .m { color: var(--ink-400); font-weight: 700; line-height: 1.4; }
+.refuse .x .t { font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
+.refuse .x .t b { color: var(--text-primary); font-weight: 600; }
+
+.foot { margin-top: 80px; padding-top: 18px;
+  display: flex; justify-content: space-between; align-items: baseline; }
+.foot span { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-tertiary); }
+
+@media (max-width: 760px) {
+  .wrap { padding: 48px 22px 80px; }
+  .mast { grid-template-columns: 1fr; } .mast .meta { text-align: left; }
+  .mast h1 { font-size: 44px; }
+  .pov, .grid2, .grid3, .roles, .elev, .refuse, .budget, .motion { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ── MASTHEAD ───────────────────────────────────────────────────────── -->
+  <header class="mast">
+    <div>
+      <div class="crumbs">
+        <span class="eyebrow">AI Travel</span><span class="dot"></span>
+        <span class="eyebrow">Foundations</span><span class="dot"></span>
+        <span class="eyebrow" style="color: var(--accent-600);">v2.0 · awaiting sign-off</span>
+      </div>
+      <h1>The system,<br />rebuilt <span class="v">from zero</span>.</h1>
+      <p class="lede">A trip planner whose calm is the product. A near-monochrome field — greys and near-black text — with one iMessage-blue accent spent only where it counts. Every value below is a role you reference — never a number you pick.</p>
+    </div>
+    <div class="meta">
+      <div class="mono"><b>iPhone 15 / 16 Pro</b></div>
+      <div class="mono">Light mode only</div>
+      <div class="mono">8pt grid · OKLCH ramps</div>
+      <div class="mono">Jun 2, 2026</div>
+    </div>
+  </header>
+
+  <div class="pov">
+    <div class="item">
+      <div class="k">Display</div>
+      <div class="vv disp">Schibsted Grotesk</div>
+      <div class="d">A sharp modern grotesque with genuine character — chosen over the Inter / Geist reflex. Titles, names, numerals.</div>
+    </div>
+    <div class="item">
+      <div class="k">Accent</div>
+      <div class="vv disp" style="color: var(--accent-600);">iMessage blue, once</div>
+      <div class="d">The iOS system blue — the one pop of color in an otherwise white-and-grey screen. Restraint is what makes it read as a signal.</div>
+    </div>
+    <div class="item">
+      <div class="k">Field</div>
+      <div class="vv disp">White, grey, near-black</div>
+      <div class="d">White surfaces on a subtle grey ground, near-black text. Greys differentiate; there are no borders anywhere.</div>
+    </div>
+    <div class="item">
+      <div class="k">Motion</div>
+      <div class="vv disp">One easing, restrained</div>
+      <div class="d">A single critically-damped ease-out. One continuous motion per screen; taps answer in ≤100ms.</div>
+    </div>
+  </div>
+
+  <!-- ── 01 TYPE ────────────────────────────────────────────────────────── -->
+  <section class="sec">
+    <div class="head"><div class="num">01</div><div class="ttl">Type</div><div class="note">3 roles · ≤2 families per screen · ≤4 sizes</div></div>
+
+    <div class="plate">
+      <p class="cap"><b>Family per role, never mixed.</b> A distinctive display face carries the beauty; Hanken Grotesk carries every word of UI; SF Mono carries every number. Pick by role — never reach across lanes (a display face on a button is decoration).</p>
+      <div class="fam">
+        <div class="role"><b>Display</b>Schibsted Grotesk</div>
+        <div class="spec disp" style="font-weight: 600;">Lisbon, slowly.<small>names · hero titles · numerals — the one signature face</small></div>
+      </div>
+      <div class="fam">
+        <div class="role"><b>UI</b>Hanken Grotesk</div>
+        <div class="spec" style="font-size: 30px; font-weight: 400;">Body, chrome, every label.<small>the default — if a role wasn’t chosen, it’s this</small></div>
+      </div>
+      <div class="fam">
+        <div class="role"><b>Mono</b>SF Mono / system</div>
+        <div class="spec mono" style="font-size: 28px;">08:40 · €24 · Day 2<small>times · counts · prices · IDs — aligned, never prose</small></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="plate">
+        <p class="cap"><b>The scale.</b> Eleven Dynamic-Type styles; a screen spends only four. Hierarchy comes from weight before size — body and headline are both 17.</p>
+        <div class="scale">
+          <div class="row"><div class="tk">titleLarge</div><div class="sample disp" style="font-size: 34px; font-weight: 700; letter-spacing: -0.02em;">Yanaka</div><div class="px">34 / 700</div></div>
+          <div class="row"><div class="tk">title</div><div class="sample disp" style="font-size: 22px; font-weight: 600;">Today’s plan</div><div class="px">22 / 600</div></div>
+          <div class="row"><div class="tk">name</div><div class="sample disp" style="font-size: 17px; font-weight: 600;">Tsuta ramen</div><div class="px">17 / 600</div></div>
+          <div class="row"><div class="tk">body</div><div class="sample" style="font-size: 17px;">A quiet morning before the crowds.</div><div class="px">17 / 400</div></div>
+          <div class="row"><div class="tk">subhead</div><div class="sample" style="font-size: 15px; color: var(--text-secondary);">8 min walk from the station</div><div class="px">15 / 400</div></div>
+          <div class="row"><div class="tk">footnote</div><div class="sample mono" style="font-size: 13px; color: var(--text-secondary);">OPENS 08:00 · ¥1,200</div><div class="px">13 / 400</div></div>
+          <div class="row"><div class="tk">caption</div><div class="sample mono" style="font-size: 11px; letter-spacing: 0.06em; color: var(--text-tertiary);">DAY 2 · DEFINITIVE</div><div class="px">11 / 400</div></div>
+        </div>
+      </div>
+      <div class="plate">
+        <p class="cap"><b>One editorial moment per hero.</b> The italic cut is the product’s voice — a single hero line, an empty state. Never sprinkled on stray words, never the giant centered italic-serif startup hero.</p>
+        <div class="editorial">
+          <div class="line disp">Tuesday,<br /><em>quietly</em>.</div>
+        </div>
+        <p class="cap" style="margin-top: 22px;">Used here to separate a <b>known thing</b> from a <b>soft intention</b> — the distinction the whole product turns on. That is what earns the expressive face; it is not a font we liked.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 02 COLOR ───────────────────────────────────────────────────────── -->
+  <section class="sec">
+    <div class="head"><div class="num">02</div><div class="ttl">Color</div><div class="note">OKLCH ramps · one accent · ≤4 colors · AA</div></div>
+
+    <div class="plate">
+      <p class="cap"><b>Three ramps, built in OKLCH</b> so equal steps look equal. The accent is the iOS system blue. Neutrals are pure neutral greys — white surfaces on a subtle grey ground, near-black text — so the one blue mark does all the talking.</p>
+      <div class="grid3">
+        <div class="swrap">
+          <div class="name">Accent · iOS blue</div>
+          <div class="ramp">
+            <div class="stop" style="background: var(--accent-700);"><span class="lab" style="color: var(--on-accent);">700</span></div>
+            <div class="stop" style="background: var(--accent-600);"><span class="lab" style="color: var(--on-accent);">600</span></div>
+            <div class="stop" style="background: var(--accent-500);"><span class="lab" style="color: var(--on-accent);">500</span></div>
+            <div class="stop" style="background: var(--accent-300);"><span class="lab" style="color: var(--ink-800);">300</span></div>
+            <div class="stop" style="background: var(--accent-100);"><span class="lab" style="color: var(--ink-700);">100</span></div>
+            <div class="stop" style="background: var(--accent-50);"><span class="lab" style="color: var(--ink-600);">50</span></div>
+          </div>
+        </div>
+        <div class="swrap">
+          <div class="name">Ink · text + lines</div>
+          <div class="ramp">
+            <div class="stop" style="background: var(--ink-900);"><span class="lab" style="color: var(--paper-50);">900</span></div>
+            <div class="stop" style="background: var(--ink-700);"><span class="lab" style="color: var(--paper-50);">700</span></div>
+            <div class="stop" style="background: var(--ink-600);"><span class="lab" style="color: var(--paper-50);">600</span></div>
+            <div class="stop" style="background: var(--ink-400);"><span class="lab" style="color: var(--paper-50);">400</span></div>
+            <div class="stop" style="background: var(--ink-200);"><span class="lab" style="color: var(--ink-700);">200</span></div>
+            <div class="stop" style="background: var(--ink-100);"><span class="lab" style="color: var(--ink-600);">100</span></div>
+          </div>
+        </div>
+        <div class="swrap">
+          <div class="name">Paper · surfaces</div>
+          <div class="ramp">
+            <div class="stop" style="background: var(--paper-0);"><span class="lab" style="color: var(--ink-500);">0</span></div>
+            <div class="stop" style="background: var(--paper-50);"><span class="lab" style="color: var(--ink-500);">50</span></div>
+            <div class="stop" style="background: var(--paper-100);"><span class="lab" style="color: var(--ink-500);">100</span></div>
+            <div class="stop" style="background: var(--paper-200);"><span class="lab" style="color: var(--ink-500);">200</span></div>
+            <div class="stop" style="background: var(--paper-300);"><span class="lab" style="color: var(--ink-500);">300</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="plate">
+        <p class="cap"><b>Roles, not RGB.</b> Every surface references a semantic name; one edit re-themes the app and makes dark mode a token swap.</p>
+        <div class="roles">
+          <div class="r"><div class="chip" style="background: var(--ink-700);"></div><div class="nm">textPrimary<small>titles, names</small></div><div class="vl">ink-700</div></div>
+          <div class="r"><div class="chip" style="background: var(--ink-400);"></div><div class="nm">textSecondary<small>meta, sub copy</small></div><div class="vl">ink-400</div></div>
+          <div class="r"><div class="chip" style="background: var(--paper-100);"></div><div class="nm">surfacePage<small>the grey ground</small></div><div class="vl">paper-100</div></div>
+          <div class="r"><div class="chip" style="background: var(--paper-0);"></div><div class="nm">surfaceGrouped<small>white cards, cells</small></div><div class="vl">paper-0</div></div>
+          <div class="r"><div class="chip" style="background: var(--accent-600);"></div><div class="nm">actionPrimary<small>the one CTA</small></div><div class="vl">accent-600</div></div>
+          <div class="r"><div class="chip" style="background: var(--paper-200);"></div><div class="nm">fill · well<small>subtle grey differentiator</small></div><div class="vl">paper-200</div></div>
+        </div>
+      </div>
+      <div class="plate">
+        <p class="cap"><b>Categorical day marks.</b> Equal lightness &amp; chroma, hue varied — for color-coding the four trip days on a map. A <b>mark</b>, never a chrome fill, never paired with the accent budget, always backed by a label or position.</p>
+        <div class="daymarks" style="margin-bottom: 22px;">
+          <div class="dm"><span class="o" style="background: var(--day-1);"></span><span class="t"><b>Day 1</b> amber</span></div>
+          <div class="dm"><span class="o" style="background: var(--day-2);"></span><span class="t"><b>Day 2</b> sage</span></div>
+          <div class="dm"><span class="o" style="background: var(--day-3);"></span><span class="t"><b>Day 3</b> slate</span></div>
+          <div class="dm"><span class="o" style="background: var(--day-4);"></span><span class="t"><b>Day 4</b> violet</span></div>
+        </div>
+        <p class="cap" style="margin: 0;"><b>Never color-alone.</b> Every state mark pairs with a glyph, label, or position so it survives color-blindness and grayscale. Color is information, not the only channel.</p>
+      </div>
+    </div>
+
+    <div class="plate">
+      <p class="cap"><b>The accent budget — at most twice per screen.</b> A third appearance and the accent becomes the room instead of a presence in it. Here it spends both: the <b>now</b> mark and the primary <b>CTA</b>. Everything else is neutral.</p>
+      <div class="budget">
+        <div class="mini">
+          <div class="top">
+            <div class="h disp">Day 2</div>
+            <div class="now"><span class="pulse"></span> now · 08:40</div>
+          </div>
+          <div class="card2"><div class="l1">Tsuta ramen</div><div class="l2">08:00 · 8 MIN WALK</div></div>
+          <div class="card2"><div class="l1">Yanaka cemetery walk</div><div class="l2">10:30 · QUIET</div></div>
+          <div class="cta">Open today’s map</div>
+        </div>
+        <div class="legend">
+          <div class="li"><span class="n">1</span><div><b style="color: var(--text-primary);">The “now” mark.</b> The pulse + blue label is the single live state. Spend one.</div></div>
+          <div class="li"><span class="n">2</span><div><b style="color: var(--text-primary);">The primary action.</b> One filled CTA. Spend two — and stop.</div></div>
+          <div class="li"><span class="n" style="color: var(--text-tertiary);">—</span><div>Rows, times, and meta stay in ink. No card gets an accent fill or a colored side-border.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 03 SPACING ─────────────────────────────────────────────────────── -->
+  <section class="sec">
+    <div class="head"><div class="num">03</div><div class="ttl">Spacing</div><div class="note">8pt spine · 4pt sub-step · named gap ladder</div></div>
+    <div class="grid2">
+      <div class="plate">
+        <p class="cap"><b>The 8pt spine.</b> Every gap is a multiple of 8; 4 is the only legal fine step. 10 / 13 / 14 / 18 / 22 are tells — off-grid is a bug.</p>
+        <div class="gridruler">
+          <div class="u" style="width: 8px; height: 20%;"><span>4</span></div>
+          <div class="u" style="width: 8px; height: 32%;"><span>8</span></div>
+          <div class="u" style="width: 16px; height: 48%;"><span>16</span></div>
+          <div class="u" style="width: 24px; height: 64%;"><span>24</span></div>
+          <div class="u" style="width: 32px; height: 78%;"><span>32</span></div>
+          <div class="u" style="width: 40px; height: 88%;"><span>40</span></div>
+          <div class="u" style="width: 48px; height: 96%;"><span>48</span></div>
+          <div class="u" style="width: 56px; height: 100%;"><span>56</span></div>
+        </div>
+        <p class="cap" style="margin: 18px 0 0;"><b>Internal ≤ external.</b> A card’s inner padding never exceeds the gap to its neighbor — so groups read by proximity, no divider needed.</p>
+      </div>
+      <div class="plate">
+        <p class="cap"><b>The gap ladder.</b> Six named rungs. A screen pulls “the gap after a section header” by name and lands on 24 — which is what makes two independently-built screens match.</p>
+        <div class="ladder">
+          <div class="lr"><div class="rk">hairline<small>eyebrow ↔ title</small></div><div class="bar" style="width: 4px;"></div><div class="vv">4</div></div>
+          <div class="lr"><div class="rk">paired<small>icon ↔ label</small></div><div class="bar" style="width: 8px;"></div><div class="vv">8</div></div>
+          <div class="lr"><div class="rk">sibling<small>title ↔ subtitle</small></div><div class="bar" style="width: 12px;"></div><div class="vv">12</div></div>
+          <div class="lr"><div class="rk">card<small>card / row padding</small></div><div class="bar" style="width: 16px;"></div><div class="vv">16</div></div>
+          <div class="lr"><div class="rk">section<small>header ↔ content</small></div><div class="bar" style="width: 24px;"></div><div class="vv">24</div></div>
+          <div class="lr"><div class="rk">breath<small>hero ↔ first control</small></div><div class="bar" style="width: 32px;"></div><div class="vv">32</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 04 SHAPE + ELEVATION ───────────────────────────────────────────── -->
+  <section class="sec">
+    <div class="head"><div class="num">04</div><div class="ttl">Shape &amp; depth</div><div class="note">chrome = pill · content = rounded-rect · 3-tier</div></div>
+    <div class="grid2">
+      <div class="plate">
+        <p class="cap"><b>The radius ladder.</b> A ladder of meaning, capped at 16 for content — a pill <b>floats</b> (chrome), a rounded-rect is <b>anchored</b> (content). 24px+ on a small card reads AI-generated.</p>
+        <div class="radrow" style="margin-bottom: 24px;">
+          <div class="ri"><div class="box" style="border-radius: 6px;"></div><div class="lb"><b>tag</b>6</div></div>
+          <div class="ri"><div class="box" style="border-radius: 8px;"></div><div class="lb"><b>thumb</b>8</div></div>
+          <div class="ri"><div class="box" style="border-radius: 12px;"></div><div class="lb"><b>row</b>12</div></div>
+          <div class="ri"><div class="box" style="border-radius: 16px;"></div><div class="lb"><b>card</b>16</div></div>
+          <div class="ri"><div class="pill">Borrow</div><div class="lb"><b>chrome</b>pill</div></div>
+        </div>
+        <p class="cap" style="margin: 0;"><b>Concentric is the craft move.</b> Inner radius = outer − padding (16 − 12 = 4), so corners nest instead of pinching.</p>
+        <div style="margin-top: 16px;"><div class="concentric"><div class="inner"></div></div></div>
+      </div>
+      <div class="plate">
+        <p class="cap"><b>One elevation system: paper, paper, glass.</b> A card lifts off the page with a <b>rest</b> shadow; one <b>hero</b> surface per screen lifts higher; <b>glass</b> is the system material — on floating chrome only, never on a card or sheet-at-rest, never glass-on-glass.</p>
+        <div class="elev">
+          <div class="e rest"><div class="et disp">Rest</div><div class="ed">default card</div></div>
+          <div class="e hero"><div class="et disp">Hero</div><div class="ed">one per screen</div></div>
+          <div class="e glass"><div class="et disp">Glass</div><div class="ed">chrome only</div></div>
+        </div>
+        <p class="cap" style="margin: 18px 0 0;">Never the hairline-plus-wide-glow combo: a surface is <b>either</b> a 1px edge <b>or</b> a soft shadow — not a glowing floater.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 05 MOTION ──────────────────────────────────────────────────────── -->
+  <section class="sec">
+    <div class="head"><div class="num">05</div><div class="ttl">Motion</div><div class="note">one easing · one continuous motion · tap ≤100ms</div></div>
+    <div class="plate">
+      <p class="cap"><b>One easing personality.</b> A single critically-damped ease-out — no bounce, no elastic, no spring outside one scoped reward. Tap the track to watch it; reduce-motion degrades it to a cut.</p>
+      <div class="motion">
+        <div class="track" id="track" onclick="this.classList.toggle('run')"><div class="ball"></div></div>
+        <div class="durs">
+          <div class="dr"><div class="nm">tap<small>response ceiling</small></div><div class="bar" style="width: 24%;"></div><div class="vv">100ms</div></div>
+          <div class="dr"><div class="nm">standard<small>the default</small></div><div class="bar" style="width: 52%;"></div><div class="vv">220ms</div></div>
+          <div class="dr"><div class="nm">sheet<small>present / dismiss</small></div><div class="bar" style="width: 76%;"></div><div class="vv">320ms</div></div>
+          <div class="dr"><div class="nm">cover<small>full-screen</small></div><div class="bar" style="width: 100%;"></div><div class="vv">420ms</div></div>
+        </div>
+      </div>
+      <p class="cap" style="margin: 20px 0 0;"><code>cubic-bezier(0.32, 0.72, 0, 1)</code> — the one curve everything inherits. Motion explains space or gives feedback; it is never decoration.</p>
+    </div>
+  </section>
+
+  <!-- ── 06 WHAT WE REFUSE ──────────────────────────────────────────────── -->
+  <section class="sec">
+    <div class="head"><div class="num">06</div><div class="ttl">What we refuse</div><div class="note">the anti-slop pledge</div></div>
+    <div class="plate">
+      <p class="cap">The three choices this system makes on purpose — a tinted neutral field, an expressive face, a single accent — sit one step from current AI tells. They are <b>earned</b> here, never reflexive. These are out, full stop:</p>
+      <div class="refuse">
+        <div class="x"><div class="m">✕</div><div class="t"><b>Gradient fills &amp; gradient text.</b> The #1 AI tell — and exactly what the old version did. Solid semantic tones only.</div></div>
+        <div class="x"><div class="m">✕</div><div class="t"><b>The reflex faces.</b> Inter, Geist, Space Grotesk, Instrument Serif, Fraunces. They signal “no decision.”</div></div>
+        <div class="x"><div class="m">✕</div><div class="t"><b>Borders &amp; hairline strokes.</b> No separators, no outlines — separation is white-on-grey surfaces, soft shadows, and space.</div></div>
+        <div class="x"><div class="m">✕</div><div class="t"><b>Glass as decoration.</b> Only the system material, only on floating chrome, only over a real layer.</div></div>
+        <div class="x"><div class="m">✕</div><div class="t"><b>Cards inside cards</b> and the icon-tile-over-heading template. Group with space, not nesting.</div></div>
+        <div class="x"><div class="m">✕</div><div class="t"><b>Bounce / elastic motion</b> and gratuitous tap-scale. One damped curve; one continuous motion.</div></div>
+        <div class="x"><div class="m">✕</div><div class="t"><b>Em-dash &amp; buzzword copy.</b> Specific, plain, verb-led — no “streamline / empower,” no exclamation marks.</div></div>
+        <div class="x"><div class="m">✕</div><div class="t"><b>Off-grid spacing</b> (10/13/14/18/22) and tight line-height. Everything on the 4/8 ladder.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>AI Travel · Foundations v2.0</span>
+    <span>Schibsted · Hanken · SF Mono — iMessage blue — awaiting sign-off</span>
+  </footer>
+
+</div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#f4f4f4" />
+    <circle cx="50" cy="42" r="16" fill="#0a84ff" />
+    <rect x="30" y="66" width="40" height="6" rx="3" fill="#3a3a3c" />
+    <rect x="36" y="78" width="28" height="5" rx="2.5" fill="#b5b5b8" />
+  </svg>
+</template>
+
+</body>
+</html>
