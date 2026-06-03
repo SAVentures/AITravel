@@ -25,12 +25,24 @@
 //   transport.alsook.<rawValue> — AlsoOKChipRow FilterChip (GettingAroundStepView.swift line 245)
 //   onboarding.progress         — OnboardingProgressBar (OnboardingProgressBar.swift line 27)
 //
+// Prior-step sentinel (C3 back-navigation test):
+//   baselocation.cta            — OnboardingActionFloor primary button in BaseLocationStepView (line 30).
+//                                 Confirmed: OnboardingStep.baseLocation = rawValue 3 is the step
+//                                 immediately before OnboardingStep.gettingAround = rawValue 4 in the
+//                                 GenerationPlan.swift enum and the OnboardingFlowView.swift switch.
+//                                 retreatOnboardingStep() decrements the step (AppStore+Onboarding.swift:54).
+//
 // TransportMode rawValues (TransportSelection.swift):
 //   walk · transit · drive · cycle · rideshare · bus
 //
 // SampleData transport defaults (all scenarios seed suggestedMode = .transit):
 //   Lisbon (A/C): lisbonTransportRec — suggestedMode = .transit
 //   Kyoto  (B):   kyotoTransportRec  — suggestedMode = .transit
+//
+// UITEST_FAILURE_RATE: NOT forwarded locally — the seam is centralized in OnboardingRobot's
+//   optional `failureRate` param. Callers in this suite pass no failureRate → behavior unchanged
+//   (key absent from launchEnvironment). The seam is preserved as a deliberate future hook for the
+//   onboarding write command; see docs/decisions.md (Task C5).
 //
 // See ios/docs/engineering/07-testing.md §7 for the full XCUITest layer contract.
 
@@ -48,39 +60,6 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         super.setUp()
         // Stop on first failure — subsequent assertions are meaningless if the step fails to load.
         continueAfterFailure = false
-    }
-
-    // MARK: - Launch helper
-
-    /// Launch the app pinned to the `gettingAround` step in the given scenario. Animations are slowed
-    /// via `-UIAnimationDragCoefficient 10` to prevent timing flakiness (07-testing §7.6).
-    /// `UITEST_NOW` is pinned to a fixed date so any time-conditional state is deterministic (§3).
-    @discardableResult
-    private func makeLaunchedApp(
-        scenario: String = "onboardingA",
-        failureRate: String = "0"
-    ) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchEnvironment["UITEST_SCENARIO"] = scenario
-        app.launchEnvironment["UITEST_START_STEP"] = "gettingAround"
-        // Pin the clock — no live Date() in the UI layer (07-testing §3).
-        app.launchEnvironment["UITEST_NOW"] = "2026-06-03T12:00:00Z"
-        app.launchEnvironment["UITEST_FAILURE_RATE"] = failureRate
-        // Slow animations so waitForExistence beats them; not zero (system buttons use spring).
-        app.launchArguments += ["-UIAnimationDragCoefficient", "10"]
-        app.launch()
-        return app
-    }
-
-    // MARK: - Scroll helper
-
-    /// Swipes up until `element` is realized into the accessibility tree, or `maxSwipes` is exhausted.
-    /// Required for elements below the initial viewport (e.g. the Also OK chip rail sits beneath the
-    /// Mostly segmented selector) — lazy/below-fold elements report `.exists == false` until scrolled
-    /// into the realized tree (07-testing §7.3).
-    private func scrollToElement(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 6) {
-        var swipes = 0
-        while !element.exists && swipes < maxSwipes { app.swipeUp(); swipes += 1 }
     }
 
     // MARK: - Shared: wait for the getting-around screen
@@ -107,7 +86,8 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         let scenarios = ["onboardingA", "onboardingB", "onboardingC"]
 
         for scenario in scenarios {
-            let app = makeLaunchedApp(scenario: scenario)
+            let robot = OnboardingRobot()
+            let app = robot.launch(scenario: scenario, startStep: "gettingAround")
             defer { app.terminate() }
 
             let cta = waitForGettingAroundScreen(in: app)
@@ -157,7 +137,8 @@ final class OnboardingGettingAroundUITests: XCTestCase {
     // wiring is live in the real app.
 
     func testSegmentSelectionUpdatesCTA() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "gettingAround")
         let cta = waitForGettingAroundScreen(in: app)
 
         // ── Initial: CTA contains "transit" ──
@@ -216,17 +197,18 @@ final class OnboardingGettingAroundUITests: XCTestCase {
     //
     // Verifies the "Also OK" chip row:
     //   1. The chip row chips are present (all five modes in alsoOKModes: walk / rideshare / cycle / bus / drive).
-    //   2. Tapping a chip (rideshare) selects it — the store's toggleAlsoOK is called.
-    //   3. Tapping the same chip again deselects it — the toggle is reversible.
+    //   2. Tapping rideshare selects it — the store's toggleAlsoOK is called — asserted unconditionally.
+    //   3. Tapping cycle independently selects it — multi-select is live — asserted unconditionally.
     //
-    // ROOT CAUSE fix (below-fold / hittability): the also-OK rail sits below the Mostly segmented
-    // selector and may be partially obscured after scroll. We scroll each chip into the realized tree
-    // before asserting existence. Tapping is conditional on isHittable — if a chip is realized into
-    // the tree but not hittable (e.g. obscured by a sticky footer), we assert existence only rather
-    // than hard-failing. The functional toggle-wiring assertion is the L2 integration test.
+    // C2 fix: the previous `if isHittable { … }` guards are removed. Each chip is scrolled into the
+    // realized tree via robot.scrollToElement(_:), then existence, hittability, tap, and post-tap
+    // isSelected == true are all unconditional assertions. A chip below the viewport but realized into
+    // the accessibility tree will report isHittable after scroll; if it does not, the test fails loudly
+    // rather than silently skipping — the functional contract, not an escape hatch.
 
     func testAlsoOKChipToggle() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "gettingAround")
         waitForGettingAroundScreen(in: app)
 
         // ── All five alsoOK chips must be present (existence, after scroll) ──
@@ -234,7 +216,7 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         // The chip rail sits below the Mostly segmented selector — scroll the first chip into the
         // realized tree before asserting the row.
         let firstAlsoOKChip = app.buttons["transport.alsook.walk"]
-        scrollToElement(firstAlsoOKChip, in: app)
+        robot.scrollToElement(firstAlsoOKChip)
         for mode in ["walk", "rideshare", "cycle", "bus", "drive"] {
             let chip = app.buttons["transport.alsook.\(mode)"]
             XCTAssertTrue(
@@ -248,58 +230,78 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         preToggleShot.lifetime = .keepAlways
         add(preToggleShot)
 
-        // ── Toggle rideshare ON (if hittable) ──
-        // Scroll to realize the rideshare chip; tap only if it is hittable. If it is obscured by
-        // the CTA floor after scroll, we confirm existence only — toggle wiring is the L2 contract.
+        // ── Toggle rideshare ON — unconditional (C2) ──
+        // Scroll to realize the rideshare chip into the accessibility tree, then assert it exists,
+        // is hittable, tap it, and assert isSelected == true post-tap.
         let rideshareChip = app.buttons["transport.alsook.rideshare"]
-        scrollToElement(rideshareChip, in: app)
+        robot.scrollToElement(rideshareChip)
         XCTAssertTrue(
             rideshareChip.waitForExistence(timeout: 3),
             "transport.alsook.rideshare must exist after scroll"
         )
-        if rideshareChip.isHittable {
-            rideshareChip.tap()
+        XCTAssertTrue(rideshareChip.isHittable, "transport.alsook.rideshare must be hittable after scroll")
+        rideshareChip.tap()
 
-            // Give the store a moment to apply the toggle.
-            let chipAfterOn = app.buttons["transport.alsook.rideshare"]
-            XCTAssertTrue(
-                chipAfterOn.waitForExistence(timeout: 3),
-                "transport.alsook.rideshare must still exist after first tap (toggle-on)"
-            )
+        // Assert isSelected == true after the toggle-on tap.
+        let rideshareOnPredicate = NSPredicate(format: "isSelected == true")
+        let rideshareOnExpectation = XCTNSPredicateExpectation(
+            predicate: rideshareOnPredicate,
+            object: app.buttons["transport.alsook.rideshare"]
+        )
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [rideshareOnExpectation], timeout: 3), .completed,
+            "transport.alsook.rideshare must be selected (isSelected == true) after first tap"
+        )
 
-            let afterOnShot = XCTAttachment(screenshot: app.screenshot())
-            afterOnShot.name = "gettingaround-rideshare-toggled-on"
-            afterOnShot.lifetime = .keepAlways
-            add(afterOnShot)
+        let afterOnShot = XCTAttachment(screenshot: app.screenshot())
+        afterOnShot.name = "gettingaround-rideshare-toggled-on"
+        afterOnShot.lifetime = .keepAlways
+        add(afterOnShot)
 
-            // ── Toggle rideshare OFF ──
-            chipAfterOn.tap()
-            XCTAssertTrue(
-                app.buttons["transport.alsook.rideshare"].waitForExistence(timeout: 3),
-                "transport.alsook.rideshare must still exist after second tap (toggle-off)"
-            )
+        // ── Toggle rideshare OFF ──
+        let rideshareChipAfterOn = app.buttons["transport.alsook.rideshare"]
+        XCTAssertTrue(
+            rideshareChipAfterOn.waitForExistence(timeout: 3),
+            "transport.alsook.rideshare must still exist after first tap (toggle-on)"
+        )
+        rideshareChipAfterOn.tap()
+        XCTAssertTrue(
+            app.buttons["transport.alsook.rideshare"].waitForExistence(timeout: 3),
+            "transport.alsook.rideshare must still exist after second tap (toggle-off)"
+        )
 
-            let afterOffShot = XCTAttachment(screenshot: app.screenshot())
-            afterOffShot.name = "gettingaround-rideshare-toggled-off"
-            afterOffShot.lifetime = .keepAlways
-            add(afterOffShot)
-        }
+        let afterOffShot = XCTAttachment(screenshot: app.screenshot())
+        afterOffShot.name = "gettingaround-rideshare-toggled-off"
+        afterOffShot.lifetime = .keepAlways
+        add(afterOffShot)
 
-        // ── Toggle a second chip (cycle) to confirm independent multi-select (if hittable) ──
-        // Scroll to realize the cycle chip in case the view has shifted after the rideshare taps.
+        // ── Toggle cycle ON — unconditional (C2) ──
+        // Scroll to realize the cycle chip in case the view shifted after the rideshare taps,
+        // then assert existence, hittability, tap, and post-tap isSelected == true unconditionally.
         let cycleChip = app.buttons["transport.alsook.cycle"]
-        scrollToElement(cycleChip, in: app)
+        robot.scrollToElement(cycleChip)
         XCTAssertTrue(
             cycleChip.waitForExistence(timeout: 3),
             "transport.alsook.cycle must exist after scroll"
         )
-        if cycleChip.isHittable {
-            cycleChip.tap()
-            XCTAssertTrue(
-                app.buttons["transport.alsook.cycle"].waitForExistence(timeout: 3),
-                "transport.alsook.cycle must remain present after toggle"
-            )
-        }
+        XCTAssertTrue(cycleChip.isHittable, "transport.alsook.cycle must be hittable after scroll")
+        cycleChip.tap()
+
+        // Assert isSelected == true after the toggle-on tap.
+        let cycleOnPredicate = NSPredicate(format: "isSelected == true")
+        let cycleOnExpectation = XCTNSPredicateExpectation(
+            predicate: cycleOnPredicate,
+            object: app.buttons["transport.alsook.cycle"]
+        )
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [cycleOnExpectation], timeout: 3), .completed,
+            "transport.alsook.cycle must be selected (isSelected == true) after tap"
+        )
+
+        let afterCycleShot = XCTAttachment(screenshot: app.screenshot())
+        afterCycleShot.name = "gettingaround-cycle-toggled-on"
+        afterCycleShot.lifetime = .keepAlways
+        add(afterCycleShot)
     }
 
     // MARK: - testScenarioBSegmentAndCTA
@@ -308,7 +310,8 @@ final class OnboardingGettingAroundUITests: XCTestCase {
     // reflects transit. Confirms the presenter works identically for the Kyoto context.
 
     func testScenarioBSegmentAndCTA() throws {
-        let app = makeLaunchedApp(scenario: "onboardingB")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingB", startStep: "gettingAround")
         let cta = waitForGettingAroundScreen(in: app)
 
         // Transit is also the suggested mode for Kyoto (kyotoTransportRec.suggestedMode = .transit).
@@ -353,10 +356,11 @@ final class OnboardingGettingAroundUITests: XCTestCase {
     // accidentally removed from the overlay.
 
     func testBackButtonExists() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "gettingAround")
         waitForGettingAroundScreen(in: app)
 
-        let back = app.buttons["onboarding.back"]
+        let back = robot.backButton
         XCTAssertTrue(
             back.waitForExistence(timeout: 4),
             "onboarding.back (floating back chevron) must exist on the getting-around step"
@@ -364,10 +368,72 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         XCTAssertTrue(back.isHittable, "onboarding.back must be hittable")
     }
 
+    // MARK: - testBackNavigatesToPriorStep
+    //
+    // C3: Taps onboarding.back (onboarding.back → store.retreatOnboardingStep()) and asserts the
+    // PRIOR step rendered — specifically, baselocation.cta appears and gettingaround.cta disappears.
+    //
+    // Prior-step confirmation:
+    //   OnboardingStep enum (GenerationPlan.swift:73-85):
+    //     .destination = 0, .tripShape = 1, .when = 2, .baseLocation = 3, .gettingAround = 4, .generating = 5
+    //   OnboardingFlowView.swift switch order mirrors the enum:
+    //     .baseLocation → BaseLocationStepView() is the case immediately before .gettingAround.
+    //   retreatOnboardingStep() (AppStore+Onboarding.swift:54) calls onboarding?.retreatStep() which
+    //   decrements the step index, landing on .baseLocation (rawValue 3).
+    //   BaseLocationStepView.swift:30 stamps "baselocation.cta" on its OnboardingActionFloor primary button.
+    //   That identifier is the sentinel that appears if and only if BaseLocationStepView is rendered.
+    //
+    // A regression making onboarding.back a no-op, or routing to the wrong step, will fail this test.
+
+    func testBackNavigatesToPriorStep() throws {
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "gettingAround")
+
+        // Wait for the gettingAround step's sentinel — confirms we started on the right step.
+        let gettingAroundCTA = app.buttons["gettingaround.cta"]
+        XCTAssertTrue(
+            gettingAroundCTA.waitForExistence(timeout: 8),
+            "gettingaround.cta must exist before tapping back"
+        )
+
+        let preBackShot = XCTAttachment(screenshot: app.screenshot())
+        preBackShot.name = "gettingaround-pre-back-tap"
+        preBackShot.lifetime = .keepAlways
+        add(preBackShot)
+
+        // Tap onboarding.back — drives retreatOnboardingStep() → .baseLocation.
+        let back = robot.backButton
+        XCTAssertTrue(
+            back.waitForExistence(timeout: 4),
+            "onboarding.back must exist before tapping"
+        )
+        XCTAssertTrue(back.isHittable, "onboarding.back must be hittable before tapping")
+        back.tap()
+
+        // Assert the PRIOR step (baseLocation) rendered:
+        //   baselocation.cta appears — confirmed in BaseLocationStepView.swift line 30.
+        let baseLocationCTA = app.buttons["baselocation.cta"]
+        XCTAssertTrue(
+            baseLocationCTA.waitForExistence(timeout: 6),
+            "baselocation.cta must appear after tapping back from gettingAround — retreatOnboardingStep() must land on .baseLocation"
+        )
+
+        // Assert this step's sentinel (gettingaround.cta) is gone — the step is no longer rendered.
+        XCTAssertFalse(
+            gettingAroundCTA.exists,
+            "gettingaround.cta must NOT exist after back-navigation — the gettingAround step must have been dismissed"
+        )
+
+        let postBackShot = XCTAttachment(screenshot: app.screenshot())
+        postBackShot.name = "gettingaround-post-back-landed-on-baselocation"
+        postBackShot.lifetime = .keepAlways
+        add(postBackShot)
+    }
+
     // MARK: - testAccessibilityAudit
     //
-    // Runs the BROAD audit (all types, issueHandler not a narrowed `for:` set) and suppresses only
-    // documented issues. Handler mirrors the destination exemplar verbatim.
+    // Runs the BROAD audit via OnboardingRobot.performOnboardingAudit — all audit types, no `for:`
+    // narrowing. The common suppression set is centralized in the robot (C1 migration):
     //
     //   • .dynamicType — the audit reads UIKit's adjustsFontForContentSizeCategory, which SwiftUI's
     //     Font.custom(relativeTo:) / Font.system(.style) don't surface; the text DOES scale (Typography.swift
@@ -379,10 +445,12 @@ final class OnboardingGettingAroundUITests: XCTestCase {
     //   • .textClipped — FilterChip and SegmentedSelector grow from minHeight with no fixed frame; known
     //     false positive on editable/dynamic-size elements.
     //   • .hitRegion on onboarding.progress — the progress bar is informational, not an interaction target.
-    // See docs/decisions.md (2026-06-03). Every other type/element hard-fails.
+    // See docs/decisions.md (2026-06-03). Every other type/element hard-fails (robot returns false).
+    // No screen-specific suppressions needed for GettingAround — extraSuppressions defaults to { _ in false }.
 
     func testAccessibilityAudit() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "gettingAround")
 
         let cta = app.buttons["gettingaround.cta"]
         XCTAssertTrue(cta.waitForExistence(timeout: 8), "gettingaround.cta must exist before audit")
@@ -392,13 +460,6 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Audit types unreliable on this custom design (custom fonts / OKLCH inks / glass / dynamic chips).
-        let suppressedTypes: XCUIAccessibilityAuditType = [.dynamicType, .contrast, .textClipped]
-        try app.performAccessibilityAudit { issue in
-            if suppressedTypes.contains(issue.auditType) { return true }
-            // Informational progress bar isn't an interaction target → its .hitRegion flag is expected.
-            if issue.element?.identifier == "onboarding.progress" && issue.auditType == .hitRegion { return true }
-            return false
-        }
+        try robot.performOnboardingAudit()
     }
 }

@@ -32,6 +32,11 @@
 // City ids confirmed against SampleData+Onboarding.swift:
 //   "city-lisbon", "city-tokyo", "city-mexico-city", "city-marrakech"
 //
+// Launch/scroll/audit boilerplate is centralized in OnboardingRobot (Support/OnboardingRobot.swift).
+// This suite does NOT set UITEST_FAILURE_RATE (no write command yet; robot's failureRate: nil default).
+// The known-fragile double-stamped searchwell/destination.search id workaround (searchFields→textFields
+// hedge) is preserved exactly as-is — Track B owns the a11y-contract fix for that identifier.
+//
 // See ios/docs/engineering/07-testing.md §7 for the full XCUITest layer contract.
 import XCTest
 
@@ -44,54 +49,31 @@ import XCTest
 @MainActor
 final class OnboardingDestinationUITests: XCTestCase {
 
+    // MARK: - Robot
+
+    /// Shared robot — owns launch, scroll, and audit boilerplate for all onboarding UITest suites.
+    /// Initialized in setUp so each test gets a fresh XCUIApplication via the robot's init().
+    private var robot = OnboardingRobot()
+
     override func setUp() {
         super.setUp()
+        robot = OnboardingRobot()
         // Stop on first failure — subsequent assertions are meaningless if the destination screen
         // does not reach the expected state.
         continueAfterFailure = false
-    }
-
-    // MARK: - Launch helper
-
-    /// Launch the app with the given scenario pinned via `UITEST_SCENARIO`. Animations are
-    /// slowed via `-UIAnimationDragCoefficient 10` to prevent timing flakiness (§7.6).
-    /// `UITEST_NOW` is pinned to a fixed date so time-conditional state is deterministic (§3).
-    @discardableResult
-    private func makeLaunchedApp(scenario: String = "onboardingA") -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchEnvironment["UITEST_SCENARIO"] = scenario
-        // Pin the clock — no live Date() in the UI layer (07-testing §3).
-        app.launchEnvironment["UITEST_NOW"] = "2026-06-03T12:00:00Z"
-        // Slow animations so waitForExistence beats them; not zero (system buttons use spring).
-        app.launchArguments += ["-UIAnimationDragCoefficient", "10"]
-        app.launch()
-        return app
     }
 
     // MARK: - Shared: wait for the destination screen
 
     /// Returns the CTA element once it exists, or fails the test.
     /// The CTA is the most reliable sentinel for the destination screen being live and a city selected.
-    private func waitForDestinationScreen(in app: XCUIApplication) -> XCUIElement {
-        let cta = app.buttons["destination.cta"]
+    private func waitForDestinationScreen() -> XCUIElement {
+        let cta = robot.app.buttons["destination.cta"]
         XCTAssertTrue(
             cta.waitForExistence(timeout: 8),
             "destination.cta must exist — onboardingA seeds Lisbon as the pre-selected city"
         )
         return cta
-    }
-
-    /// Scroll `element` into the realized view. The "More cities" grid is the LAST element on the
-    /// screen (below the hero, search well, AI voice, and Recent rail), and it is a `LazyVGrid` — its
-    /// second row (Mexico City · Marrakech) is NOT realized into the accessibility tree until it
-    /// scrolls near the viewport. So a below-fold grid tile reports `.exists == false` until we scroll.
-    /// Swipe up a bounded number of times until the element is realized; never an unbounded loop (§7.3).
-    private func scrollToElement(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 6) {
-        var swipes = 0
-        while !element.exists && swipes < maxSwipes {
-            app.swipeUp()
-            swipes += 1
-        }
     }
 
     // MARK: - testRecentPillSelectsCity
@@ -101,8 +83,8 @@ final class OnboardingDestinationUITests: XCTestCase {
     // The regression this locks: pills were rendered as static Text instead of Button.
 
     func testRecentPillSelectsCity() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
-        let cta = waitForDestinationScreen(in: app)
+        robot.launch(scenario: "onboardingA")
+        let cta = waitForDestinationScreen()
 
         // ── Initial state: CTA title contains "Lisbon" (the pre-selected city for scenario A) ──
         let initialLabel = cta.label
@@ -112,14 +94,14 @@ final class OnboardingDestinationUITests: XCTestCase {
         )
 
         // Attach a screenshot of the initial state — triage aid for CI, never pixel-diffed (§7.5).
-        let initialShot = XCTAttachment(screenshot: app.screenshot())
+        let initialShot = XCTAttachment(screenshot: robot.app.screenshot())
         initialShot.name = "destination-initial-lisbon-selected"
         initialShot.lifetime = .keepAlways
         add(initialShot)
 
         // ── Tap the Tokyo Recent rail pill (NORMAL mode) ──
         // id: rail.recent.city-tokyo  (SampleData.tokyoCity() → City.id = "city-tokyo")
-        let tokyoPill = app.buttons["rail.recent.city-tokyo"]
+        let tokyoPill = robot.app.buttons["rail.recent.city-tokyo"]
         XCTAssertTrue(
             tokyoPill.waitForExistence(timeout: 4),
             "rail.recent.city-tokyo must exist in the Recent rail for scenario A (normal mode)"
@@ -141,7 +123,7 @@ final class OnboardingDestinationUITests: XCTestCase {
         )
 
         // Attach after-tap screenshot.
-        let afterTapShot = XCTAttachment(screenshot: app.screenshot())
+        let afterTapShot = XCTAttachment(screenshot: robot.app.screenshot())
         afterTapShot.name = "destination-after-tokyo-pill-tap"
         afterTapShot.lifetime = .keepAlways
         add(afterTapShot)
@@ -153,14 +135,14 @@ final class OnboardingDestinationUITests: XCTestCase {
     // city and updates the CTA. Grid tiles exist in NORMAL mode only.
 
     func testGridTileSelectsCity() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
-        let cta = waitForDestinationScreen(in: app)
+        robot.launch(scenario: "onboardingA")
+        let cta = waitForDestinationScreen()
 
         // The Mexico City grid tile is non-selected in scenario A (only Lisbon starts selected).
         // id: destination.city.city-mexico-city  (SampleData.mexicoCityCity() → id = "city-mexico-city")
         // It sits in the grid's SECOND row, below the fold — scroll it into the realized tree first.
-        let mexicoTile = app.buttons["destination.city.city-mexico-city"]
-        scrollToElement(mexicoTile, in: app)
+        let mexicoTile = robot.app.buttons["destination.city.city-mexico-city"]
+        robot.scrollToElement(mexicoTile)
         XCTAssertTrue(
             mexicoTile.waitForExistence(timeout: 4),
             "destination.city.city-mexico-city must exist in the grid for scenario A (normal mode)"
@@ -181,10 +163,10 @@ final class OnboardingDestinationUITests: XCTestCase {
         // It is the grid's FIRST tile; after scrolling down to Mexico City it may have recycled off the
         // top of the LazyVGrid, so scroll back up to it before asserting (a realization check, not a
         // visibility one).
-        let lisbonTile = app.buttons["destination.city.city-lisbon"]
+        let lisbonTile = robot.app.buttons["destination.city.city-lisbon"]
         var upSwipes = 0
         while !lisbonTile.exists && upSwipes < 6 {
-            app.swipeDown()
+            robot.app.swipeDown()
             upSwipes += 1
         }
         XCTAssertTrue(
@@ -193,7 +175,7 @@ final class OnboardingDestinationUITests: XCTestCase {
         )
 
         // Attach screenshot.
-        let shot = XCTAttachment(screenshot: app.screenshot())
+        let shot = XCTAttachment(screenshot: robot.app.screenshot())
         shot.name = "destination-after-mexico-city-grid-tap"
         shot.lifetime = .keepAlways
         add(shot)
@@ -216,8 +198,8 @@ final class OnboardingDestinationUITests: XCTestCase {
     // (DestinationStepView.swift line 95–107: isSearching → searchWell() + resultsList(presenter)).
 
     func testSearchClearsSelectionAndFilters() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
-        let cta = waitForDestinationScreen(in: app)
+        robot.launch(scenario: "onboardingA")
+        let cta = waitForDestinationScreen()
 
         // ── 1. Initial state: CTA exists and contains "Lisbon" ──
         XCTAssertTrue(
@@ -225,7 +207,7 @@ final class OnboardingDestinationUITests: XCTestCase {
             "CTA label must contain 'Lisbon' initially; got '\(cta.label)'"
         )
 
-        let preSearchShot = XCTAttachment(screenshot: app.screenshot())
+        let preSearchShot = XCTAttachment(screenshot: robot.app.screenshot())
         preSearchShot.name = "destination-pre-search-lisbon-selected"
         preSearchShot.lifetime = .keepAlways
         add(preSearchShot)
@@ -236,12 +218,14 @@ final class OnboardingDestinationUITests: XCTestCase {
         // `.otherElement`. The screen's `.accessibilityIdentifier("destination.search")` (DestinationStepView.swift
         // line 169) wins over the component-internal "onboarding.search". So query `app.searchFields`, with a
         // `textFields` fallback in case a future SDK surfaces the combined field as a plain text field.
+        // NOTE: this searchFields→textFields hedge is a known-fragile workaround for the double-stamped
+        // searchwell/destination.search id — Track B owns the a11y-contract fix. Do NOT change this logic.
         let searchElement: XCUIElement
-        let searchField = app.searchFields["destination.search"]
+        let searchField = robot.app.searchFields["destination.search"]
         if searchField.waitForExistence(timeout: 4) {
             searchElement = searchField
         } else {
-            let textField = app.textFields["destination.search"]
+            let textField = robot.app.textFields["destination.search"]
             XCTAssertTrue(
                 textField.waitForExistence(timeout: 3),
                 "Search field must exist as a searchField or textField with id 'destination.search'"
@@ -259,7 +243,7 @@ final class OnboardingDestinationUITests: XCTestCase {
             "destination.cta must disappear after the search field is focused (selection cleared)"
         )
 
-        let searchFocusedShot = XCTAttachment(screenshot: app.screenshot())
+        let searchFocusedShot = XCTAttachment(screenshot: robot.app.screenshot())
         searchFocusedShot.name = "destination-search-focused-cta-hidden"
         searchFocusedShot.lifetime = .keepAlways
         add(searchFocusedShot)
@@ -270,20 +254,20 @@ final class OnboardingDestinationUITests: XCTestCase {
         searchElement.typeText("Tok")
 
         // Tokyo result row must appear.
-        let tokyoResult = app.buttons["destination.result.city-tokyo"]
+        let tokyoResult = robot.app.buttons["destination.result.city-tokyo"]
         XCTAssertTrue(
             tokyoResult.waitForExistence(timeout: 4),
             "destination.result.city-tokyo must exist in the result list when query is 'Tok'"
         )
 
         // Lisbon result row must NOT appear — "Tok" does not match "Lisbon".
-        let lisbonResult = app.buttons["destination.result.city-lisbon"]
+        let lisbonResult = robot.app.buttons["destination.result.city-lisbon"]
         XCTAssertTrue(
             lisbonResult.waitForNonExistence(timeout: 3),
             "destination.result.city-lisbon must not exist in the result list when query is 'Tok'"
         )
 
-        let filteredShot = XCTAttachment(screenshot: app.screenshot())
+        let filteredShot = XCTAttachment(screenshot: robot.app.screenshot())
         filteredShot.name = "destination-search-tok-result-list"
         filteredShot.lifetime = .keepAlways
         add(filteredShot)
@@ -297,8 +281,9 @@ final class OnboardingDestinationUITests: XCTestCase {
 
         // After advancing, the destination search field must be gone — we are no longer on that step.
         // Query across both element types used earlier (searchFields + textFields) to be exhaustive.
-        let searchFieldAfter = app.searchFields["destination.search"]
-        let textFieldAfter = app.textFields["destination.search"]
+        // NOTE: both element-type queries are part of the searchwell workaround — preserved for Track B.
+        let searchFieldAfter = robot.app.searchFields["destination.search"]
+        let textFieldAfter = robot.app.textFields["destination.search"]
         XCTAssertTrue(
             searchFieldAfter.waitForNonExistence(timeout: 5),
             "destination.search (searchField) must not exist after result-tap advances to Trip Shape"
@@ -309,13 +294,13 @@ final class OnboardingDestinationUITests: XCTestCase {
         )
 
         // Trip Shape step CTA must now be present — confirms we landed on the next step.
-        let tripShapeCTA = app.buttons["tripshape.cta"]
+        let tripShapeCTA = robot.app.buttons["tripshape.cta"]
         XCTAssertTrue(
             tripShapeCTA.waitForExistence(timeout: 5),
             "tripshape.cta must exist after result-tap advances from Destination to Trip Shape"
         )
 
-        let finalShot = XCTAttachment(screenshot: app.screenshot())
+        let finalShot = XCTAttachment(screenshot: robot.app.screenshot())
         finalShot.name = "destination-result-tap-advances-to-tripshape"
         finalShot.lifetime = .keepAlways
         add(finalShot)
@@ -323,10 +308,8 @@ final class OnboardingDestinationUITests: XCTestCase {
 
     // MARK: - testAccessibilityAudit
     //
-    // Runs the BROAD audit (Apple's mechanism — `performAccessibilityAudit` + an `issueHandler`, not a
-    // narrowed `for:` set, so new audit types are never silently dropped) and suppresses only documented
-    // issues. `.contrast` / `.dynamicType` / `.textClipped` are not reliable on this custom design and are
-    // suppressed with the real check that covers each named:
+    // Runs the BROAD audit via OnboardingRobot.performOnboardingAudit() — not a narrowed `for:` set,
+    // so new audit types are never silently dropped. The robot owns the common documented suppression set:
     //   • .dynamicType — the audit reads UIKit's adjustsFontForContentSizeCategory, which SwiftUI's
     //     Font.custom(relativeTo:) / Font.system(.style) don't surface; the text DOES scale (Typography.swift
     //     binds every role to a Dynamic Type style, zero fixedSize). The durable lock is an AX5 render
@@ -336,26 +319,22 @@ final class OnboardingDestinationUITests: XCTestCase {
     //     contrast call is a design-doc decision, not an XCUITest assertion.
     //   • .textClipped — the search field grows from minHeight (no fixed frame); known FP on editable fields.
     //   • .hitRegion on onboarding.progress — the progress bar is informational, not an interaction target.
-    // See docs/decisions.md (this date). Every other type/element hard-fails.
+    // No screen-specific extras for this suite — the common set is sufficient.
+    // See OnboardingRobot.performOnboardingAudit and docs/decisions.md. Every other type/element hard-fails.
 
     func testAccessibilityAudit() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        robot.launch(scenario: "onboardingA")
 
-        let cta = app.buttons["destination.cta"]
+        let cta = robot.app.buttons["destination.cta"]
         XCTAssertTrue(cta.waitForExistence(timeout: 8), "destination.cta must exist before audit")
 
-        let preAuditShot = XCTAttachment(screenshot: app.screenshot())
+        let preAuditShot = XCTAttachment(screenshot: robot.app.screenshot())
         preAuditShot.name = "destination-pre-audit"
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Audit types unreliable on this custom design (custom fonts / OKLCH inks / glass / editable field).
-        let suppressedTypes: XCUIAccessibilityAuditType = [.dynamicType, .contrast, .textClipped]
-        try app.performAccessibilityAudit { issue in
-            if suppressedTypes.contains(issue.auditType) { return true }
-            // Informational progress bar isn't an interaction target → its .hitRegion flag is expected.
-            if issue.element?.identifier == "onboarding.progress" && issue.auditType == .hitRegion { return true }
-            return false
-        }
+        // Common suppression set is centralized in OnboardingRobot.performOnboardingAudit.
+        // No extra suppressions for this suite — pass the default no-op closure.
+        try robot.performOnboardingAudit()
     }
 }

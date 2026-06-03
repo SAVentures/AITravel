@@ -286,3 +286,38 @@ than first-saas's literal component sizes. The t-shirt scale is the conventional
 **Supersedes.** The role-named gap ladder; the earlier 2026-06-03 "token organization" §1.1 "Sizing stays
 flat" framing (Sizing now uses `Grid.x` + a `Component` band) and the bespoke `--size-*` primitives from
 the same day's component-tokenization entry. Theming seam unchanged (`ColorRole` is the dark-mode swap point).
+
+---
+
+## 2026-06-03 — Onboarding L2: rollback test DEFERRED (write command coming later)
+
+**Decision (deferral).** Onboarding currently has no networked write. Its single request,
+`GetOnboardingContextRequest`, is a read; today's mutations are in-place `TripDraftModel` transitions
+applied client-side. A write command (optimistic-apply + rollback) is on the roadmap. The rollback /
+error-path test is therefore **deferred until that write lands** — at which point it mirrors the Library
+borrow flow's rollback test (`07-testing.md §5.1`). Until then the L2 onboarding suite covers read-path
+failure (`.failed` + no partial graph leak) and the store's generation arithmetic
+(`advanceGeneration` sweep + clamp, `completeGeneration`, `cancelOnboarding`).
+
+This is a **deferral**, not a permanent design decision. Do not frame onboarding as "local-session-only
+by design / no rollback." When the write lands: wire `UITEST_FAILURE_RATE` → `AppTemplateApp.init` →
+`.mock(failure:)`, add the optimistic-apply + rollback tests, and remove this deferral entry.
+Cross-reference: `UITEST_FAILURE_RATE` is kept as an intentional, currently-unconsumed future hook
+(see Task C5 entry below).
+
+---
+
+## 2026-06-03 — `UITEST_FAILURE_RATE`: intentional, currently-unconsumed future hook (Task C5)
+
+**Decision.** `UITEST_FAILURE_RATE` is kept as deliberate scaffolding for the planned onboarding write
+command — it is **not dead code**. Today, `AppTemplateApp.init` reads only `UITEST_SCENARIO`;
+`UITEST_FAILURE_RATE` is forwarded via `OnboardingRobot.launch(failureRate:)` into `launchEnvironment`
+but nothing in the app consumes it. This is intentional: the onboarding write command (optimistic-apply
++ rollback) is on the roadmap, and when it lands the implementor wires `UITEST_FAILURE_RATE` through
+`AppTemplateApp.init` → `.mock(failure:)` and adds the error-path / rollback UITests at that time.
+
+**Reviewers and the coverage gate must NOT flag this as dead code.** The forwarding in the robot's
+optional `failureRate` param is the scaffolding seam.
+
+**When the write lands:** wire the env var → app init → `.mock(failure:)`; add the rollback/error-path
+UITest; then remove this note. Cross-reference the A-DEC deferral entry above.

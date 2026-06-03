@@ -30,6 +30,11 @@
 //   case justMonth  → "justMonth"
 //   case exactDates → "exactDates"
 //
+// Launch is routed through OnboardingRobot.launch(scenario:startStep:now:) (C1 migration).
+// UITEST_FAILURE_RATE is NOT forwarded here — the robot centralizes it via its optional failureRate
+// param (C5). Callers that pass nothing get nil → key absent → behavior unchanged (future hook
+// for the planned onboarding write; see docs/decisions.md Task C5).
+//
 // See ios/docs/engineering/07-testing.md §7 for the full XCUITest layer contract.
 
 import XCTest
@@ -47,31 +52,6 @@ final class OnboardingWhenUITests: XCTestCase {
         super.setUp()
         // Stop on first failure — subsequent assertions are meaningless if the When screen fails to load.
         continueAfterFailure = false
-    }
-
-    // MARK: - Launch helper
-
-    /// Launch the app pinned to the `when` step in the given scenario. Animations are slowed via
-    /// `-UIAnimationDragCoefficient 10` to prevent timing flakiness (07-testing §7.6). `UITEST_NOW` is
-    /// pinned to a fixed date so the month-menu derivation (12 months forward from "now") is deterministic
-    /// (07-testing §3). `UITEST_FAILURE_RATE` is wired so the write-error path is driveable; the default
-    /// "0" exercises the success path.
-    @discardableResult
-    private func makeLaunchedApp(
-        scenario: String = "onboardingA",
-        failureRate: String = "0",
-        now: String = "2026-06-03T12:00:00Z"
-    ) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchEnvironment["UITEST_SCENARIO"] = scenario
-        app.launchEnvironment["UITEST_START_STEP"] = "when"
-        // Pin the clock — WhenStepPresenter derives monthOptions from AppDate.simulatedNow (§3).
-        app.launchEnvironment["UITEST_NOW"] = now
-        app.launchEnvironment["UITEST_FAILURE_RATE"] = failureRate
-        // Slow animations so waitForExistence beats them; not zero (system buttons use spring).
-        app.launchArguments += ["-UIAnimationDragCoefficient", "10"]
-        app.launch()
-        return app
     }
 
     // MARK: - Shared: wait for the When screen
@@ -103,7 +83,8 @@ final class OnboardingWhenUITests: XCTestCase {
         let scenarios = ["onboardingA", "onboardingC"]
 
         for scenario in scenarios {
-            let app = makeLaunchedApp(scenario: scenario)
+            let robot = OnboardingRobot()
+            let app = robot.launch(scenario: scenario, startStep: "when")
             defer { app.terminate() }
 
             // ── Sentinel: CTA must be present ──
@@ -180,7 +161,8 @@ final class OnboardingWhenUITests: XCTestCase {
     // already confirms the initial absent-picker state for both scenarios.
 
     func testPrecisionToggleRevealsAndHidesDatePickers() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "when")
         let cta = waitForWhenScreen(in: app)
 
         // ── 1. Confirm justMonth is the default — pickers absent ──
@@ -263,7 +245,8 @@ final class OnboardingWhenUITests: XCTestCase {
     // scenario-independent).
 
     func testCTAIsHittableAndAdvancesStep() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "when")
         let cta = waitForWhenScreen(in: app)
 
         // ── CTA is hittable ──
@@ -296,9 +279,10 @@ final class OnboardingWhenUITests: XCTestCase {
     // MARK: - testAccessibilityAudit
     //
     // Runs the BROAD audit (Apple's mechanism — `performAccessibilityAudit` with an `issueHandler`, not a
-    // narrowed `for:` set, so new audit types are never silently dropped) and suppresses only documented
-    // issues. Policy mirrors OnboardingDestinationUITests.testAccessibilityAudit:
+    // narrowed `for:` set, so new audit types are never silently dropped) via OnboardingRobot's
+    // performOnboardingAudit, which centralizes the common suppression set (C1 migration).
     //
+    // Common suppression set (owned by OnboardingRobot.performOnboardingAudit):
     //   • .dynamicType — the audit reads UIKit's adjustsFontForContentSizeCategory, which SwiftUI's
     //     Font.custom(relativeTo:) / Font.system(.style) don't surface; the text DOES scale (Typography.swift
     //     binds every role to a Dynamic Type style, zero fixedSize). The durable lock is an AX5 render
@@ -310,11 +294,15 @@ final class OnboardingWhenUITests: XCTestCase {
     //     elements where the audit can mis-read transient clipping.
     //   • .hitRegion on onboarding.progress — the progress bar is informational, not an interaction target.
     //
-    // Every other type/element hard-fails (return false). A blanket-suppressed or bare audit is a bug (§7.9).
-    // See docs/decisions.md (this date).
+    // No screen-specific extraSuppressions are needed for this suite — the When step has no additional
+    // documented exemptions beyond the common set (no generation.handoff, no decorative map placeholder).
+    //
+    // Every other type/element hard-fails (return false inside the robot). A blanket-suppressed or bare
+    // audit is a bug (§7.9). See docs/decisions.md (this date).
 
     func testAccessibilityAudit() throws {
-        let app = makeLaunchedApp(scenario: "onboardingA")
+        let robot = OnboardingRobot()
+        let app = robot.launch(scenario: "onboardingA", startStep: "when")
 
         let cta = app.buttons["when.cta"]
         XCTAssertTrue(cta.waitForExistence(timeout: 8), "when.cta must exist before audit")
@@ -324,15 +312,7 @@ final class OnboardingWhenUITests: XCTestCase {
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Audit types unreliable on this custom design (custom fonts / OKLCH inks / glass / dynamic Menu).
-        let suppressedTypes: XCUIAccessibilityAuditType = [.dynamicType, .contrast, .textClipped]
-        try app.performAccessibilityAudit { issue in
-            // Suppress the documented unreliable types for this design system.
-            if suppressedTypes.contains(issue.auditType) { return true }
-            // Informational progress bar isn't an interaction target → its .hitRegion flag is expected.
-            if issue.element?.identifier == "onboarding.progress" && issue.auditType == .hitRegion { return true }
-            // All other issues hard-fail.
-            return false
-        }
+        // Common suppression set only — no screen-specific extras for the When step.
+        try robot.performOnboardingAudit()
     }
 }
