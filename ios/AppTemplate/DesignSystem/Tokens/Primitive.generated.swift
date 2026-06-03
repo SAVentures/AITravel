@@ -31,6 +31,7 @@ enum Primitive {
     static let fillTertiary = Color(.sRGB, red: 0.5066, green: 0.5292, blue: 0.5482, opacity: 0.0700)
     static let fillQuaternary = Color(.sRGB, red: 0.5066, green: 0.5292, blue: 0.5482, opacity: 0.0450)
     static let separator = Color(.sRGB, red: 0.3127, green: 0.3380, blue: 0.3590, opacity: 0.1600)
+    static let scrim = Color(.sRGB, red: 0.0861, green: 0.0861, blue: 0.0861, opacity: 0.2200)
     static let destructive = Color(.sRGB, red: 0.8018, green: 0.1556, blue: 0.1539, opacity: 1.0000)
     static let day1 = Color(.sRGB, red: 0.7162, green: 0.4910, blue: 0.3355, opacity: 1.0000)
     static let day2 = Color(.sRGB, red: 0.3650, green: 0.5602, blue: 0.4377, opacity: 1.0000)

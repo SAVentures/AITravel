@@ -62,6 +62,7 @@
 
   --separator:        oklch(0.45 0.012 243 / 0.16);  /* default hairline      */
   --separator-opaque: var(--ink-200);               /* over opaque surfaces  */
+  --scrim:            oklch(0.20 0.000 0 / 0.22);    /* modal dim behind sheets/covers */
 
   --action-primary:   var(--accent-600);
   --state-now:        var(--accent-500);
