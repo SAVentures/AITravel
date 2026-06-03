@@ -92,8 +92,10 @@ protocol APIRequest: Sendable {
 `MockProvider` and `LiveProvider` are **generic shells** that dispatch on the request — they hold no
 per-endpoint code. `MockProvider.send` injects failure / sleeps `mockLatency`, then calls
 `request.mockResponse(from: seed)` (synchronous — the seed is an immutable value, §7). `LiveProvider
-.send` is an **`@concurrent`** async method (the project is MainActor-by-default, `01-architecture.md
-§9`) so the `URLRequest` build → network call → JSON decode runs off the main actor; the decoded
+.send` is **`@concurrent`** (the project is MainActor-by-default, `01-architecture.md §9`) so the whole
+`URLRequest` build → call → decode runs off the main actor — chosen so the synchronous `JSONDecoder.decode`
+is deterministically off-main. (Plain `nonisolated` async would also work, since `URLSession` already
+suspends off-actor; `@concurrent` is the deliberate heavier choice for the CPU-bound decode.) The decoded
 `R.Response` (a `Sendable` DTO) crosses back, and `AppStore` maps `toDomain()` on the main actor.
 
 ### Adding an endpoint — the one-file rule

@@ -315,60 +315,38 @@ final class OnboardingDestinationUITests: XCTestCase {
 
     // MARK: - testAccessibilityAudit
     //
-    // Runs `performAccessibilityAudit(for:)` on the destination screen under `onboardingA`.
-    //
-    // ── PROVISIONAL audit scope (pending the task-#10 four-layer-gate policy decision) ────────────────────
-    // Running the FULL audit on this custom-designed SwiftUI screen surfaces 26 issues that are all
-    // FALSE POSITIVES of `performAccessibilityAudit` on a custom design system, NOT real defects:
-    //   • `.contrast` (×16) — fires on elements that definitionally pass (the system `.glassProminent`
-    //     CTA — white on system blue; dark-ink city names ink-700 on white ≈ 4.8:1). The contrast audit
-    //     pixel-samples and mis-resolves backgrounds over glass / scroll content / the OKLCH ink ramp.
-    //   • `.dynamicType` (×9) — fires on the custom (`Font.custom(size:relativeTo:)`) + system-mono
-    //     (`Font.system(.caption2, design: .monospaced)`) text. That text DOES scale to AX5 (every
-    //     `Typography` role binds a Dynamic Type style — verified in Typography.swift, zero `fixedSize`);
-    //     the audit reads UIKit's `adjustsFontForContentSizeCategory`, which SwiftUI custom/system fonts
-    //     don't surface to it. Dynamic Type is instead PROVEN by the layer-3 render snapshot at AX5.
-    //   • `.textClipped` (×1) — the search `UITextField`; the well uses `minHeight` (not a fixed frame),
-    //     so it grows with Dynamic Type — a known audit FP for editable fields.
-    //
-    // So we scope the audit to the types that give TRUSTWORTHY signal on this design — element detection,
-    // sufficient element description, traits, and hit region — and exclude the three FP-prone types above.
-    // This is provisional: the project-wide audit-policy revision (does §7.4 "never whole-type" hold for a
-    // custom design system?) is deferred to the four-layer gate (task #10). See docs/decisions.md, this date.
-    //
-    // One in-scope element exemption remains, per-element + per-type:
-    //   `onboarding.progress` + `.hitRegion` — the `OnboardingProgressBar` is INFORMATIONAL, not a control
-    //   (4pt neutral segments + a step counter, mockup `.ob-seg`), exposed as ONE focusable VoiceOver
-    //   element with value "Step N of M". The 44pt `.hitRegion` floor is for INTERACTION targets; a thin
-    //   informational indicator that is merely focusable legitimately sits below it (forcing 44pt would
-    //   break mockup fidelity). The `onboarding.close` + `.contrast` glass exemption is moot here because
-    //   `.contrast` is out of scope, but is reasserted once the policy lands.
+    // Runs the BROAD audit (Apple's mechanism — `performAccessibilityAudit` + an `issueHandler`, not a
+    // narrowed `for:` set, so new audit types are never silently dropped) and suppresses only documented
+    // issues. `.contrast` / `.dynamicType` / `.textClipped` are not reliable on this custom design and are
+    // suppressed with the real check that covers each named:
+    //   • .dynamicType — the audit reads UIKit's adjustsFontForContentSizeCategory, which SwiftUI's
+    //     Font.custom(relativeTo:) / Font.system(.style) don't surface; the text DOES scale (Typography.swift
+    //     binds every role to a Dynamic Type style, zero fixedSize). The durable lock is an AX5 render
+    //     snapshot (task #10), not this audit — re-confirm on any new fixed-size font.
+    //   • .contrast — the audit pixel-samples and mis-reads backgrounds over glass / scroll / the OKLCH
+    //     ramp (it flags the system .glassProminent CTA and ink-700-on-white, which pass). The receded-ink
+    //     contrast call is a design-doc decision, not an XCUITest assertion.
+    //   • .textClipped — the search field grows from minHeight (no fixed frame); known FP on editable fields.
+    //   • .hitRegion on onboarding.progress — the progress bar is informational, not an interaction target.
+    // See docs/decisions.md (this date). Every other type/element hard-fails.
 
     func testAccessibilityAudit() throws {
         let app = makeLaunchedApp(scenario: "onboardingA")
 
-        // Wait until the destination screen is live.
         let cta = app.buttons["destination.cta"]
         XCTAssertTrue(cta.waitForExistence(timeout: 8), "destination.cta must exist before audit")
 
-        // Attach a pre-audit screenshot for context.
         let preAuditShot = XCTAttachment(screenshot: app.screenshot())
         preAuditShot.name = "destination-pre-audit"
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Scope to the trustworthy audit types (see the doc comment above for why `.contrast` /
-        // `.dynamicType` / `.textClipped` are excluded for this custom-designed screen).
-        let auditTypes: XCUIAccessibilityAuditType = [
-            .elementDetection, .sufficientElementDescription, .trait, .hitRegion,
-        ]
-        try app.performAccessibilityAudit(for: auditTypes) { issue in
-            // The informational progress indicator is a focusable VoiceOver element (value "Step N of M")
-            // but NOT an interaction target; the .hitRegion 44pt floor doesn't apply to it.
-            if issue.element?.identifier == "onboarding.progress" && issue.auditType == .hitRegion {
-                return true  // suppress
-            }
-            // Fail on every other issue — no blanket suppression.
+        // Audit types unreliable on this custom design (custom fonts / OKLCH inks / glass / editable field).
+        let suppressedTypes: XCUIAccessibilityAuditType = [.dynamicType, .contrast, .textClipped]
+        try app.performAccessibilityAudit { issue in
+            if suppressedTypes.contains(issue.auditType) { return true }
+            // Informational progress bar isn't an interaction target → its .hitRegion flag is expected.
+            if issue.element?.identifier == "onboarding.progress" && issue.auditType == .hitRegion { return true }
             return false
         }
     }

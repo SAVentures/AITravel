@@ -151,3 +151,26 @@ fail WCAG-AA and should be re-toned, vs. accepted as matching iOS's own `.second
 **deferred to the onboarding four-layer gate (task #10)**. Until then this screen's audit is type-scoped as
 above; the other onboarding screens follow the same provisional scope. The user opted to commit the passing
 suite now and settle the policy at the gate.
+
+---
+
+## 2026-06-03 — Onboarding audit: BROAD audit + issueHandler suppression (SUPERSEDES the two entries above)
+
+**Decision.** `testAccessibilityAudit` runs the **broad** `performAccessibilityAudit { … }` (no `for:`
+set — so a new SDK audit type is never silently dropped, per Apple WWDC23) and suppresses in the
+`issueHandler`. Three audit types are not reliable on this custom design and are suppressed **with the
+real check that covers each named**, not declared blind false-positives:
+
+- `.dynamicType` — the audit reads UIKit `adjustsFontForContentSizeCategory`, which SwiftUI's
+  `Font.custom(relativeTo:)` / `Font.system(.style)` don't surface; the text DOES scale (Typography.swift,
+  zero `fixedSize`). Durable lock = an **AX5 render snapshot** (task #10), not this audit.
+- `.contrast` — pixel-samples and mis-reads backgrounds over glass / scroll / the OKLCH ramp (flags the
+  system `.glassProminent` CTA and ink-700-on-white, which pass). Receded-ink contrast is a **design-doc**
+  call, not an XCUITest assertion.
+- `.textClipped` — the search field grows from `minHeight`; known FP on editable fields.
+- plus `onboarding.progress` + `.hitRegion` (informational, not an interaction target).
+
+Everything else hard-fails. **Supersedes** the two prior same-date audit entries (per-element-only, and the
+`for:` type-scoping): the `for:`-exclude was Apple's anti-pattern; whole-type suppression here is deliberate
+and compensated, not blanket. Open at task #10: add the AX5 snapshot; decide if `textSecondary`/`textTertiary`
+need re-toning vs. accepting the iOS `.secondary`/`.tertiary` convention.

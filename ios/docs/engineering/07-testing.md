@@ -270,10 +270,10 @@ objectVersion 77)**. Get them right up front:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `XCTestCase` subclass **won't compile** in the unit-test target | `XCTestCase.init` is `nonisolated`; it clashes with the target's MainActor default | **Snapshot (and all functional) tests use Swift Testing** — `@Suite` + `@Test @MainActor`, never `XCTestCase`. `XCTestCase` is reserved for the **XCUITest target only** (its own module, §7). |
+| `XCTestCase` subclass **won't compile** when the *target's* default isolation is MainActor | its MainActor `init()` clashes with the `nonisolated` override | rather than fight the init clash, standardize L1–L3 on **Swift Testing** (`@Suite`/`@Test @MainActor`); the XCUITest target keeps its own nonisolated default for `XCTestCase` (§7). |
 | `You can't save the file … the volume is read only` on first record | the helper passed **`#file`**, which `xcodebuild` remaps to a non-writable path | the helper's `file:` default is **`#filePath`** (the real on-disk path), never `#file` (§6.1). |
 | `extra argument 'snapshotDirectory'` | that parameter doesn't exist in swift-snapshot-testing 1.19 | don't pass it — the dir derives from `#filePath`. Pin the library's actual `assertSnapshot` signature before calling. |
-| `Multiple commands produce …/<State>.png` at build time | synchronized folders bundle the committed baseline PNGs into the test target; same-named PNGs across suites collide when flattened | set **`EXCLUDED_SOURCE_FILE_NAMES = "*.png"`** on the test target. NB: hand-authored `membershipExceptions` in the `.pbxproj` are **silently ignored** under objectVersion 77 — the build setting is the only thing that works. |
+| `Multiple commands produce …/<State>.png` at build time | synchronized folders bundle the committed baseline PNGs into the test target; same-named PNGs across suites collide when flattened | set **`EXCLUDED_SOURCE_FILE_NAMES = "*.png"`** on the test target (baselines must never be bundle resources). The IDE-written exception set works too; hand-edited `.pbxproj membershipExceptions` *didn't take effect in our case* — prefer the build setting or the IDE. |
 
 ---
 
@@ -343,9 +343,15 @@ Run one `performAccessibilityAudit()` per screen under the `standard` scenario:
     try app.performAccessibilityAudit()   // .contrast, .dynamicType, .hitRegion, …
 }
 ```
-Suppress a **documented** exemption per-type via the `issueHandler` closure (return `true` to suppress
-that one issue, `false` to fail) — and tag the exempt element with a dedicated identifier so the handler
-matches it without hardcoding text. Suppress narrowly; never blanket-return `true`.
+Run the **broad** audit + an `issueHandler` (never narrow the `for:` set — that silently drops whole
+categories). Suppress a **documented** exemption (return `true`), ideally keyed to a dedicated identifier.
+Default to per-element + per-type; never blanket-return `true`.
+
+**Whole-type suppression is allowed only when an audit type is systematically unreliable on this design
+AND a real check covers it** — e.g. `.dynamicType` can't introspect SwiftUI `Font.custom(relativeTo:)`
+scaling, so suppress it but lock Dynamic Type with an **AX5 render snapshot**; `.contrast` mis-samples over
+glass/scroll, so the receded-ink call is a **design-doc decision**. Name the covering check in the comment
++ `decisions.md`; a bare whole-type suppress with no compensating check is a defect.
 
 ### 7.5 Screenshots = triage only
 `XCTAttachment(screenshot:)` at key states gives a CI failure visual context. These are **never
