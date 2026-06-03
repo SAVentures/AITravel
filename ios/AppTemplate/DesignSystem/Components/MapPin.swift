@@ -1,32 +1,8 @@
-// MapPin.swift — the map marker carrying the product's one signature idea, definitive vs fuzzy vs now.
-//
-// Ports the components mockup `.pin` (§08 — "Map pins — definitive · fuzzy · now"):
-//   .pin .mk        — the teardrop marker: a pill with one sharp corner, rotated 45°
-//                     (`border-radius: 999px 999px 999px 2px; transform: rotate(45deg)`), the glyph
-//                     counter-rotated so it reads upright (`.mk span { transform: rotate(-45deg) }`).
-//   .pin.def  .mk   — solid ink ground (`--ink-900`), a number / `●` glyph on paper (`--paper-0`).
-//   .pin.fuzzy .mk  — soft grey ground (`--paper-300`), an italic `~` glyph in lighter ink (`--ink-500`).
-//   .pin.now  .mk   — the blue now ground (`--state-now`), a `●` glyph on accent (`--on-accent`), with a
-//                     soft ring (`box-shadow: 0 0 0 6px state-now @ 16%`).
-//
-// The three registers ARE the product's point of view (the plan's "definitive vs fuzzy" signature) and
-// run through cards, timeline rows, and pins alike — so the register is a VALUE-TYPE ENUM arg
-// (`PinRegister`), never a boolean or an ad-hoc style (05 §8, plan Wave C note).
-//
-// Survives grayscale (02-color §6, never colour alone): each register is conveyed by COLOUR **and**
-// SHAPE/GLYPH — the definitive number/`●` on ink, the italic `~` on grey, the `●` on the blue ring — so a
-// colour-blind or monochrome reader still tells the three apart by the glyph and the now-ring.
-//
-// The now register is a STATIC ring this phase (OD-2): the mockup shows a pulsing now-ring, but a
-// continuous motion in the frozen foundation would be an unowned loop (J-9.3 — ≤1 continuous motion *per
-// screen*). The pulse is deferred to the screen that first anchors it; here the ring is drawn at rest.
-// NEVER a continuous pulse in this component.
-//
-// @ScaledMetric (T-6.4): the marker is a non-text metric, so the pin size scales with the glyph's mono
-// caption text style via `@ScaledMetric(relativeTo:)` — never a fixed CGFloat, never a fixed frame (J-0.3).
-//
-// Semantic tokens only; zero literals / `Primitive.*` (J-0.2). Content, never chrome — a pin is NOT glass
-// (J-0.1). Value-type args only; the local `PinRegister` fixture drives the previews + the Wave E snapshot.
+// MapPin.swift — the map marker carrying the product's signature register: definitive · fuzzy · now.
+// Ports the components mockup `.pin` (§08): a teardrop marker (pill with one sharp corner, rotated 45°,
+// glyph counter-rotated upright). Register is conveyed by COLOUR **and** glyph/shape so it survives
+// grayscale (02-color §6). Content, never glass (J-0.1); semantic tokens only (J-0.2).
+// The now-ring is STATIC this phase (OD-2) — a continuous pulse would be an unowned loop (J-9.3).
 import SwiftUI
 
 struct MapPin: View {
@@ -131,11 +107,9 @@ struct MapPin: View {
         }
     }
 
-    // The marker scales with the glyph's mono caption text style so it stays optically matched at every
-    // Dynamic Type size (T-6.4); never a bare fixed CGFloat. The @Large base mirrors the mockup's 26px mark.
-    @ScaledMetric(relativeTo: .caption2) private var pinSize: CGFloat = 26
-    // The now ring's stroke width scales alongside the marker (the mockup's 6px halo).
-    @ScaledMetric(relativeTo: .caption2) private var ringWidth: CGFloat = 6
+    // The marker + halo scale with the glyph's mono caption text style (T-6.4); never a fixed CGFloat.
+    @ScaledMetric(relativeTo: .caption2) private var pinSize: CGFloat = Sizing.Component.mapPin
+    @ScaledMetric(relativeTo: .caption2) private var ringWidth: CGFloat = Stroke.Component.mapPinRing
 }
 
 // MARK: - Preview
@@ -143,11 +117,11 @@ struct MapPin: View {
 #Preview("MapPin — definitive · fuzzy · now") {
     // Local value-type fixtures — no SampleData / domain model exists in Phase 0 (05 §8, plan Wave C note).
     let registers: [MapPin.PinRegister] = [.definitive(2), .fuzzy, .now]
-    HStack(spacing: Spacing.hero) {
+    HStack(spacing: Spacing.`2xl`) {
         ForEach(Array(registers.enumerated()), id: \.offset) { _, register in
             MapPin(register)
         }
     }
-    .padding(Spacing.hero)
+    .padding(Spacing.`2xl`)
     .background(ColorRole.surfacePage)
 }

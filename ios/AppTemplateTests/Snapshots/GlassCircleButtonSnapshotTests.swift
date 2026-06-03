@@ -81,7 +81,7 @@ private func frostedStage<Content: View>(
         // Page ground
         ColorRole.surfacePage
         // Horizontal stripes — grouped and fill bands mirror the component's GlassStage
-        VStack(spacing: Spacing.paired) {
+        VStack(spacing: Spacing.sm) {
             ColorRole.surfaceGrouped
             ColorRole.fillTertiary
             ColorRole.surfaceGrouped
@@ -89,7 +89,7 @@ private func frostedStage<Content: View>(
         }
         // The button, centred, with standard card inset
         content()
-            .padding(Spacing.cardInset)
+            .padding(Spacing.lg)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
 }

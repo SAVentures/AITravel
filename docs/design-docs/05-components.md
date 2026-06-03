@@ -127,11 +127,11 @@ carry the most weight to get wrong; the anti-slop catalog flags more card tells 
 - **When to use:** a discrete, tappable-or-not unit that benefits from its own surface — *not* a list of
   homogeneous rows (use rows, §4), and *not* a wrapper around a single value (use a section + type).
 - **Anatomy:** `surfaceElevated` fill on the page, `Radius.card` corners (medium-large, **12–16pt** —
-  24pt+ on a small card reads as AI; `08-slop.md A-6`), `Spacing.cardInset` (16pt) internal padding,
+  24pt+ on a small card reads as AI; `08-slop.md A-6`), `Spacing.lg` (16pt) internal padding,
   optional thumbnail, a title in the display family, meta in the UI/mono family. Content left-aligned
   (`J-7.1`).
 - **Sizing:** content + Dynamic Type drive height; no fixed frame (`J-0.3`). Internal padding ≤ the gap
-  to the next card (`Spacing.sectionGap`) so cards read as separate, not merged (`J-1`; Cieden
+  to the next card (`Spacing.xl`) so cards read as separate, not merged (`J-1`; Cieden
   internal ≤ external).
 
 **Hard rules (these are the common card tells):**
@@ -175,7 +175,7 @@ when items repeat and the eye should *scan* (`J-4.1`).
 - **Inks are binary:** primary line `textPrimary`, everything else `textSecondary`; at most three inks in
   a row including one state mark (`J-2.2`, `J-2.3`). Left-align text; right-align any numeric/mono column
   (counts, due dates) so the eye runs the right edge (`J-7.1`, `J-7.2`).
-- **Sizing:** `Spacing.cardInset` (16pt) vertical padding; the whole row ≥ **44pt** tall as a tap target
+- **Sizing:** `Spacing.lg` (16pt) vertical padding; the whole row ≥ **44pt** tall as a tap target
   (Apple HIG). Height follows content + Dynamic Type — no fixed row height (`J-0.3`).
 
 **Trailing accessory = the row's behavior contract** (don't mismatch; learnui.design iOS 26 list cells):
@@ -212,7 +212,7 @@ Small, capsule-shaped labels for status, category, or filter. Two registers — 
 "Borrowed", "Due Jun 1") and **filter chips** (interactive, selectable).
 
 - **Anatomy:** capsule (`buttonBorderShape(.capsule)`), a short label in the UI family (mono only for a
-  measurement like a date/count), optional leading glyph at `Spacing.paired` (8pt) from the label. Caps
+  measurement like a date/count), optional leading glyph at `Spacing.sm` (8pt) from the label. Caps
   reserved for short mono eyebrows, never sentence text (`J-3.5`, `08-slop.md B-10`).
 - **Sizing:** content-hugging; interactive chips still meet 44pt in the tap dimension via padding even if
   the visual capsule is shorter (Apple HIG).

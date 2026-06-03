@@ -23,7 +23,7 @@ struct ContextNote: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.itemGap) {
+        HStack(alignment: .top, spacing: Spacing.md) {
             if let systemImage {
                 Image(systemName: systemImage)
                     .font(Typography.subhead)
@@ -31,7 +31,7 @@ struct ContextNote: View {
                     .accessibilityHidden(true)
             }
 
-            VStack(alignment: .leading, spacing: Spacing.hairline) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(eyebrow)
                     .font(Typography.caption)
                     .tracking(Typography.trackEyebrowCaption)
@@ -45,7 +45,7 @@ struct ContextNote: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.cardInset)
+        .padding(Spacing.lg)
         .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
         .accessibilityIdentifier("contextnote")
         .accessibilityElement(children: .combine)

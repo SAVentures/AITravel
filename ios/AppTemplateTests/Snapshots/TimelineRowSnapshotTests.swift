@@ -32,7 +32,7 @@ private struct LocalRailStage<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: 0) { content }
-            .padding(.horizontal, Spacing.cardInset)
+            .padding(.horizontal, Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(ColorRole.surfaceGrouped, in: .rect(cornerRadius: Radius.card))
             .padding(Spacing.screenInset)

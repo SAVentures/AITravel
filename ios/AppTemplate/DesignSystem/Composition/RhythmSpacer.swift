@@ -22,17 +22,17 @@ struct RhythmSpacer: View {
     /// The named rungs of the six-rung gap ladder (03-layout-spacing §2, J-1). Each maps 1:1 to a
     /// `Spacing.*` role below — there is no off-ladder rung.
     enum Rung {
-        /// 4 — the tightest pairing (eyebrow ↔ title). → `Spacing.hairline`
+        /// 4 — the tightest pairing (eyebrow ↔ title). → `Spacing.xs`
         case hairline
-        /// 8 — icon ↔ label; cover ↔ first baseline. → `Spacing.paired`
+        /// 8 — icon ↔ label; cover ↔ first baseline. → `Spacing.sm`
         case paired
-        /// 12 — between siblings (title ↔ subtitle). → `Spacing.itemGap`
+        /// 12 — between siblings (title ↔ subtitle). → `Spacing.md`
         case sibling
-        /// 16 — card/row inset rhythm. → `Spacing.cardInset`
+        /// 16 — card/row inset rhythm. → `Spacing.lg`
         case card
-        /// 24 — the default between-group rhythm (section ↔ section). → `Spacing.sectionGap`
+        /// 24 — the default between-group rhythm (section ↔ section). → `Spacing.xl`
         case section
-        /// 32 — the widest breath (hero ↔ first control). → `Spacing.hero`
+        /// 32 — the widest breath (hero ↔ first control). → `Spacing.`2xl``
         case hero
     }
 
@@ -45,12 +45,12 @@ struct RhythmSpacer: View {
     /// The semantic gap height for the selected rung. Maps to `Spacing.*` only — never a literal.
     private var height: CGFloat {
         switch rung {
-        case .hairline: Spacing.hairline
-        case .paired:   Spacing.paired
-        case .sibling:  Spacing.itemGap
-        case .card:     Spacing.cardInset
-        case .section:  Spacing.sectionGap
-        case .hero:     Spacing.hero
+        case .hairline: Spacing.xs
+        case .paired:   Spacing.sm
+        case .sibling:  Spacing.md
+        case .card:     Spacing.lg
+        case .section:  Spacing.xl
+        case .hero:     Spacing.`2xl`
         }
     }
 

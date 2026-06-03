@@ -1,32 +1,10 @@
 // GlassCircleButton.swift — the bar glyph button (05-components.md §1.1; J-0.1/J-8.3/J-2.4).
 //
-// A single SF Symbol on the iOS 26 system Liquid Glass material, shaped as a circle, with a 44×44pt hit
-// target — the glyph button that floats in nav bars, toolbars, and overlay chips. Ports the mockup
-// `.gbtn` (mockups/components/Components.html §01): 44×44, a ~20pt glyph, `ink-700` at rest, `accent-600`
-// when selected.
-//
-// ── This is the ONE component that touches glass — and it is a *bar glyph*, not content ───────────────
-// Every other `Components/` view is resting content on a solid surface and NEVER touches glass (J-0.1,
-// 05-components §3.3). This one is the single exception because it IS floating chrome (a bar glyph). It
-// uses the SYSTEM material via `.buttonStyle(.glass)` — never a hand-rolled translucency, never the
-// `glassChrome()` content seam (that wraps *containers*; a button picks up glass from its style).
-//
-// ── If it ever migrates into a glass bar, it DROPS its own glass (J-8.3 — no glass-on-glass) ──────────
-// Two translucent layers read as dishwater. When a `GlassCircleButton` sits inside an already-glass bar
-// (a tab/top bar, the `ActionBar`'s `GlassEffectContainer`), the host bar carries the glass and these
-// glyphs render as plain glyph buttons (`.borderless`/`.plain`) instead — never `.glass` inside `.glass`
-// (05-components §1.1). That demotion is the *host*'s call; standalone (an overlay chip over a photo /
-// map) this button carries its own glass, as here.
-//
-// ── Tint conveys MEANING only (J-2.4) ─────────────────────────────────────────────────────────────────
-// `.tint(_:)` is applied ONLY to the selected/active glyph (it carries `actionPrimary` — the mockup's
-// `--accent-600`). Tinting every glyph destroys the signal (05-components §1.1, conorluddy). The accent
-// is paired with the `isSelected` accessibility trait so the state survives grayscale / VoiceOver — never
-// color alone (02-color §6). An unselected glyph stays neutral (`textPrimary`).
-//
-// Semantic tokens only — no literal, no `Primitive.*` (J-0.2). The 44pt hit target scales with text via
-// `@ScaledMetric` (never a fixed CGFloat — T-6.4); `.buttonBorderShape(.circle)` + `controlSize` shape
-// the capsule, never a `.frame(width:height:)` (05-components §1.4, J-0.3).
+// One SF Symbol on the system Liquid Glass material, circular, 44×44pt hit target. Ports `.gbtn`
+// (mockups/components/Components.html §01). The ONE component that touches glass, because it IS floating
+// chrome — via `.buttonStyle(.glass)`, never hand-rolled. Inside an already-glass bar the host demotes it
+// to a plain glyph (no glass-on-glass, J-8.3). Tint conveys meaning ONLY (J-2.4): the accent rides the
+// selected glyph, paired with the `.isSelected` trait so it is never color alone (02-color §6).
 import SwiftUI
 
 /// A circular Liquid Glass glyph button for floating bars / overlay chips (05-components §1.1).
@@ -51,9 +29,9 @@ struct GlassCircleButton: View {
     /// The tap action.
     let action: () -> Void
 
-    /// The 44×44pt minimum hit target — the HIG floor — scaled with Dynamic Type so the touch area grows
-    /// with the user's text size rather than staying a fixed point value (05-components intro, T-6.4).
-    @ScaledMetric(relativeTo: .body) private var hitTarget: CGFloat = 44
+    /// The HIG minimum hit target — scaled with Dynamic Type so the touch area grows with the user's text
+    /// size rather than staying a fixed point value (05-components intro, T-6.4).
+    @ScaledMetric(relativeTo: .body) private var hitTarget: CGFloat = Sizing.minTapTarget
 
     init(
         systemImage: String,
@@ -101,14 +79,14 @@ private struct GlassStage<Content: View>: View {
             // A representative striped paper ground (the system glass samples this so the material reads).
             // Built from semantic surface roles only — no literal colors (J-0.2).
             ColorRole.surfacePage
-            VStack(spacing: Spacing.paired) {
+            VStack(spacing: Spacing.sm) {
                 ColorRole.surfaceGrouped
                 ColorRole.fillTertiary
                 ColorRole.surfaceGrouped
                 ColorRole.fillSecondary
             }
             content
-                .padding(Spacing.cardInset)
+                .padding(Spacing.lg)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -116,7 +94,7 @@ private struct GlassStage<Content: View>: View {
 
 #Preview("GlassCircleButton") {
     GlassStage {
-        HStack(spacing: Spacing.itemGap) {
+        HStack(spacing: Spacing.md) {
             // default — neutral ink glyph
             GlassCircleButton(
                 systemImage: "chevron.left",

@@ -1,22 +1,7 @@
-// Radius.swift — the SEMANTIC radius tier (03-layout-spacing §6; 05-design-system.md §1, §5).
-//
-// Radius is a ladder of MEANING, not a free dial (J-10.1). Each member is referenced by ROLE here —
-// never a raw number, never a `Primitive.r*` directly from a view (J-0.2). The ladder runs:
-//
-//     tag → thumb → row/well → card/sheet → pill (chrome)
-//
-// Two rules govern the picks (J-10):
-//   • Chrome is a PILL; content is a ROUNDED-RECT (J-10.2). A pill *floats* (a bar, a chip, a button);
-//     a rounded-rect is *anchored* (a card, a row). A pill-shaped card reads as a giant chip; a
-//     rounded-rect bar reads as a panel — both wrong.
-//   • CAP content at the `card` rung (16). Extreme radii — 24px+ on a small card — read as
-//     AI-generated (08-slop A-6); full-pill is for tags/buttons/chips only, never a content surface.
-//
-// Concentric children — the craft move (03-layout-spacing §5). Do NOT hand-pick an inner radius
-// (that produces "pinched" or "flared" corners). Instead the PARENT carries
-// `.containerShape(.rect(cornerRadius: Radius.card))` and the CHILD uses `ConcentricRectangle()`
-// (or `.rect(corners: .concentric)`); the system computes inner = outer − padding. This is a usage
-// note for component authors, not a member of this enum.
+// Radius.swift — the SEMANTIC radius tier: a meaning ladder (tag→thumb→row/well→card→pill) referenced by
+// ROLE, never a raw number or `Primitive.r*` (03-layout-spacing §6; J-0.2/J-10). Rules: chrome = PILL,
+// content = ROUNDED-RECT capped at `card` (extreme radii read AI — J-10.2, 08-slop A-6); concentric inner
+// corners are the system's job via `.containerShape` + `ConcentricRectangle()` (03 §5).
 import SwiftUI
 
 enum Radius {

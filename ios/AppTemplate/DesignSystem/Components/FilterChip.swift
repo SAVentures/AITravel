@@ -1,25 +1,10 @@
 // FilterChip.swift — the interactive, selectable filter chip (05-components §5; ports `.chip` / `.chip.sel`
 // from mockups/components/Components.html §05).
 //
-// A capsule the user taps to toggle a filter. Two registers — read-only *tags* (the `Tag` component) and
-// these interactive *filter chips* — share the capsule shape but NOT the selected treatment.
-//
-// THE LOAD-BEARING DECISION (Components.html §05 caption): a selected filter is a **solid ink pill, NOT the
-// accent**. The blue (`actionPrimary` / `stateNow`) stays reserved for the action and the now-state — a
-// selected chip is *navigation through one's own filters*, not a now-state, so it must not claim the accent
-// (J-0.4 / J-2.4). The ink fill is `ColorRole.textPrimary` with a legible `textOnAccent`-style label,
-// mirroring the mockup's `--ink-900` ground / `--paper-0` label.
-//
-// Color is NEVER the only signal: selection pairs the color change WITH a leading check glyph so it survives
-// grayscale / color-blindness (02-color §6; "color-coded status is always paired with the label" — §05 cap).
-//
-// One selected chip per group is the CALLER's responsibility (J-6.3 — "one selected marker per group"):
-// this view renders the state it is handed; the screen owning the group enforces single-selection in its
-// model and passes `isSelected` accordingly.
-//
-// Tokens only (J-0.2): semantic `ColorRole` / `Typography` / `Spacing` / `Radius` / `Motion` — zero literals,
-// zero `Primitive.*`. Capsule via `Radius.pill` (chrome shape; J-10.2). NEVER glass — a chip is content the
-// user taps, not floating chrome (J-0.1; only the bar/ActionBar layer is glass). 44pt tap target via padding.
+// Load-bearing call (§05 caption): a selected filter is a SOLID INK pill, NOT the accent — choosing among
+// one's own filters is navigation, not a now-state, so the accent stays reserved (J-0.4 / J-2.4). Selection
+// pairs the fill with a leading check glyph so it survives grayscale (02-color §6) — never color alone.
+// CONTENT, never glass (J-0.1). The caller enforces one-selected-per-group (J-6.3).
 import SwiftUI
 
 /// A tiny value-type fixture for previews and the Wave E snapshot — no domain object, no `AppStore`
@@ -64,13 +49,13 @@ struct FilterChip: View {
 
 // MARK: - Label layout (icon ↔ label pairing)
 
-/// Lays the optional check glyph at `Spacing.paired` (8pt) from the label — the icon↔label rung (J-1). When
-/// unselected the icon slot is collapsed so the chip hugs its label, matching the mockup's two widths.
+/// Lays the optional check glyph at `Spacing.sm` from the label — the icon↔label rung (J-1). When unselected
+/// the icon slot is collapsed so the chip hugs its label, matching the mockup's two widths.
 private struct FilterChipLabelStyle: LabelStyle {
     let showsIcon: Bool
 
     func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             if showsIcon {
                 configuration.icon
                     .font(Typography.footnote) // glyph scales with Dynamic Type (no fixed pt; J-0.3)
@@ -90,8 +75,8 @@ private struct FilterChipButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
     /// The HIG minimum tap target — a floor, content/Dynamic Type still grow the chip. `@ScaledMetric`
-    /// scales it with the label so it holds at large text (T-6.4); a bare `44` literal would not (J-0.3).
-    @ScaledMetric(relativeTo: .subheadline) private var minTapTarget: CGFloat = 44
+    /// scales it with the label so it holds at large text (T-6.4); a bare literal would not (J-0.3).
+    @ScaledMetric(relativeTo: .subheadline) private var minTapTarget: CGFloat = Sizing.minTapTarget
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -99,8 +84,8 @@ private struct FilterChipButtonStyle: ButtonStyle {
             .foregroundStyle(labelColor)
             // Vertical/horizontal inset pads the visual capsule and guarantees the 44pt tap dimension
             // (HIG; 05-components §5) without a fixed frame (J-0.3).
-            .padding(.vertical, Spacing.paired)
-            .padding(.horizontal, Spacing.cardInset)
+            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.lg)
             .frame(minHeight: minTapTarget)
             .background(fill, in: .capsule) // pill shape — chrome radius for a chip (J-10.2)
             .contentShape(.capsule)
@@ -134,9 +119,9 @@ private struct FilterChipButtonStyle: ButtonStyle {
         FilterChipModel(label: "Orphans", isSelected: false),
     ]
 
-    return VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+    return VStack(alignment: .leading, spacing: Spacing.xl) {
         // default + selected, side by side (the group register from the mockup)
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             ForEach(group) { chip in
                 FilterChip(label: chip.label, isSelected: chip.isSelected, action: {})
             }
@@ -146,6 +131,6 @@ private struct FilterChipButtonStyle: ButtonStyle {
         FilterChip(label: "By type", isSelected: false, action: {})
             .disabled(true)
     }
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }

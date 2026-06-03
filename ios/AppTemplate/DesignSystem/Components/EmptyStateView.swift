@@ -1,28 +1,9 @@
-// EmptyStateView.swift — the considered empty state (05-components §9; J-11.6, J-12.4, J-13.5).
-//
-// An empty region earns the SAME editorial care as the happy path — a considered empty state is a craft
-// signal, never an afterthought (J-11.6 / J-13.5). Ports the mockup `.empty` (components.html §09):
-//
-//   • a MONOCHROME SF Symbol glyph — recessed placeholder ink (the mockup `.empty .g` is `--ink-300`),
-//     NEVER a broken-image box and never a stock illustration (J-12.4, 08-slop G-1).
-//   • ONE editorial line of specific copy in the DISPLAY face (`Typography.name` — the mockup `.empty .ln`
-//     is `--font-display` weight 500 / 17, exactly the `name` role). Calm and specific ("No saved places
-//     in Lisbon yet."), not an alarm — no exclamation marks, no "Error" copy (J-11.5).
-//   • ONE offered action — a `PillButton` at the SECONDARY tier (a real but lesser action; the empty
-//     state isn't *the* CTA of the screen, so it never claims the budgeted accent — §9, J-2.4/J-6.1).
-//
-// This is CONTENT, not floating chrome — so it sits on a resting `.cardSurface()` (the mockup `.empty`
-// is `surface-grouped` + `r-card` + `shadow-rest`) and is NEVER glass (J-0.1). Content is centered here
-// (the one place centering is right — a standalone hero/empty block, J-7.1), left-alignment being the
-// row/list default.
-//
-// @ScaledMetric (T-6.4): the glyph is a non-text metric, so its box scales with the line text via
-// `@ScaledMetric(relativeTo:)` rather than a fixed CGFloat (J-0.3). Nothing is fixed-framed.
-//
-// Value-type args only — `systemImage` + `message` + an optional `actionTitle`/`action` (no AppStore, no
-// domain object; 05 §8). The action is optional because some empty regions only explain, they don't act;
-// when present it is the single secondary `PillButton`. Semantic tokens + the C1 PillButton only — zero
-// literals, zero `Primitive.*`, zero glass.
+// EmptyStateView.swift — the considered empty state: it earns the same editorial care as the happy path
+// (05-components §9; J-11.6). Ports the mockup `.empty` (components.html §09): a monochrome SF Symbol
+// glyph (recessed ink, never a broken-image box — J-12.4), one calm specific display-face line (no alarm
+// — J-11.5), and an OPTIONAL single secondary `PillButton` (never the budgeted accent — J-2.4/J-6.1).
+// CONTENT on a resting `.cardSurface()`, never glass (J-0.1); centered as the rare standalone block (J-7.1).
+// Value-type args only (05 §8); semantic tokens only.
 import SwiftUI
 
 struct EmptyStateView: View {
@@ -37,11 +18,11 @@ struct EmptyStateView: View {
     var action: (() -> Void)?
 
     /// The glyph box, scaled with the editorial line so it tracks Dynamic Type (T-6.4) — a placeholder
-    /// metric, never a fixed frame (J-0.3). 44pt mirrors the mockup `.empty .g`.
-    @ScaledMetric(relativeTo: .headline) private var glyphSize: CGFloat = 44
+    /// metric, never a fixed frame (J-0.3).
+    @ScaledMetric(relativeTo: .headline) private var glyphSize: CGFloat = Sizing.Component.emptyStateGlyph
 
     var body: some View {
-        VStack(spacing: Spacing.cardInset) {
+        VStack(spacing: Spacing.lg) {
             // Monochrome, recessed glyph — the placeholder ink (textTertiary ≈ the mockup's `--ink-300`),
             // never a colored fill or a broken-image box (J-12.4, 02-color §2).
             Image(systemName: systemImage)
@@ -94,6 +75,6 @@ private struct EmptyStateFixture {
         message: fixture.message,
         actionTitle: fixture.actionTitle
     ) {}
-        .padding(Spacing.cardInset)
+        .padding(Spacing.lg)
         .background(ColorRole.surfacePage)
 }

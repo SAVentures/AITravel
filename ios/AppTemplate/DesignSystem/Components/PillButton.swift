@@ -1,33 +1,10 @@
 // PillButton.swift — the tier-driven content button (05-components §1; J-6.1, J-9.1, J-11.3).
 //
-// One button, four hierarchy TIERS — and the tier drives the look, never the reverse (§1.1): the caller
-// says "is this *the* action, a lesser one, inline, or destructive?" and the style follows. Ports the
-// mockup `.btn` family (`.btn.primary` / `.secondary` / `.ghost` / `.destructive`, components.html §01):
-//
-//   • primary     — `actionPrimary` fill + `textOnAccent` label. The one budgeted accent CTA (J-0.4/J-2.4).
-//   • secondary   — a quiet grey well (`fillTertiary`) + `textPrimary` label. A real but lesser action.
-//   • ghost       — transparent, no fill, `textSecondary` label. Low-stakes / inline (§1, "See all").
-//   • destructive — `role: .destructive` + a tinted `destructive` wash; red is a STATE signal, the only
-//                   place red appears, never chrome (§1.2, J-2). Tier maps to the destructive treatment;
-//                   the caller still supplies `role: .destructive` at the `Button(role:)` for the system
-//                   to announce intent to assistive tech.
-//
-// This is CONTENT, not floating chrome — so it is NEVER glass (J-0.1, 05 §6; glass is the bar/ActionBar
-// only). The CTA-in-the-thumb-zone variant is `ActionBar` (`.glassProminent`), a Wave-D composition
-// primitive — not this button.
-//
-// Shape & size are TOKENS, never a fixed frame (§1.4, J-0.3): `buttonBorderShape(.capsule)` + `Radius.pill`
-// for the pill, `.controlSize(.large)` for the size, and content + Dynamic Type drive the height. A
-// hardcoded `.frame(height: 48)` would break at large text — so there is none. The 44pt hit target comes
-// from padding (`@ScaledMetric`-scaled), not a frame.
-//
-// Press commits in ≤100ms via `configuration.isPressed` read inside a `ButtonStyle` — a ~0.985 press
-// scale that lands *before* any animation (§1, J-9.1). Loading swaps the label for an inline `ProgressView`
-// at a STABLE footprint (the label stays in the layout, hidden, so nothing reflows; §1 loading state).
-//
-// Value-type args only — a `tier` enum + a title + optional `systemImage` + `isLoading` (no AppStore, no
-// domain object). Label leads with a present-tense verb the user owns (§1.5, J-11.3). Semantic tokens only
-// (ColorRole/Typography/Spacing/Radius) — zero literals, zero `Primitive.*`, zero glass.
+// One button, four hierarchy TIERS — the tier drives the look, never the reverse (§1.1). Ports the mockup
+// `.btn` family (primary / secondary / ghost / destructive, components.html §01). CONTENT, never glass
+// (J-0.1; glass is the bar/ActionBar only). Shape/size are TOKENS, never a fixed frame (§1.4, J-0.3): the
+// 44pt hit target comes from padding, not a frame. Press commits in ≤100ms (§1, J-9.1). Label leads with a
+// present-tense verb (§1.5, J-11.3). Semantic tokens only — zero literals, zero `Primitive.*`.
 import SwiftUI
 
 // MARK: - Tier (the value-type that drives the style · §1)
@@ -67,7 +44,7 @@ struct PillButton: View {
         Button(role: tier == .destructive ? .destructive : nil, action: action) {
             // Stable-footprint label: the title stays in the layout to hold the width; loading overlays a
             // spinner and hides the text, so nothing reflows when state flips (§1 loading).
-            HStack(spacing: Spacing.paired) {
+            HStack(spacing: Spacing.sm) {
                 if let systemImage {
                     Image(systemName: systemImage)
                 }
@@ -99,15 +76,15 @@ private struct PillButtonStyle: ButtonStyle {
 
     // The vertical padding that lifts the control to a ≥44pt tap target — scaled with the text so it holds
     // at large Dynamic Type (T-6.4); never a fixed frame (§1.4, J-0.3).
-    @ScaledMetric(relativeTo: .body) private var verticalPadding: CGFloat = Spacing.itemGap
-    @ScaledMetric(relativeTo: .body) private var horizontalPadding: CGFloat = Spacing.sectionGap
+    @ScaledMetric(relativeTo: .body) private var verticalPadding: CGFloat = Spacing.md
+    @ScaledMetric(relativeTo: .body) private var horizontalPadding: CGFloat = Spacing.xl
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(labelColor)
             .padding(.vertical, verticalPadding)
-            .padding(.horizontal, tier == .ghost ? Spacing.paired : horizontalPadding)
+            .padding(.horizontal, tier == .ghost ? Spacing.sm : horizontalPadding)
             .frame(minHeight: minTapTarget) // a MINIMUM, not a fixed height — content/Dynamic Type still grow it
             .background(background)
             .clipShape(.capsule) // pill via the shape role, not a corner literal
@@ -157,8 +134,8 @@ private struct PillButtonStyle: ButtonStyle {
     private let disabledOpacity: CGFloat = 0.4
     /// The destructive fill is a faint wash (`color-mix … 9%` in the mockup `.btn.destructive`).
     private let destructiveWashOpacity: CGFloat = 0.1
-    /// HIG minimum tap target — a floor, content still grows the control (44pt, §1; HIG).
-    @ScaledMetric(relativeTo: .body) private var minTapTarget: CGFloat = 44
+    /// HIG minimum tap target — a floor, content still grows the control (§1; HIG).
+    @ScaledMetric(relativeTo: .body) private var minTapTarget: CGFloat = Sizing.minTapTarget
 }
 
 // MARK: - Preview fixture (a tiny in-file value type · Wave-C rule)

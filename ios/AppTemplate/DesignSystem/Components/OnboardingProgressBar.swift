@@ -1,10 +1,9 @@
 /*
  In-content onboarding step progress: 5 neutral segments + a mono `NN / 05` counter. Ports the mockup
- `.ob-progress` / `.ob-seg` / `.ob-counter` (mockups/screens/onboarding/screen-shell.css).
+ `.ob-progress`/`.ob-seg`/`.ob-counter` (mockups/screens/onboarding/screen-shell.css).
 
- NO glass, NO × button — this is resting content, not chrome; the dismiss × is a separate floating
- `GlassCircleButton` the screen overlays. The segment ramp is strictly ink (never accent): the blue
- budget is reserved for the CTA + the one AI/now mark.
+ Resting content, NOT chrome — no glass, no × (the dismiss × is a separate floating GlassCircleButton).
+ The segment ramp is strictly ink: the accent budget is reserved for the CTA + the one AI/now mark (J-2.4).
 */
 import SwiftUI
 
@@ -14,12 +13,12 @@ struct OnboardingProgressBar: View {
 
     var totalSteps: Int = 5
 
-    @ScaledMetric(relativeTo: .caption) private var segmentHeight: CGFloat = 4
+    @ScaledMetric(relativeTo: .caption) private var segmentHeight: CGFloat = Sizing.Component.progressSegment
 
     private var displayStep: Int { min(stepIndex, totalSteps - 1) + 1 }
 
     var body: some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             progressSegments
             counter
         }
@@ -31,7 +30,7 @@ struct OnboardingProgressBar: View {
     // MARK: - Progress
 
     private var progressSegments: some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             ForEach(0..<totalSteps, id: \.self) { index in
                 Capsule()
                     .fill(segmentColor(at: index))

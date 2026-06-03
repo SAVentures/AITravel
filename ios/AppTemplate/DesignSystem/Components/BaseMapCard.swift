@@ -1,14 +1,8 @@
-/*
- The recommended-base mini-map. Ports screen-03 `.rec .map`: a MapKit map carrying a soft neighborhood
- zone, MapPin place markers (.definitive in / .fuzzy out), a home marker, and a floating mono zone-label chip.
-
- Two load-bearing choices:
- - Content, never glass (J-0.1): the map and the zone-label chip are solid surfaces; the only frosted
-   layer in onboarding is the floating progress header at the composition tier.
- - snapshotMode (OPEN DECISION 4 / J-12.4): MapKit tiles are network-dependent and non-deterministic, so
-   the live `Map` would flake an L3 snapshot. When true, the same footprint renders zone+pins+home+label
-   over a neutral `fillTertiary` placeholder — no tiles, no network. The live `Map` is L4 XCUITest-only.
-*/
+// BaseMapCard.swift — the recommended-base mini-map. Ports screen-03 `.rec .map`: a MapKit map with a soft
+// zone, MapPin markers (.definitive in / .fuzzy out), a home marker, and a floating mono zone-label chip.
+// Content, never glass (J-0.1) — map + chip are solid surfaces.
+// snapshotMode (J-12.4): MapKit tiles are non-deterministic and would flake an L3 snapshot, so the same
+// footprint renders zone+pins+home+label over a neutral placeholder (no tiles); the live Map is L4-only.
 import SwiftUI
 import MapKit
 
@@ -53,7 +47,7 @@ struct BaseMapCard: View {
     let model: BaseMapModel
     var snapshotMode: Bool = false
 
-    @ScaledMetric(relativeTo: .body) private var mapHeight: CGFloat = 184
+    @ScaledMetric(relativeTo: .body) private var mapHeight: CGFloat = Sizing.Component.baseMapHeight
 
     var body: some View {
         ZStack {
@@ -106,7 +100,7 @@ struct BaseMapCard: View {
                 zoneLabel
                 Spacer(minLength: 0)
             }
-            .padding(Spacing.itemGap)
+            .padding(Spacing.md)
         }
     }
 
@@ -118,7 +112,7 @@ struct BaseMapCard: View {
                 .frame(width: zonePlaceholderWidth, height: zonePlaceholderHeight)
 
             // A representative scatter — exact geo positions are L4's concern, not the lock's (J-12.4).
-            HStack(spacing: Spacing.itemGap) {
+            HStack(spacing: Spacing.md) {
                 ForEach(model.places.prefix(placeholderPinCount)) { place in
                     MapPin(place.register)
                 }
@@ -130,7 +124,7 @@ struct BaseMapCard: View {
                 zoneLabel
                 Spacer(minLength: 0)
             }
-            .padding(Spacing.itemGap)
+            .padding(Spacing.md)
         }
     }
 
@@ -160,8 +154,8 @@ struct BaseMapCard: View {
             .tracking(Typography.trackCapsCaption)
             .textCase(.uppercase)
             .foregroundStyle(ColorRole.textSecondary)
-            .padding(.horizontal, Spacing.paired)
-            .padding(.vertical, Spacing.hairline)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xs)
             // Solid surface chip, NOT glass (J-0.1).
             .background(ColorRole.surfaceGrouped, in: .rect(cornerRadius: Radius.pill))
             .shadowRest()
@@ -176,11 +170,11 @@ struct BaseMapCard: View {
     }
 
     // Non-text metrics scale with Dynamic Type (T-6.4) — never a bare fixed CGFloat (J-0.3).
-    @ScaledMetric(relativeTo: .body) private var homeSize: CGFloat = 30
-    @ScaledMetric(relativeTo: .body) private var homeRingWidth: CGFloat = 5
-    @ScaledMetric(relativeTo: .body) private var zoneStroke: CGFloat = 1
-    @ScaledMetric(relativeTo: .body) private var zonePlaceholderWidth: CGFloat = 168
-    @ScaledMetric(relativeTo: .body) private var zonePlaceholderHeight: CGFloat = 124
+    @ScaledMetric(relativeTo: .body) private var homeSize: CGFloat = Sizing.Component.baseMapHome
+    @ScaledMetric(relativeTo: .body) private var homeRingWidth: CGFloat = Sizing.Component.baseMapHomeRing
+    @ScaledMetric(relativeTo: .body) private var zoneStroke: CGFloat = Stroke.separator
+    @ScaledMetric(relativeTo: .body) private var zonePlaceholderWidth: CGFloat = Sizing.Component.baseMapZoneWidth
+    @ScaledMetric(relativeTo: .body) private var zonePlaceholderHeight: CGFloat = Sizing.Component.baseMapZoneHeight
 
     private let homeRingOpacity: Double = 0.10
     private let zoneSpanFraction: Double = 0.33

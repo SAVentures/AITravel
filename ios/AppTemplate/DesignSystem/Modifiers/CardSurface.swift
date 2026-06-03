@@ -22,7 +22,7 @@ import SwiftUI
 private struct CardSurface: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .padding(Spacing.cardInset)
+            .padding(Spacing.lg)
             .background(ColorRole.surfaceGrouped, in: .rect(cornerRadius: Radius.card))
             .shadowRest()
             .containerShape(.rect(cornerRadius: Radius.card))

@@ -1,11 +1,10 @@
 /*
- The generate moment — a single "heartbeat" sweep over a firming-up planning checklist + a faint handoff
- peek. Ports state-a-screen-05-generate.html. Value-type args only; no AppStore/domain model.
+ The generate moment — a single "heartbeat" sweep over a firming-up checklist + a faint handoff peek.
+ Ports state-a-screen-05-generate.html. Value-type args only; no AppStore/domain model.
 
- This is the ONE place in onboarding that owns continuous motion (J-9.3): one neutral band sweeping a 3pt
- track at Motion.think. It goes STATIC under BOTH Reduce Motion and the snapshot seam — the static
- checklist carries the state, so motion is never the only signal (04-motion §4.3 / J-9.5).
- The current step's stateNow ring is the screen's single accent (the CTA is absent here — J-2.4).
+ The ONE place in onboarding that owns continuous motion (J-9.3): one band sweeping the track at
+ Motion.think, STATIC under Reduce Motion + the snapshot seam (the static checklist carries the state —
+ J-9.5). The current step's stateNow ring is the screen's single accent (J-2.4).
 */
 import SwiftUI
 
@@ -50,11 +49,11 @@ struct GenerationProgressView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.hero) {
+        VStack(alignment: .leading, spacing: Spacing.`2xl`) {
             HeartbeatSweep()
 
             // The static checklist carries the state even with the sweep parked (04-motion §4.3).
-            VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+            VStack(alignment: .leading, spacing: Spacing.xl) {
                 ForEach(Array(steps.enumerated()), id: \.element.id) { index, step in
                     GenerationStepRow(step: step, index: index)
                 }
@@ -81,7 +80,7 @@ private struct HeartbeatSweep: View {
     /// Static when EITHER the user has Reduce Motion on OR the snapshot seam disables it.
     private var motionDisabled: Bool { reduceMotion || disablesOneShotMotion }
 
-    @ScaledMetric(relativeTo: .body) private var trackHeight: CGFloat = 3
+    @ScaledMetric(relativeTo: .body) private var trackHeight: CGFloat = Sizing.Component.progressTrack
     private let bandFraction: CGFloat = 0.35 // mockup width: 35%
 
     var body: some View {
@@ -133,14 +132,14 @@ private struct GenerationStepRow: View {
     let step: GenerationStepVM
     let index: Int
 
-    @ScaledMetric(relativeTo: .body) private var glyphSize: CGFloat = 20
+    @ScaledMetric(relativeTo: .body) private var glyphSize: CGFloat = Sizing.Component.stepGlyph
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.itemGap) {
+        HStack(alignment: .top, spacing: Spacing.md) {
             statusGlyph
                 .frame(width: glyphSize, height: glyphSize)
 
-            VStack(alignment: .leading, spacing: Spacing.hairline) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 bodyLine
                 if let detail = step.detail {
                     Text(detail)
@@ -205,7 +204,7 @@ private struct GenerationStepRow: View {
         }
     }
 
-    @ScaledMetric(relativeTo: .body) private var ringWidth: CGFloat = 1.5
+    @ScaledMetric(relativeTo: .body) private var ringWidth: CGFloat = Stroke.Component.progressRing
 
     private var accessibilityStatus: String {
         switch step.status {
@@ -223,7 +222,7 @@ struct HandoffPeekCard: View {
     let handoff: HandoffVM
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.hairline) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(handoff.title)
                 .font(Typography.caption)
                 .tracking(Typography.trackEyebrowCaption)
@@ -235,7 +234,7 @@ struct HandoffPeekCard: View {
                 .multilineTextAlignment(.leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.cardInset)
+        .padding(Spacing.lg)
         .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.card))
         .opacity(0.5) // faint — the next surface isn't drawn yet
         .allowsHitTesting(false) // a preview, not a control

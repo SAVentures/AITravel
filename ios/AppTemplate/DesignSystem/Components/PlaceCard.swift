@@ -1,37 +1,10 @@
 // PlaceCard.swift — the signature definitive/fuzzy place card (05-components §3; J-8).
-//
-// This is the product's one idea made concrete (the plan's POV §, the mockup `.pcard` lede): a place is
-// either *definitive* — solid and lifted (a white `surfaceGrouped` card, a rest shadow, a roman display
-// name, exact mono facts, a photo) — or *fuzzy* — receded (a flat `surfacePage` ground, NO shadow, an
-// ITALIC name in lighter ink, a glyph instead of a photo). Certainty is carried by elevation, weight, and
-// italic — never a border, never a fill, never glass (05-components §3.1–3.4, J-8.1/J-8.3/J-8.4).
-//
-// The register is a value-type ENUM arg (`PlaceCertainty`), not a boolean buried in the view — it is the
-// one idea, so it reads at the call site (plan §C, components.html §03 lede). Data comes in as a tiny
-// local value-type fixture (`PlaceCardModel`); no `AppStore`, no domain object (05 §8, 01-arch §3).
-//
-// ── Surface ─────────────────────────────────────────────────────────────────────────────────────────
-// definitive → `.cardSurface()` (B1): `surfaceGrouped` + `Radius.card` + the `rest` shadow + the
-//   concentric `containerShape`. fuzzy → the SAME footprint (same inset, same `Radius.card` corner, same
-//   `containerShape`) but a flat `surfacePage` fill and NO shadow — it recedes (mockup `.pcard.fuzzy`:
-//   `background: paper-100; box-shadow: none`). Same footprint matters so the loading-redacted state and
-//   the two registers occupy identical space (no reflow; J-9.3).
-//
-// ── Concentric photo ────────────────────────────────────────────────────────────────────────────────
-// The photo / glyph well uses `ConcentricRectangle()` and inherits the card's corner from the parent
-// `containerShape` — never a hand-picked inner radius (03-layout-spacing §5, J-7.4). The mockup's literal
-// `9px` photo radius is exactly what concentric computes (outer − inset); we don't transcribe the number.
-//
-// ── Italic for fuzzy ────────────────────────────────────────────────────────────────────────────────
-// The fuzzy name applies `.italic()` to the display `Typography.name` role (mockup `.pcard.fuzzy .nm {
-// font-style: italic }`). This is the receded register's cue, distinct from the AI-voice editorial italic
-// (C8) — here it signals *uncertainty*, paired with lighter `textSecondary` ink and the flat ground so it
-// never reads as decoration (J-3.6 governs the one editorial moment; this is the certainty register).
-//
-// States covered: definitive · fuzzy · selected (a single mark, never an accent fill — 05-components §3
-// selected row, J-2.4) · loading (`.redacted(.placeholder)` at the same footprint — §3 loading row, J-9.3).
-// No nesting, no side-border, no glass, one elevation (05-components §3.1–3.4). Semantic tokens + the
-// `cardSurface` modifier only — zero literals, zero `Primitive.*` (J-0.2).
+// Certainty is carried by elevation + weight + italic — never a border/fill/glass (§3.1–3.4, J-8). The
+// register is a value-type enum arg; data is a local fixture, no AppStore/domain object (05 §8, 01-arch §3).
+// definitive → `.cardSurface()`; fuzzy → the SAME footprint (flat `surfacePage`, no shadow, italic name in
+// lighter ink) so registers + redacted loading share one footprint, no reflow (J-9.3). The photo well uses
+// `ConcentricRectangle()` to inherit the card corner — never a hand-picked inner radius (03 §5, J-7.4).
+// States: definitive · fuzzy · selected (one mark, never an accent fill — J-2.4) · loading. Tokens only (J-0.2).
 import SwiftUI
 
 // MARK: - The register — the product's one idea, as a value-type arg
@@ -87,14 +60,13 @@ struct PlaceCard: View {
     /// Redacts the card at the same footprint while data loads (05-components §3 loading, J-9.3).
     var isLoading: Bool = false
 
-    /// The photo / glyph well height — a non-text metric, so it scales with Dynamic Type via
-    /// `@ScaledMetric` rather than a fixed CGFloat (T-6.4). Seeded from the mockup's 116pt well.
-    @ScaledMetric(relativeTo: .body) private var wellHeight: CGFloat = 116
+    /// The photo / glyph well height — a non-text metric, so it scales with Dynamic Type (T-6.4).
+    @ScaledMetric(relativeTo: .body) private var wellHeight: CGFloat = Sizing.Component.placeCardWell
 
     private var isFuzzy: Bool { model.certainty == .fuzzy }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             photoWell
             nameAndFacts
             if !model.tags.isEmpty { tagRow }
@@ -121,7 +93,7 @@ struct PlaceCard: View {
 
     /// Definitive: a contained photo glyph + a mono caps marker (mockup `.pcard .photo`).
     private var definitivePhotoPlaceholder: some View {
-        VStack(spacing: Spacing.paired) {
+        VStack(spacing: Spacing.sm) {
             Image(systemName: "photo")
                 .font(Typography.title)
                 .foregroundStyle(ColorRole.textTertiary)
@@ -142,7 +114,7 @@ struct PlaceCard: View {
     // MARK: Name + facts — definitive: roman display name; fuzzy: italic display name in lighter ink
 
     private var nameAndFacts: some View {
-        VStack(alignment: .leading, spacing: Spacing.hairline) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(model.name)
                 .font(Typography.name)
                 .italic(isFuzzy) // the fuzzy register's cue — italic display name (mockup `.fuzzy .nm`)
@@ -157,14 +129,14 @@ struct PlaceCard: View {
     // MARK: Tags — read-only mono capsules (definitive only)
 
     private var tagRow: some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             ForEach(model.tags, id: \.self) { tag in
                 Text(tag.uppercased())
                     .font(Typography.caption)
                     .tracking(Typography.trackCapsCaption)
                     .foregroundStyle(ColorRole.textSecondary)
-                    .padding(.horizontal, Spacing.paired)
-                    .padding(.vertical, Spacing.hairline)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xs)
                     .background(ColorRole.fillTertiary, in: .rect(cornerRadius: Radius.tag))
             }
         }
@@ -177,7 +149,7 @@ struct PlaceCard: View {
             Image(systemName: "checkmark.circle.fill")
                 .font(Typography.name)
                 .foregroundStyle(ColorRole.actionPrimary)
-                .padding(Spacing.paired)
+                .padding(Spacing.sm)
                 .accessibilityHidden(true) // surfaced via the combined label below instead
         }
     }
@@ -206,7 +178,7 @@ private struct SurfaceForRegister: ViewModifier {
             content.cardSurface()
         case .fuzzy:
             content
-                .padding(Spacing.cardInset)
+                .padding(Spacing.lg)
                 .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.card))
                 .containerShape(.rect(cornerRadius: Radius.card))
         }

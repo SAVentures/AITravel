@@ -1,43 +1,9 @@
-// TimelineRow.swift — the day-timeline stop row + the transit connector that rides the rail between
-// stops (05-components §4 "List rows" + the §04 `.tlstop`/`.tlleg`/`.modes` rail anatomy; J-2/J-7/J-8).
-//
-// `TimelineRow` and `TransitConnector` live in one file because they are one idea: the timeline is an
-// alternating run of STOPS and the CONNECTORS between them. Both are CONTENT, so neither is ever glass
-// (J-0.1 / J-8) — glass is reserved for floating chrome.
-//
-// PORTS FROM: `mockups/components/Components.html` §04 `.tlstop` / `.tlleg` / `.leg` / `.modes`.
-//
-// ── TimelineRow (a stop) — the workhorse for the day's stops (05-components §4) ──────────────────────
-//   leading mark (the dot) → a primary place name + a mono meta line → a trailing mono fact + accessory.
-//   • REGISTER is the product's one signature idea, exposed as a value-type enum arg (not a buried bool):
-//       definitive — solid ink dot, roman display name, exact mono facts (`.d`, `.pri`).
-//       fuzzy      — recessive grey dot, ITALIC display name in a lighter ink, "~" facts (`.d.fuzzy`,
-//                    `.pri.it`, `--ink-600`). A fuzzy place *recedes*.
-//       now        — the ONE `stateNow` mark on the screen: a STATIC ring this phase (OD-2 — no pulse;
-//                    a continuous motion in a frozen foundation would be an unowned loop, J-9.3). The
-//                    ring ports `.d.now`'s `0 0 0 4px surface-grouped, 0 0 0 7px state-now/16%` halo.
-//   • ACCESSORY is the row's BEHAVIOUR CONTRACT (05-components §4 table), a value-type enum — the shape
-//     is a promise: `.chevron` drills in (push), `.toggle` flips state in place, `.inline` does one
-//     discrete action, `.check` selects in a choosing context. Don't mismatch (§4.1).
-//   • Inks are binary (J-2.2/J-2.3): name `textPrimary`, mono meta + trailing fact `textSecondary`,
-//     plus at most one state mark (the dot). Left-align text; RIGHT-ALIGN the trailing mono fact so the
-//     eye runs the right edge (J-7.1/J-7.2).
-//   • PAST = FADE, NEVER STRIKETHROUGH (the consolidated past-state rule, 05-components §4 / J-2.3): a
-//     done stop drops to `textTertiary` + reduced opacity, never a line through the text.
-//
-// ── TransitConnector (a leg) — rides the rail between two stops (the §04 `.tlleg`) ───────────────────
-//   REGISTER, a value-type enum:
-//       singleMode — one leg: a mode glyph + a mono "8 min · walk" fact (`.leg`).
-//       multiLeg   — a chain: leg → arrow → leg, the mono facts joined by a recessive "→" (`.arr`).
-//       ways       — the set of options the AI weighs: a "WAYS" mono eyebrow + mode glyph-pills, one
-//                    `.sel`ected (the `.modes` / `.mode.sel` block).
-//
-// Token discipline: SEMANTIC tokens + Wave-B modifiers only — zero literals, zero `Primitive.*` (J-0.2).
-// `@ScaledMetric(relativeTo:)` sizes the rail width, the dot, and the now-ring (non-text metrics scale
-// with Dynamic Type — T-6.4, never a fixed CGFloat). Each row is ONE VoiceOver stop
-// (`.accessibilityElement(children: .combine)`, 05-components §4.2), and every colour-coded register is
-// paired with a glyph/label so meaning never rides on colour alone (02-color §6). Value-type args only —
-// no `AppStore`, no domain object (05-design-system.md §8); the local fixtures below drive the previews.
+// TimelineRow.swift — the day-timeline stop row + the transit connector that rides the rail between stops
+// (05-components §4 + the mockup §04 `.tlstop`/`.tlleg`/`.modes` anatomy; J-2/J-7/J-8). One file, one idea:
+// an alternating run of STOPS and CONNECTORS. Both are CONTENT — never glass (J-0.1).
+// REGISTER (definitive/fuzzy/now) and ACCESSORY (the behaviour contract — §4.1) are value-type enum args.
+// Inks binary (J-2.2); the now mark is a STATIC ring this phase (OD-2 — a pulse would be an unowned loop,
+// J-9.3); past = FADE, never strikethrough (§4.2/J-2.3). Tokens only; value-type args, no AppStore (05 §8).
 import SwiftUI
 
 // MARK: - TimelineRow
@@ -110,20 +76,19 @@ struct TimelineRow: View {
         self.model = model
     }
 
-    // The leading dot (`.tlstop .d` 13px) and the static now-ring scale with the row's text (T-6.4).
-    @ScaledMetric(relativeTo: .subheadline) private var dotSize: CGFloat = 13
-    // The now-ring's outer halo radius beyond the dot (ports `.d.now`'s `0 0 0 7px` outer ring).
-    @ScaledMetric(relativeTo: .subheadline) private var nowRingInset: CGFloat = 7
+    // The leading dot and the static now-ring halo scale with the row's text (T-6.4).
+    @ScaledMetric(relativeTo: .subheadline) private var dotSize: CGFloat = Sizing.Component.timelineDot
+    @ScaledMetric(relativeTo: .subheadline) private var nowRingInset: CGFloat = Spacing.Component.timelineNowRing
 
     var body: some View {
-        HStack(spacing: Spacing.itemGap) {
+        HStack(spacing: Spacing.md) {
             // Leading state mark — the dot. The register's colour is ALWAYS paired with the name's face
             // (roman vs italic) + the meta, so the state never rides on colour alone (02-color §6).
             dot
                 .accessibilityHidden(true)
 
             // Primary line + mono meta — left-aligned, binary inks (J-2.2/J-7.1).
-            VStack(alignment: .leading, spacing: Spacing.hairline) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(model.name)
                     .font(Typography.name)
                     // Fuzzy places recede to an italic display cut in a lighter ink (the `.pri.it` register).
@@ -138,7 +103,7 @@ struct TimelineRow: View {
                 }
             }
 
-            Spacer(minLength: Spacing.paired)
+            Spacer(minLength: Spacing.sm)
 
             // Trailing mono fact — RIGHT-ALIGNED so the eye runs the right edge (J-7.2). A measurement, so
             // the mono role + tabular digits (T-1.2). Fades with the past-state.
@@ -156,7 +121,7 @@ struct TimelineRow: View {
             }
         }
         // List-row vertical rhythm; ≥44pt tall as a tap target follows from the content + padding (J-1, HIG).
-        .padding(.vertical, Spacing.itemGap)
+        .padding(.vertical, Spacing.md)
         // Past stops FADE — reduced opacity + tertiary ink, NEVER a strikethrough (05-components §4 / J-2.3).
         .opacity(model.isPast ? pastOpacity : 1)
         // One VoiceOver stop — name + meta + fact + accessory read as a single phrase, not five (§4.2).
@@ -329,12 +294,12 @@ struct TransitConnector: View {
     }
 
     // The mode glyph box scales with the mono fact (T-6.4).
-    @ScaledMetric(relativeTo: .footnote) private var glyphSize: CGFloat = 14
+    @ScaledMetric(relativeTo: .footnote) private var glyphSize: CGFloat = Sizing.Component.timelineModeGlyph
 
     var body: some View {
         content
             // The leg sits indented from the rail, on the §04 `.tlleg` rhythm — a tight pairing gap.
-            .padding(.vertical, Spacing.hairline)
+            .padding(.vertical, Spacing.xs)
             // One VoiceOver stop for the whole leg (the chain/ways read as a single phrase).
             .accessibilityElement(children: .combine)
             .accessibilityLabel(accessibilityLabel)
@@ -346,7 +311,7 @@ struct TransitConnector: View {
             legView(leg)
         case .multiLeg(let legs):
             // leg → arrow → leg (the recessive `.arr` separates the mono facts).
-            HStack(spacing: Spacing.paired) {
+            HStack(spacing: Spacing.sm) {
                 ForEach(Array(legs.enumerated()), id: \.offset) { index, leg in
                     if index > 0 {
                         Image(systemName: "arrow.right")
@@ -358,7 +323,7 @@ struct TransitConnector: View {
                 }
             }
         case .ways(let ways):
-            HStack(spacing: Spacing.paired) {
+            HStack(spacing: Spacing.sm) {
                 // The "WAYS" mono eyebrow — caps tracking applied at the call site (the role doesn't bake
                 // it in — T-5.2), recessive ink.
                 Text("Ways".uppercased())
@@ -375,7 +340,7 @@ struct TransitConnector: View {
 
     /// One leg: the mode glyph + the mono fact, in the recessive leg inks (the §04 `.leg`).
     private func legView(_ leg: Leg) -> some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             Image(systemName: leg.systemImage)
                 .font(Typography.footnote)
                 .frame(width: glyphSize, height: glyphSize)
@@ -391,7 +356,7 @@ struct TransitConnector: View {
     /// A "way" glyph-count pill. The selected pill is a SOLID INK capsule (the `.mode.sel`, `--ink-900` /
     /// `--paper-0`) — NOT the accent: the blue stays reserved for action/now (components.html §05 cap).
     private func wayPill(_ way: Way) -> some View {
-        HStack(spacing: Spacing.hairline) {
+        HStack(spacing: Spacing.xs) {
             Image(systemName: way.systemImage)
                 .font(Typography.caption)
                 .accessibilityHidden(true)
@@ -399,8 +364,8 @@ struct TransitConnector: View {
                 .font(Typography.caption)
                 .monospacedDigit()
         }
-        .padding(.vertical, Spacing.hairline)
-        .padding(.horizontal, Spacing.paired)
+        .padding(.vertical, Spacing.xs)
+        .padding(.horizontal, Spacing.sm)
         // Selected = solid primary-ink capsule with on-fill text; unselected = neutral fill (a chip is a
         // pill — J-10.2). Colour is paired with the count, never colour alone (02-color §6).
         .foregroundStyle(way.isSelected ? ColorRole.surfaceGrouped : ColorRole.textSecondary)
@@ -433,7 +398,7 @@ private struct RailStage<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
         VStack(alignment: .leading, spacing: 0) { content }
-            .padding(.horizontal, Spacing.cardInset)
+            .padding(.horizontal, Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(ColorRole.surfaceGrouped, in: .rect(cornerRadius: Radius.card))
             .padding(Spacing.screenInset)

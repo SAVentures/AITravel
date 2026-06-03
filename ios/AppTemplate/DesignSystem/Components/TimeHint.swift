@@ -9,7 +9,7 @@
 // PORTS FROM: `mockups/components/Components.html` §05 `.hint`
 //   ground   `background: var(--fill-quaternary)`   → `ColorRole.fillQuaternary`
 //   shape    `border-radius: var(--r-pill)`         → `Radius.pill` (a chip is chrome-shaped — J-10.2)
-//   gap      `gap: 8px` (glyph ↔ label)             → `Spacing.paired`
+//   gap      `gap: 8px` (glyph ↔ label)             → `Spacing.sm`
 //   label    UI text, recessive                     → `Typography.subhead` · `ColorRole.textSecondary`
 //   glyph    `.hint svg { color: var(--ink-500) }`  → `ColorRole.textSecondary` (recessive, like the label)
 //   mono     `.hint .mono { color: var(--ink-700) }`→ `Typography.caption` (system mono) · `textPrimary`
@@ -51,7 +51,7 @@ struct TimeHint: View {
     }
 
     var body: some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             // The small leading glyph — recessive, paired with the label so meaning never rides on color
             // alone (02-color §6). An SF Symbol scales with Dynamic Type for free (no fixed point size).
             Image(systemName: model.systemImage)
@@ -74,8 +74,8 @@ struct TimeHint: View {
             }
         }
         // Chrome-thin chip padding from the named ladder (J-1) — vertical `paired`, horizontal `cardInset`.
-        .padding(.vertical, Spacing.paired)
-        .padding(.horizontal, Spacing.cardInset)
+        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal, Spacing.lg)
         // The recessive ground + the pill shape (a chip is chrome-shaped — J-10.2). Solid fill, NOT glass:
         // this is content, and glass is reserved for floating chrome (J-0.1 / J-8).
         .background(ColorRole.fillQuaternary, in: .capsule)

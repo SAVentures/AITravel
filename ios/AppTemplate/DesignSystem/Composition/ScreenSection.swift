@@ -19,8 +19,8 @@ import SwiftUI
 /// A grouped content block applying the design system's semantic vertical rhythm.
 ///
 /// - An optional `header` renders left-aligned in `Typography.title`.
-/// - Children stack at the `Spacing.itemGap` (sibling, 12) rung.
-/// - The header-to-content gap is the `Spacing.sectionGap` (section, 24) rung.
+/// - Children stack at the `Spacing.md` (sibling, 12) rung.
+/// - The header-to-content gap is the `Spacing.xl` (section, 24) rung.
 ///
 /// This is a *layout* primitive, deliberately **not** `SwiftUI.Section` (which is a list/form construct).
 /// It draws **no divider** by default — groups are read by proximity (J-4.2), honoring the internal ≤
@@ -35,13 +35,13 @@ struct ScreenSection<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
             if let header {
                 Text(header)
                     .font(Typography.title)
                     .foregroundStyle(ColorRole.textPrimary)
             }
-            VStack(alignment: .leading, spacing: Spacing.itemGap) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 content
             }
         }

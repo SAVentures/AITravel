@@ -18,8 +18,8 @@ struct DestinationStepView: View {
     @FocusState private var searchFocused: Bool
 
     private let gridColumns = [
-        GridItem(.flexible(), spacing: Spacing.itemGap),
-        GridItem(.flexible(), spacing: Spacing.itemGap),
+        GridItem(.flexible(), spacing: Spacing.md),
+        GridItem(.flexible(), spacing: Spacing.md),
     ]
 
     var body: some View {
@@ -39,7 +39,7 @@ struct DestinationStepView: View {
                 EmptyView()
             }
         }) {
-            VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+            VStack(alignment: .leading, spacing: Spacing.xl) {
                 OnboardingProgressBar(stepIndex: 0)
                 if !isSearching {
                     hero(presenter)
@@ -70,7 +70,7 @@ struct DestinationStepView: View {
                 action: { store.cancelOnboarding() }
             )
             .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.paired)
+            .padding(.top, Spacing.sm)
             .accessibilityIdentifier("onboarding.close")
         }
     }
@@ -78,7 +78,7 @@ struct DestinationStepView: View {
     // MARK: - Hero
 
     private func hero(_ presenter: DestinationStepPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.paired) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(presenter.eyebrow)
                 .font(Typography.caption)
                 .tracking(Typography.trackEyebrowCaption)
@@ -105,7 +105,7 @@ struct DestinationStepView: View {
     // MARK: - Search-results list
 
     private func resultsList(_ presenter: DestinationStepPresenter) -> some View {
-        LazyVStack(alignment: .leading, spacing: Spacing.hairline) {
+        LazyVStack(alignment: .leading, spacing: Spacing.xs) {
             ForEach(presenter.matchingCities) { city in
                 resultRow(city)
                 if city.id != presenter.matchingCities.last?.id {
@@ -123,13 +123,13 @@ struct DestinationStepView: View {
             searchFocused = false   // commit + leave search mode
             searchText = ""
         } label: {
-            HStack(spacing: Spacing.cardInset) {
+            HStack(spacing: Spacing.lg) {
                 Image(systemName: "mappin.and.ellipse")
                     .font(Typography.footnote)
                     .foregroundStyle(ColorRole.textTertiary)
-                    .padding(Spacing.paired)
+                    .padding(Spacing.sm)
                     .background(ColorRole.fillTertiary, in: .circle)
-                VStack(alignment: .leading, spacing: Spacing.hairline) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(city.name)
                         .font(Typography.name)
                         .foregroundStyle(ColorRole.textPrimary)
@@ -137,10 +137,10 @@ struct DestinationStepView: View {
                         .font(Typography.caption)
                         .foregroundStyle(ColorRole.textTertiary)
                 }
-                Spacer(minLength: Spacing.itemGap)
+                Spacer(minLength: Spacing.md)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, Spacing.itemGap)
+            .padding(.vertical, Spacing.md)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
@@ -174,13 +174,13 @@ struct DestinationStepView: View {
         Button {
             store.onboarding?.select(city: tile.city)
         } label: {
-            HStack(spacing: Spacing.paired) {
+            HStack(spacing: Spacing.sm) {
                 Image(systemName: "photo")
                     .font(Typography.footnote)
                     .foregroundStyle(ColorRole.textTertiary)
-                    .padding(Spacing.paired)
+                    .padding(Spacing.sm)
                     .background(ColorRole.fillTertiary, in: .circle)
-                VStack(alignment: .leading, spacing: Spacing.hairline) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(tile.city.name)
                         .font(Typography.name)
                         .foregroundStyle(ColorRole.textPrimary)
@@ -191,8 +191,8 @@ struct DestinationStepView: View {
                         .foregroundStyle(ColorRole.textTertiary)
                 }
             }
-            .padding(.vertical, Spacing.paired)
-            .padding(.horizontal, Spacing.cardInset)
+            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.lg)
             .background(ColorRole.fillTertiary, in: .capsule)
         }
         .buttonStyle(.plain)
@@ -204,12 +204,12 @@ struct DestinationStepView: View {
     // MARK: - More-cities grid
 
     private func grid(_ presenter: DestinationStepPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(alignment: .firstTextBaseline) {
                 Text("More cities")
                     .font(Typography.name)
                     .foregroundStyle(ColorRole.textPrimary)
-                Spacer(minLength: Spacing.itemGap)
+                Spacer(minLength: Spacing.md)
                 Text("From your saves")
                     .font(Typography.caption)
                     .tracking(Typography.trackEyebrowCaption)
@@ -218,7 +218,7 @@ struct DestinationStepView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            LazyVGrid(columns: gridColumns, spacing: Spacing.itemGap) {
+            LazyVGrid(columns: gridColumns, spacing: Spacing.md) {
                 ForEach(presenter.gridCities) { tile in
                     cityTile(tile)
                 }
@@ -262,13 +262,13 @@ struct DestinationStepView: View {
                 .font(Typography.caption)
                 .fontWeight(.bold)
                 .foregroundStyle(ColorRole.surfacePage)        // paper glyph on the ink chip
-                .padding(Spacing.paired)
+                .padding(Spacing.sm)
                 .background(ColorRole.textPrimary, in: .circle) // ink chip — NOT the accent (J-2.4)
-                .padding(Spacing.cardInset)
+                .padding(Spacing.lg)
                 .accessibilityHidden(true)
         } else if tile.showsPlanStartedBadge {
             Tag(tile.city.meta.displayLabel)
-                .padding(Spacing.cardInset)
+                .padding(Spacing.lg)
         }
     }
 

@@ -21,7 +21,7 @@ doc owns the *Swift contract* that ports them.
 | Tier | Holds | Authored | Referenced by |
 |---|---|---|---|
 | **Primitive** | raw values — `ink900`, `space4 = 16`, `radiusLg = 18` | **generated** from `foundations.css` (§2) | semantic tier only |
-| **Semantic** | *intent* — `textPrimary → ink900`, `surface → paper0`, `sectionGap → space4` | hand-authored Swift | screens, components, modifiers |
+| **Semantic** | *intent* — `textPrimary → ink900`, `surface → paper0`, `xl → spaceXl` | hand-authored Swift | screens, components, modifiers |
 | **Component** | a component's own value — a nested `Component` band of the category matching its property (§1.1) | hand-authored, *sparingly* | that one component |
 
 ```swift
@@ -39,14 +39,14 @@ enum ColorRole {
     static let actionPrimary = Primitive.indigo500   // the CTA / link color
 }
 
-// Tokens/Spacing.swift
-enum Spacing { static let sectionGap = Primitive.space4; static let itemGap = Primitive.space2 }
+// Tokens/Spacing.swift   (t-shirt scale)
+enum Spacing { static let md = Primitive.spaceMd; static let xl = Primitive.spaceXl }
 ```
 
 > **The one rule that prevents inconsistency:** screens, components, and modifiers reference **semantic
 > tokens only** — never a primitive, never a literal. A primitive appearing outside the semantic tier is
 > a review failure. This is what stops two screens from picking `s3` vs `s4` for "the same gap": the gap
-> has a *name* (`sectionGap`), decided once.
+> has a *name* (`xl`), decided once.
 
 Naming is **role, not value**: `textPrimary` not `inkIndigo`; `surface` not `paper0`; `actionPrimary`
 not `indigo500`. A rebrand or a future dark mode is then a re-point of the semantic tier, not a
@@ -56,27 +56,27 @@ find-and-replace across screens. Token enums are **caseless** (`static` members,
 
 A value's home is one question: **what property is it?** → that category file. Within a category:
 
-- **Semantic roles** sit flat at the top (`Radius.card`, `Spacing.sectionGap`, `Stroke.separator`).
+- **Semantic roles** sit flat at the top (`Radius.card`, `Spacing.xl`, `Stroke.separator`).
 - **Component-specific values** nest in an `enum Component` band — added only when a real component
   needs one, never pre-created empty.
 
 ```swift
-enum Radius {
-    static let card = Primitive.rCard               // semantic role (broad use)
-    // when one component needs its own radius, it nests here:
-    // enum Component { static let promoBanner = Primitive.rCard }
+enum Spacing {                          // the t-shirt gap/padding scale (§5)
+    static let md = Primitive.spaceMd   // 12 — title ↔ subtitle
+    static let xl = Primitive.spaceXl   // 24 — section header ↔ content
+    enum Component { static let timelineNowRing = Primitive.spaceSm }  // one component's inset
 }
 
-enum Sizing {                                        // inherently component-level (see below)
-    static let cardMin = Primitive.sizeCardMin       // a horizontal-scroll card's min width
-    static let dot     = Primitive.sizeDot
+enum Sizing {                           // component DIMENSIONS — Grid multiples, not primitives (§5)
+    static let dot = Grid.x(2)          // 8  — shared indicator-dot diameter
+    enum Component { static let baseMapHeight = Grid.x(46) }  // 184 — one component's fixed size
 }
 ```
 
 This kills the "do I invent a tier?" question: corner radius → `Radius`, border width → `Stroke`,
-inset/gap → `Spacing`, fixed width/height/diameter → `Sizing`. **`Sizing` is the exception to the band
-rule:** element sizes are inherently component-level (there is no general "size ladder"), so the whole
-enum *is* the component-dimension band — its members stay flat.
+inset/gap → `Spacing`, **fixed width/height/diameter → `Sizing`**. A `Sizing` value is a `Grid.x(n)`
+multiple of the 4pt unit (bounded, on-grid, never a bespoke primitive — §5), not a foundations token;
+shared sizes (`dot`, `minTapTarget`) stay flat, single-component sizes nest in `Sizing.Component`.
 
 ### 1.2 The category map
 
@@ -84,10 +84,10 @@ enum *is* the component-dimension band — its members stay flat.
 |---|---|---|---|
 | `ColorRole` | color | `textPrimary`, `actionPrimary` | rare → `Component` |
 | `Typography` | text style | `body`, `title`, `caption` | rare → `Component` |
-| `Spacing` | gaps / insets | 6-rung ladder + `screenInset`, `chromeClearance` | `Component` |
+| `Spacing` | gaps / insets | t-shirt scale `xs…4xl` + `screenInset`, `chromeClearance` | `Component` |
 | `Radius` | corner radius | `tag`→`pill` ladder | `Component` |
 | `Stroke` | border width | `separator`, `selected` | `Component` |
-| `Sizing` | fixed dimension | — (none; inherently component) | the whole enum |
+| `Sizing` | fixed dimension | `Grid.x(n)` multiples — `dot`, `minTapTarget` (shared) | `Component` (single-component) |
 | `Shadows` | elevation | `rest` / `hero` / `glass` | `Component` |
 | `Motion` | duration / easing | duration ladder + easings | `Component` |
 
@@ -157,11 +157,14 @@ The prior app used fixed-pt sizes, which break Dynamic Type. **Every text style 
 
 - **Primitives (generated):** a `4pt` spacing grid, the radius set, the shadow set, motion durations +
   easing curves — straight from `foundations.css`.
-- **Semantic:** `Spacing.sectionGap` / `.itemGap` / `.screenInset`; `Radius.card` / `.control`;
-  `Shadow.card`; `Motion.fast` / `.base` / `.long` with a shared **critically-damped** easing.
-- **No fixed frames.** Sizing comes from content + Dynamic Type + semantic spacing; a hardcoded
-  `.frame(width:220,height:48)` is a review failure (it breaks at large text sizes). Use min/ideal
-  sizing and let content drive height.
+- **Semantic:** `Spacing.xl` / `.md` / `.screenInset` (a **t-shirt** scale `xs…4xl` + named layout
+  roles); `Radius.card` / `.control`; `Shadow.card`; `Motion.fast` / `.base` / `.long` with a shared
+  **critically-damped** easing.
+- **Dimensions via `Grid`, not literals.** Sizing comes from content + Dynamic Type + semantic spacing;
+  a hardcoded `.frame(width:220,height:48)` is a review failure (it breaks at large text sizes). Prefer
+  min/ideal sizing and let content drive height. When a component genuinely needs a *fixed* dimension it
+  is a **`Grid.x(n)`** multiple of the 4pt unit (`Sizing` / `Sizing.Component`) — bounded + on-grid,
+  never a bespoke primitive or literal.
 - Custom animations use the **`@Animatable` macro** (iOS 26) to synthesize `animatableData`; motion
   reads `Motion.*` tokens and respects **Reduce Motion**.
 
@@ -190,7 +193,7 @@ Reusable `ViewModifier`s exposed via a `View` extension, consuming **semantic to
 ```swift
 private struct CardSurface: ViewModifier {
     func body(content: Content) -> some View {
-        content.padding(Spacing.cardInset)
+        content.padding(Spacing.lg)
             .background(ColorRole.surfaceElevated, in: .rect(cornerRadius: Radius.card))
             .shadow(Shadow.card)
     }
@@ -212,7 +215,7 @@ semantic tokens + modifiers. They are the vocabulary screens compose:
 struct BookRow: View {
     let model: BookRowModel                    // a value type; no domain object, no store
     var body: some View {
-        HStack(spacing: Spacing.itemGap) {
+        HStack(spacing: Spacing.md) {
             CoverThumbnail(model.cover)
             VStack(alignment: .leading) {
                 Text(model.title).font(Typography.body).foregroundStyle(ColorRole.textPrimary)

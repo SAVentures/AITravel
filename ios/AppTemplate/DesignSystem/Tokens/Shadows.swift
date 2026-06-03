@@ -1,39 +1,16 @@
-// Shadows.swift — the SEMANTIC elevation tier (03-layout-spacing §9; 05-design-system.md §1, §5; J-8.4).
+// Shadows.swift — the SEMANTIC elevation tier (03-layout-spacing §9; 05-design-system.md §1/§5; J-8.4).
+// Three tiers by ROLE, expressing hierarchy not decoration: `rest` (default card lift, via `.cardSurface()`),
+// `hero` (the one elevated surface/screen), `glass` (floating-chrome frost — SNAPSHOT parity ONLY; a real
+// glass bar uses the system `glassEffect`, never this — 05 §6, J-0.1/J-8.3). Never the 1px-edge + diffuse-
+// shadow combo (08-slop A-4): a surface is one or the other, so `.cardSurface()` ships a shadow and no border.
 //
-// Depth is ONE restrained elevation system — three solid tones, one glass — expressing *hierarchy*,
-// never decoration (J-8.4). There are exactly three tiers, and a surface picks one by ROLE:
-//
-//     • rest  — the default card lift; a card lives on the page (J-8.1). Consumed by `.cardSurface()` (B1).
-//     • hero  — the ONE elevated/active surface per screen; reserved for a single emphasis (J-8.4).
-//     • glass — floating chrome only (bars, sheet grabber, map chip). This is normally the SYSTEM's job:
-//               native Liquid Glass (the `glassEffect` material) carries its own shadow (05-design-system
-//               §6, J-0.1/J-8.3). We author `glass` here ONLY as a static frost approximation for the
-//               component snapshots (the mockup `.glass-stage` parity) — it is NOT for content, and a real
-//               glass bar in the app must use the system material, not this modifier.
-//
-// Never the hairline + wide-diffuse-shadow combo (08-slop A-4, J-8.4): a surface is *either* a 1px edge
-// *or* a soft shadow, never a glowing floater. So `.cardSurface()` ships a shadow and NO border.
-//
-// ── Why this file is hand-authored (not generated) ──────────────────────────────────────────────────
-// `Primitive.generated.swift` is codegen'd from `foundations.css`, but the generator SKIPS compound
-// values — and every elevation tier is a multi-layer shadow (`--shadow-rest/-hero/-glass`,
-// foundations.css 122–129). So these are authored BY HAND here from the exact CSS values; the authored
-// sRGB + offsets below ARE the contract. `Primitive.generated.swift` is never touched.
-//
-// ── oklch → sRGB conversion (matching the generator) ────────────────────────────────────────────────
-// foundations.css tints every shadow with one cool dark ink, `oklch(0.30 0.02 245)`; the glass inset
-// highlight is `oklch(1 0 0)` (pure white). Converted via OKLab→linear-sRGB→gamma (the same path the
-// token generator uses), the alpha carried straight from the CSS `/ A`:
-//
-//     oklch(0.30 0.02 245)  →  sRGB(0.1473, 0.1845, 0.2171)   (a cool slate ink)
-//     oklch(1    0    0)    →  sRGB(1.0000, 1.0000, 1.0000)   (white)
-//
-// ── CSS blur → SwiftUI radius ───────────────────────────────────────────────────────────────────────
-// CSS `box-shadow` blur is ~2× a SwiftUI `.shadow(radius:)` Gaussian sigma, so we map `radius = blur / 2`.
-// CSS offsets (x, y) carry straight to SwiftUI `.shadow(x:y:)`. Each CSS comma-separated layer is one
-// `.shadow(...)` call; per OD-3 the tiers are per-tier `ViewModifier`s that apply the layers OUTER-to-
-// INNER, in the same order they appear in the CSS (the widest, softest layer first, then the tight
-// contact layer) so the composite reads identically.
+// Hand-authored (NOT generated): codegen skips compound values, and each tier is a multi-layer shadow
+// (`--shadow-rest/-hero/-glass`, foundations.css 122–129) — the sRGB + offsets below ARE the contract.
+// ── oklch → sRGB (the generator's OKLab→linear-sRGB→gamma path; alpha carried from the CSS `/ A`) ──
+//     oklch(0.30 0.02 245) → sRGB(0.1473, 0.1845, 0.2171) (cool slate ink);  oklch(1 0 0) → white.
+// ── CSS blur → SwiftUI radius ──  radius = blur / 2 (CSS blur ≈ 2× SwiftUI Gaussian sigma); offsets (x,y)
+// carry straight. Each CSS layer = one `.shadow(...)`; OD-3 applies them OUTER→INNER in CSS order (widest/
+// softest first, then the tight contact layer) so the composite reads identically.
 import SwiftUI
 
 enum Shadows {

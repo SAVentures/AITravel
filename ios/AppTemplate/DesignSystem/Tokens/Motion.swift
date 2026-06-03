@@ -1,13 +1,8 @@
-/*
- The semantic motion tier — one easing personality, used with restraint. Two cubic-beziers are authored
- BY HAND from foundations.css (lines 132–133) because the codegen skips cubic-beziers, so these values
- are the contract: --ease-standard (0.32,0.72,0,1) and --ease-emph (0.22,1,0.36,1).
-
- Split is a rule, not a style: direct manipulation (taps, drags, sheet pulls) settles on the `smooth`
- spring to preserve gesture velocity; automatic/time-based moves use the fixed-duration ease-out curves.
- Reduce Motion: this token supplies curves only — `reduced` halves duration normally and yields nil under
- Reduce Motion; the caller owns the degradation (continuous motion goes static, springs flatten to a fade).
-*/
+// Motion.swift — the SEMANTIC motion tier (04-motion; 05-design-system.md §1). One restrained easing
+// personality. The two cubic-beziers are hand-authored from foundations.css (codegen skips beziers) and
+// ARE the contract: standard (0.32,0.72,0,1), emph (0.22,1,0.36,1). Split rule: direct manipulation uses
+// the `smooth` spring (keeps gesture velocity), automatic moves use the curves; `reduced` → nil under
+// Reduce Motion (caller owns degradation).
 import SwiftUI
 
 enum Motion {

@@ -1,23 +1,8 @@
-// Typography.swift — the SEMANTIC type tier (01-typography T-0/T-2/T-3 + T-5/T-6; 05-design-system.md §4).
-//
-// Every text style a screen, component, or modifier touches is referenced by ROLE here — never a raw
-// point size, never `Font.system(size:)`, never `.custom(_:fixedSize:)` (T-0.1/T-0.2, T-6.1, J-0.3).
-// Each role binds a Dynamic Type text style so it scales to AX5 for free: the custom display/UI faces
-// via `Font.custom(_:size:relativeTo:)` (T-6.1), mono via `Font.system(_:design:.monospaced)`. Sizes
-// come only from the `Primitive.type*Size` rungs (codegen'd from foundations.css) — zero hardcoded sizes.
-//
-// Three families, one role each (T-1): display = Schibsted Grotesk (names, titles, hero numerals);
-// UI = Hanken Grotesk (body, chrome, meta); mono = the system monospaced face (measurement — times,
-// counts, distances, prices). The family strings are the EXACT names FontRegistry registers and
-// FontRegistryTests verifies: "Schibsted Grotesk" and "Hanken Grotesk". A missing font falls back to the
-// system equivalent of the same role (T-6.3, 05 §4).
-//
-// `name` binds to the DISPLAY face (Schibsted), per OD-4 / the components mockup (`.pcard .nm`, `.lrow
-// .pri`, `.tlstop .pri` render place names in the display face). T-2 permits display *or* UI for `name`;
-// this is the deliberate choice.
-//
-// @ScaledMetric is NOT used here — it requires a View/property-wrapper context; a component that must
-// scale a non-text metric wires `@ScaledMetric(relativeTo:)` itself (T-6.4). This tier supplies fonts only.
+// Typography.swift — the SEMANTIC type tier (01-typography T-0/T-2/T-5/T-6; 05-design-system.md §4).
+// Each role binds a Dynamic Type text style (scales to AX5) over a `Primitive.type*Size` — never a raw
+// size, `Font.system(size:)`, or `.custom(fixedSize:)` (T-0.1/T-6.1, J-0.3). Three families (T-1):
+// display = Schibsted Grotesk (titles/names/numerals), UI = Hanken Grotesk (body/chrome/meta), mono =
+// system monospaced (measurement). `name` → display per OD-4; no `@ScaledMetric` here (fonts only, T-6.4).
 import SwiftUI
 
 enum Typography {

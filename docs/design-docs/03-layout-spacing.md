@@ -38,23 +38,29 @@ tightest pairings (icon-to-label, dense metadata) (Cieden; Apple HIG Layout). Th
 
 ---
 
-## 2. The gap ladder — six rungs, named
+## 2. The spacing scale — t-shirt rungs, named
 
-There is a fixed ladder of vertical gaps; **do not invent a rung in between** (`J-1`). Each maps to a
-*semantic* spacing token — a screen never types the number. (This table is the visual source; the Swift
+There is a fixed scale of gaps/insets; **do not invent a value in between** (`J-1`). Each maps to a
+*semantic* t-shirt token — a screen never types the number. (This table is the visual source; the Swift
 names live in `engineering/05 §5`.)
 
-| Rung | Px | Where it appears | Book example |
+| Token | Px | Where it appears | Book example |
 |---|---|---|---|
-| **Hairline** | 4 | eyebrow ↔ title; tag ↔ name | the "DUE" mono cap above a book title |
-| **Paired** | 8 | icon ↔ label in a chip; cover ↔ first text baseline | the shelf glyph and "Reading" in a status chip |
-| **Sibling** | 12 | title ↔ subtitle; meta ↔ title within a card | book title ↔ author byline |
-| **Card / row** | 16 | card padding; list-row vertical padding | the inset around a book detail card |
-| **Section** | 24 | section header ↔ first row; hero ↔ first section | "Due this week" header ↔ first book row |
-| **Breath** | 32 | screen hero ↔ first control; sheet inner top | the shelf title ↔ the first section |
+| **xs** | 4 | eyebrow ↔ title; tag ↔ name | the "DUE" mono cap above a book title |
+| **sm** | 8 | icon ↔ label in a chip; cover ↔ first text baseline | the shelf glyph and "Reading" in a status chip |
+| **md** | 12 | title ↔ subtitle; meta ↔ title within a card | book title ↔ author byline |
+| **lg** | 16 | card padding; list-row vertical padding; screen margin | the inset around a book detail card |
+| **xl** | 24 | section header ↔ first row; hero ↔ first section | "Due this week" header ↔ first book row |
+| **2xl** | 32 | screen hero ↔ first control; sheet inner top | the shelf title ↔ the first section |
+| **3xl / 4xl** | 48 / 64 | rare large breaks; floating-chrome clearance | — |
 
-The ladder is what makes two independently-built screens *match*: both pull "the gap after a section
-header" from the same rung, so both land on 24 (`J-1`). Spacing that **varies by role** is rhythm;
+Named **layout roles** sit alongside the scale where a gap is a *role*, not a rung: `screenInset` (the
+standard compact horizontal margin) and `chromeClearance` (clearance below floating chrome).
+Component-specific insets nest in `Spacing.Component`. Fixed component **dimensions** (widths/heights)
+are not spacing — they are `Grid.x(n)` multiples of the 4pt unit (`Sizing`; `engineering/05 §5`).
+
+The scale is what makes two independently-built screens *match*: both pull "the gap after a section
+header" from the same token, so both land on 24 (`J-1`). Spacing that **varies by role** is rhythm;
 spacing that's the *same value everywhere* is the monotony tell (`08-slop.md D-3`).
 
 ---
@@ -67,7 +73,7 @@ The single rule that keeps cards from melting into each other:
 
 A card with **16pt internal padding** needs **≥16pt — commonly 24pt — to the next group.** If the inner
 padding ever equals or exceeds the outer gap, two distinct cards read as one block and the hierarchy
-collapses. Concretely, on the gap ladder: a `card`-inset (16) surface sits in a `section` (24) gap. Pull
+collapses. Concretely, on the scale: a `lg` inset (16) surface sits in an `xl` (24) gap. Pull
 the inner from a lower rung than the outer and grouping is automatic — no divider, no border needed
 (`J-4.2`, `J-13.2`). This is proximity (Gestalt) doing the work that a box would otherwise fake (IxDF).
 

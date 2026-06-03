@@ -106,16 +106,15 @@
   --s-1: 4px;  --s-2: 8px;  --s-3: 16px; --s-4: 24px;
   --s-5: 32px; --s-6: 40px; --s-7: 48px; --s-8: 56px;
 
-  /* gap ladder — named rungs (03 §2). Pull these, never a raw number. */
-  --gap-hairline: 4px;   /* eyebrow ↔ title          */
-  --gap-paired:   8px;   /* icon ↔ label             */
-  --gap-sibling:  12px;  /* title ↔ subtitle         */
-  --gap-card:     16px;  /* card padding, row pad    */
-  --gap-section:  24px;  /* section header ↔ content */
-  --gap-breath:   32px;  /* hero ↔ first control     */
-
-  /* named LAYOUT role — not a gap-ladder rung (like the screen margin, 03 §4) */
-  --space-chrome-clear: 64px;  /* clearance below the floating ×/back glyph so content clears it at rest (8×8) */
+  /* t-shirt spacing scale — the gap/padding API (03 §2). Pull these by name, never a raw number. */
+  --space-xs:  4px;   /* eyebrow ↔ title; tightest pairing            */
+  --space-sm:  8px;   /* icon ↔ label                                 */
+  --space-md:  12px;  /* title ↔ subtitle                             */
+  --space-lg:  16px;  /* card padding · row pad · screen margin       */
+  --space-xl:  24px;  /* section header ↔ content                     */
+  --space-2xl: 32px;  /* hero ↔ first control                         */
+  --space-3xl: 48px;  /* large section break                          */
+  --space-4xl: 64px;  /* floating-chrome clearance                    */
 
   /* ── RADIUS ladder ─ chrome = pill · content = rounded-rect ──────────────*/
   --r-tag:   6px;    /* tags, smallest chips      */
@@ -124,16 +123,16 @@
   --r-card:  16px;   /* cards, sheets (the cap)  */
   --r-pill:  999px;  /* chrome, buttons, chips   */
 
-  /* ── SIZING ─ component dimensions · not gaps, not radii (semantic Sizing tier) ──
-     Fixed element sizes by role. Each on the 8pt spine; applied as min/ideal sizes
-     (seed @ScaledMetric / minWidth), never a hard frame (03 §1, 05 §5). */
-  --size-dot:      8px;    /* status/indicator dot diameter          */
-  --size-card-min: 136px;  /* horizontal-scroll card min width (8×17) */
-  --size-chip-min: 104px;  /* adaptive-grid chip min column   (8×13) */
+  /* Component DIMENSIONS are NOT primitives — they are grid multiples (Swift `Grid.x(n)`,
+     CSS `calc(var(--s-1) * n)`), keeping every size on the 4pt grid and in ratio. The only
+     dimension primitive is the grid unit `--s-1`. See 05-design-system.md §1.x. */
 
   /* ── STROKE ─ selection ring / hairline widths ───────────────────────────*/
   --stroke-selected: 2px;  /* the ink selection ring on a chosen card (J-2.4)  */
   --stroke-separator: 1px;  /* a 1pt rule — separator/divider/border thickness (pairs with --separator); 03 §1/§6 carve-out */
+  /* component band — single-component ring widths (off-grid stroke carve-out, 03 §1/§6) */
+  --stroke-progress-ring: 1.5px;  /* GenerationProgressView ring border  */
+  --stroke-map-pin-ring:    6px;  /* MapPin now-halo ring width          */
 
   /* ── ELEVATION ─ three tiers, restrained (03 §9) ─────────────────────────*/
   --shadow-rest:  0 1px 2px oklch(0.30 0.02 245 / 0.05),

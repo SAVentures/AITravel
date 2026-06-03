@@ -42,7 +42,7 @@ struct MapPinSnapshotTests {
     @MainActor func definitive() {
         assertDesignSnapshot(
             MapPin(.definitive(2))
-                .padding(Spacing.hero)
+                .padding(Spacing.`2xl`)
                 .background(ColorRole.surfacePage),
             named: "definitive"
         )
@@ -57,7 +57,7 @@ struct MapPinSnapshotTests {
     @MainActor func fuzzy() {
         assertDesignSnapshot(
             MapPin(.fuzzy)
-                .padding(Spacing.hero)
+                .padding(Spacing.`2xl`)
                 .background(ColorRole.surfacePage),
             named: "fuzzy"
         )
@@ -73,7 +73,7 @@ struct MapPinSnapshotTests {
     @MainActor func now() {
         assertDesignSnapshot(
             MapPin(.now)
-                .padding(Spacing.hero)
+                .padding(Spacing.`2xl`)
                 .background(ColorRole.surfacePage),
             named: "now"
         )

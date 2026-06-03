@@ -1,12 +1,8 @@
-/*
- The step-02 trip-shape choice card. Ports `.scard` from
- mockups/screens/onboarding/state-a/b-screen-02-trip-shape.html: a strategy eyebrow + title, a mono
- consequence strip, and an embedded shape diagram in a trailing column.
-
- Mirrors PlaceCard's definitive/fuzzy register, but certainty is carried by elevation + a 2pt textPrimary
- ink ring/check — never the accent, never a side-border (J-8, J-2.4). `.locked` recedes to opacity 0.55
- and swaps the metric strip for a lockline; it is inert (not tappable, no button trait).
-*/
+// TripShapeCard.swift — the step-02 trip-shape choice card. Ports `.scard` from
+// mockups/screens/onboarding/state-a/b-screen-02-trip-shape.html: eyebrow + title, a mono consequence
+// strip, and an embedded shape diagram in a trailing column.
+// Certainty is carried by elevation + a 2pt textPrimary ink ring/check — never the accent, never a
+// side-border (J-8, J-2.4). `.locked` recedes to opacity 0.55, swaps the strip for a lockline, and is inert.
 import SwiftUI
 
 // MARK: - The register — selectable vs locked, as a value-type arg
@@ -59,8 +55,8 @@ struct TripShapeCard: View {
     var embeddedControl: AnyView? = nil
     var onSelect: () -> Void = {}
 
-    /// Scales with Dynamic Type rather than a fixed CGFloat (J-0.3). Seeded from the mockup's 100pt column.
-    @ScaledMetric(relativeTo: .body) private var diagramColumnWidth: CGFloat = 100
+    /// Scales with Dynamic Type rather than a fixed CGFloat (J-0.3).
+    @ScaledMetric(relativeTo: .body) private var diagramColumnWidth: CGFloat = Sizing.Component.tripShapeDiagram
 
     private var lockReason: String? {
         if case let .locked(reason) = register { return reason }
@@ -72,7 +68,7 @@ struct TripShapeCard: View {
     private var showsSelected: Bool { isSelected && !isLocked }
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.itemGap) {
+        HStack(alignment: .top, spacing: Spacing.md) {
             content
                 .frame(maxWidth: .infinity, alignment: .leading)
             diagramColumn
@@ -95,7 +91,7 @@ struct TripShapeCard: View {
     // MARK: Content column
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: Spacing.paired) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             eyebrowLabel
             Text(title)
                 .font(Typography.title)
@@ -107,7 +103,7 @@ struct TripShapeCard: View {
                 embeddedControl
             }
 
-            Spacer(minLength: Spacing.paired) // push strip/lockline to the bottom (mockup `margin-top: auto`)
+            Spacer(minLength: Spacing.sm) // push strip/lockline to the bottom (mockup `margin-top: auto`)
 
             if let lockReason {
                 lockline(reason: lockReason)
@@ -133,7 +129,7 @@ struct TripShapeCard: View {
     // MARK: Metric strip
 
     private var metricStripView: some View {
-        WrappingHStack(spacing: Spacing.paired) {
+        WrappingHStack(spacing: Spacing.sm) {
             ForEach(Array(metricStrip.enumerated()), id: \.element.id) { index, token in
                 if index > 0 {
                     Text("·")
@@ -146,7 +142,7 @@ struct TripShapeCard: View {
                     .strikethrough(token.struck, color: ColorRole.textTertiary)
             }
         }
-        .padding(.top, Spacing.paired)
+        .padding(.top, Spacing.sm)
         .overlay(alignment: .top) { Divider().overlay(ColorRole.separator) }
         .accessibilityHidden(true)
     }
@@ -159,7 +155,7 @@ struct TripShapeCard: View {
     // MARK: Lockline
 
     private func lockline(reason: String) -> some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             Image(systemName: "lock")
                 .font(Typography.caption)
                 .foregroundStyle(ColorRole.textTertiary)
@@ -168,7 +164,7 @@ struct TripShapeCard: View {
                 .foregroundStyle(ColorRole.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.top, Spacing.paired)
+        .padding(.top, Spacing.sm)
         .overlay(alignment: .top) { Divider().overlay(ColorRole.separator) }
         .accessibilityHidden(true)
     }
@@ -178,12 +174,12 @@ struct TripShapeCard: View {
     private var diagramColumn: some View {
         diagramBody
             .frame(maxHeight: .infinity)
-            .padding(.leading, Spacing.itemGap)
+            .padding(.leading, Spacing.md)
             // A structural hairline between the two regions — emphasis from space, not a side-tab border (J-8).
             .overlay(alignment: .leading) {
                 Rectangle()
                     .fill(ColorRole.separator)
-                    .frame(width: 1)
+                    .frame(width: Stroke.separator)
             }
     }
 
@@ -205,9 +201,9 @@ struct TripShapeCard: View {
             Image(systemName: "checkmark")
                 .font(Typography.caption.weight(.bold))
                 .foregroundStyle(ColorRole.textOnAccent)
-                .padding(Spacing.paired)
+                .padding(Spacing.sm)
                 .background(ColorRole.textPrimary, in: .circle) // ink pill, not the accent
-                .padding(Spacing.itemGap)
+                .padding(Spacing.md)
                 .accessibilityIdentifier("tripshape.\(id).check")
                 .accessibilityHidden(true)
         }
@@ -267,7 +263,7 @@ private struct TripShapeSurface: ViewModifier {
                 }
         } else {
             content
-                .padding(Spacing.cardInset)
+                .padding(Spacing.lg)
                 .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.card))
                 .containerShape(.rect(cornerRadius: Radius.card))
         }
@@ -280,10 +276,10 @@ private struct FixedDaysDiagram: View {
     let filled: [Int]
     let dim: [Int]
 
-    @ScaledMetric(relativeTo: .caption2) private var dotSize: CGFloat = 5
+    @ScaledMetric(relativeTo: .caption2) private var dotSize: CGFloat = Sizing.dot
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: Spacing.hairline) {
+        HStack(alignment: .bottom, spacing: Spacing.xs) {
             ForEach(Array(filled.enumerated()), id: \.offset) { index, filledCount in
                 column(filled: filledCount, dim: dim.indices.contains(index) ? dim[index] : 0)
             }
@@ -293,11 +289,11 @@ private struct FixedDaysDiagram: View {
     }
 
     private func column(filled: Int, dim: Int) -> some View {
-        VStack(spacing: Spacing.hairline) {
+        VStack(spacing: Spacing.xs) {
             ForEach(0 ..< dim, id: \.self) { _ in dot(ColorRole.separatorOpaque) }
             ForEach(0 ..< filled, id: \.self) { _ in dot(ColorRole.textSecondary) }
         }
-        .padding(.vertical, Spacing.hairline)
+        .padding(.vertical, Spacing.xs)
         .frame(maxWidth: .infinity)
         .background(ColorRole.fillTertiary, in: .rect(cornerRadius: Radius.thumb))
     }
@@ -315,9 +311,9 @@ private struct CoverBucketDiagram: View {
     let dayCounts: [Int]
     let isLocked: Bool
 
-    @ScaledMetric(relativeTo: .caption2) private var dotSize: CGFloat = 7
+    @ScaledMetric(relativeTo: .caption2) private var dotSize: CGFloat = Sizing.dot
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: Spacing.hairline), count: 5)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: Spacing.xs), count: 5)
 
     private func markColor(_ markIndex: Int) -> Color {
         switch markIndex {
@@ -339,7 +335,7 @@ private struct CoverBucketDiagram: View {
     }
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: Spacing.hairline) {
+        LazyVGrid(columns: columns, spacing: Spacing.xs) {
             ForEach(Array(dots.enumerated()), id: \.offset) { _, color in
                 Circle()
                     .fill(color)
@@ -359,11 +355,11 @@ private struct RankedBarsDiagram: View {
     let dim: Int?
     let pick: Int?
 
-    @ScaledMetric(relativeTo: .caption2) private var markSize: CGFloat = 7
-    @ScaledMetric(relativeTo: .caption2) private var barHeight: CGFloat = 3
+    @ScaledMetric(relativeTo: .caption2) private var markSize: CGFloat = Sizing.dot
+    @ScaledMetric(relativeTo: .caption2) private var barHeight: CGFloat = Sizing.Component.tripShapeBar
 
     var body: some View {
-        VStack(spacing: Spacing.paired) {
+        VStack(spacing: Spacing.sm) {
             ForEach(Array(values.enumerated()), id: \.offset) { index, value in
                 row(value: value, isDim: index == dim, isPick: index == pick)
             }
@@ -373,7 +369,7 @@ private struct RankedBarsDiagram: View {
     }
 
     private func row(value: Double, isDim: Bool, isPick: Bool) -> some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             RoundedRectangle(cornerRadius: Radius.tag)
                 .fill(markColor(isDim: isDim, isPick: isPick))
                 .frame(width: markSize, height: markSize)
@@ -465,8 +461,8 @@ private struct WrappingHStack: Layout {
             Text("− 4 days +")
                 .font(Typography.footnote)
                 .foregroundStyle(ColorRole.textPrimary)
-                .padding(.vertical, Spacing.paired)
-                .padding(.horizontal, Spacing.itemGap)
+                .padding(.vertical, Spacing.sm)
+                .padding(.horizontal, Spacing.md)
                 .background(ColorRole.fillSecondary, in: .capsule)
         ),
         onSelect: {}

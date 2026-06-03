@@ -1,11 +1,8 @@
 /*
  A single-select segmented control on a quiet pill track. Ports the onboarding `.seg`/`.pace`/`.mostly`
- controls (2/3/4-way) — all share one pattern: an ink pill on the selected segment over a `fillTertiary` track.
-
- The load-bearing call (mirrors FilterChip): the selected segment is a SOLID INK pill, NOT the accent —
- choosing among one's own options is navigation, not a now-state, so the accent stays reserved for the CTA
- and the one AI/now mark (J-0.4 / J-2.4). Selection is conveyed by fill + the `.isSelected` trait, never
- color alone, so it survives grayscale and reaches assistive tech.
+ controls (2/3/4-way): an ink pill on the selected segment over a `fillTertiary` track.
+ Load-bearing call (mirrors FilterChip): the selected segment is a SOLID INK pill, NOT the accent (J-0.4 /
+ J-2.4) — conveyed by fill + the `.isSelected` trait, never color alone, so it survives grayscale.
 */
 import SwiftUI
 
@@ -22,8 +19,8 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
     let onSelect: (Option) -> Void
 
     var body: some View {
-        // The quiet pill track: hairline inset keeps the selected pill off the track edge.
-        HStack(spacing: Spacing.hairline) {
+        // The quiet pill track: a hairline inset keeps the selected pill off the track edge.
+        HStack(spacing: Spacing.xs) {
             ForEach(options) { option in
                 Button {
                     onSelect(option)
@@ -38,7 +35,7 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
                 .accessibilityAddTraits(option == selection ? [.isSelected] : [])
             }
         }
-        .padding(Spacing.hairline)
+        .padding(Spacing.xs)
         .background(ColorRole.fillTertiary, in: .rect(cornerRadius: Radius.pill))
     }
 }
@@ -50,7 +47,7 @@ private struct SegmentLabel: View {
     let systemImage: String?
 
     var body: some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             if let systemImage {
                 Image(systemName: systemImage)
                     .font(Typography.footnote)
@@ -67,16 +64,16 @@ private struct SegmentButtonStyle: ButtonStyle {
     let isSelected: Bool
     @Environment(\.isEnabled) private var isEnabled
 
-    // @ScaledMetric so the 44pt tap floor holds at large text — a bare `44` literal would not (J-0.3).
-    @ScaledMetric(relativeTo: .subheadline) private var minTapTarget: CGFloat = 44
+    // @ScaledMetric so the tap floor holds at large text — a bare literal would not (J-0.3).
+    @ScaledMetric(relativeTo: .subheadline) private var minTapTarget: CGFloat = Sizing.minTapTarget
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(Typography.subhead)
             .foregroundStyle(labelColor)
             .frame(maxWidth: .infinity) // equal-width segments
-            .padding(.vertical, Spacing.paired)
-            .padding(.horizontal, Spacing.itemGap)
+            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.md)
             .frame(minHeight: minTapTarget)
             .background(fill, in: .rect(cornerRadius: Radius.pill))
             .contentShape(.rect(cornerRadius: Radius.pill))
@@ -116,7 +113,7 @@ private struct SegmentOption: Identifiable, Hashable {
         accessibilityIDPrefix: "basemode",
         onSelect: { _ in }
     )
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }
 
@@ -134,7 +131,7 @@ private struct SegmentOption: Identifiable, Hashable {
         accessibilityIDPrefix: "pace",
         onSelect: { _ in }
     )
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }
 
@@ -153,6 +150,6 @@ private struct SegmentOption: Identifiable, Hashable {
         accessibilityIDPrefix: "transport.mostly",
         onSelect: { _ in }
     )
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }

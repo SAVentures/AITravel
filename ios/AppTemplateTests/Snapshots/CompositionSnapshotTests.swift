@@ -155,7 +155,7 @@ struct CompositionSnapshotTests {
     func actionBarPrimary() {
         let view = ZStack(alignment: .bottom) {
             ColorRole.surfacePage.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: Spacing.itemGap) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 ForEach(0..<5, id: \.self) { _ in
                     Text("Content scrolls under the floating action bar.")
                         .font(Typography.body)
@@ -180,7 +180,7 @@ struct CompositionSnapshotTests {
     func actionBarPrimarySecondary() {
         let view = ZStack(alignment: .bottom) {
             ColorRole.surfacePage.ignoresSafeArea()
-            VStack(alignment: .leading, spacing: Spacing.itemGap) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 ForEach(0..<5, id: \.self) { _ in
                     Text("Content scrolls under the floating action bar.")
                         .font(Typography.body)

@@ -39,19 +39,20 @@ non-negotiables in `CLAUDE.md`.
 There is a fixed ladder of vertical gaps. Memorize the rungs; **do not invent one in between.** Each
 maps to a *semantic* spacing token (`05-design-system.md §1`), never a raw number.
 
-| Rung | Token | Px (4pt grid) | Where it appears |
-|---|---|---|---|
-| Hairline | `Spacing.hairline` | 4 | eyebrow ↔ title; tag ↔ name |
-| Paired | `Spacing.paired` | 8 | icon ↔ label in a chip/button; thumb ↔ name baseline |
-| Sibling | `Spacing.itemGap` | 12 | title ↔ subtitle in a card; meta ↔ title |
-| Card / row | `Spacing.cardInset` | 16 | card padding; list-row vertical padding |
-| Section | `Spacing.sectionGap` | 24 | section header ↔ first row; hero ↔ first section |
-| Breath | `Spacing.hero` | 32 | screen hero ↔ first control; sheet inner top |
+| Token | Px (4pt grid) | Where it appears |
+|---|---|---|
+| `Spacing.xs` | 4 | eyebrow ↔ title; tag ↔ name |
+| `Spacing.sm` | 8 | icon ↔ label in a chip/button; thumb ↔ name baseline |
+| `Spacing.md` | 12 | title ↔ subtitle in a card; meta ↔ title |
+| `Spacing.lg` | 16 | card padding; list-row vertical padding; screen margin |
+| `Spacing.xl` | 24 | section header ↔ first row; hero ↔ first section |
+| `Spacing.2xl` | 32 | screen hero ↔ first control; sheet inner top |
+| `Spacing.3xl` / `.4xl` | 48 / 64 | rare large breaks; floating-chrome clearance |
 
-Anything off this ladder (10, 14, 18, 20…) is a bug. **The 4pt grid is a hard contract** — every value
+Anything off this scale (10, 14, 18, 20…) is a bug. **The 4pt grid is a hard contract** — every value
 is a multiple of 4 (the sole exception is sub-pixel glass edge hairlines). Two independently-built
-screens that both pull `Spacing.sectionGap` for "the gap after the header" will *match* — that is the
-whole point of the ladder.
+screens that both pull `Spacing.xl` for "the gap after the header" will *match* — that is the
+whole point of the scale. Fixed component **dimensions** use `Grid.x(n)` multiples (`Sizing`), not spacing.
 
 ---
 

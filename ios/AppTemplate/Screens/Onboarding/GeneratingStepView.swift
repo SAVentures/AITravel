@@ -21,10 +21,10 @@ struct GeneratingStepView: View {
         let presenter = GeneratingStepPresenter(store: store)
 
         ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped) {
-            VStack(alignment: .leading, spacing: Spacing.hero) {
+            VStack(alignment: .leading, spacing: Spacing.`2xl`) {
                 OnboardingProgressBar(stepIndex: OnboardingStep.generating.index)
 
-                VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+                VStack(alignment: .leading, spacing: Spacing.xl) {
                     AIVoice(eyebrow: presenter.eyebrow, line: presenter.headline)
                     Text(presenter.sub)
                         .font(Typography.body)
@@ -53,7 +53,7 @@ struct GeneratingStepView: View {
                 action: { store.cancelOnboarding() }
             )
             .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.paired)
+            .padding(.top, Spacing.sm)
             .accessibilityIdentifier("onboarding.cancel")
         }
         // The store owns the clock (OPEN DECISION 3); the view only observes the walk it kicks here.

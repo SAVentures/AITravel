@@ -164,7 +164,7 @@ screen?"* → cover.
 declares `ScreenScaffold(<intent>)` and composes `ScreenSection` / `RhythmSpacer`, which carry the
 tokens. That single seam is what makes two independently-built screens share one chrome and one rhythm
 (the prior app diverged precisely because each wired its own). Inner, component-local spacing still
-uses **semantic** tokens (`Spacing.itemGap`, never the primitive `Space.s2` or a literal — see
+uses **semantic** tokens (`Spacing.md`, never the primitive `Space.s2` or a literal — see
 `05-design-system.md §1`).
 
 ---

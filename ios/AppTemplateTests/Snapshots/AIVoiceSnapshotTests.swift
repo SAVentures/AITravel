@@ -41,7 +41,7 @@ struct AIVoiceSnapshotTests {
             // Constrain to a representative content column so the italic display line
             // wraps naturally — matching authoring context (the #Preview uses cardInset
             // padding on a full-width container). Leading-aligned, top of column.
-            .padding(Spacing.cardInset)
+            .padding(Spacing.lg)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading),
             named: "default"
         )

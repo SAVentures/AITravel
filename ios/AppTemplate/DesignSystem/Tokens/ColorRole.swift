@@ -1,14 +1,8 @@
-// ColorRole.swift — the SEMANTIC color tier (02-color §2 role vocabulary; 05-design-system.md §1–3).
-//
-// Every color a screen, component, or modifier touches is referenced by ROLE here — never a raw hex,
-// never a `Color(...)` literal, and never a `Primitive.*` directly (J-0.2 / J-2). Each member aliases
-// the generated primitive that the matching `foundations.css` semantic alias resolves to; changing the
-// look is one edit at this layer (and a future dark mode becomes a token swap — 02-color §7).
-//
-// Restraint is enforced by OMISSION (02-color §4, 05 §3): there is deliberately no `buttonBackground`,
-// no `accentFill`, and no gradient role to misuse. `actionPrimary` and `stateNow` are the ONLY accent
-// surfaces — emphasis/state only, ≤ twice per screen, never chrome or a card fill (J-0.4, J-2.4).
-// `dayMark1…dayMark4` are categorical *marks* (a day's color cue), never fills of size (J-2).
+// ColorRole.swift — the SEMANTIC color tier (02-color §2; 05-design-system.md §1–3). Every color is
+// referenced by ROLE — never a hex, `Color(...)` literal, or `Primitive.*` directly (J-0.2/J-2); one edit
+// here reskins, and dark mode becomes a token swap (02-color §7). Restraint by OMISSION (02-color §4):
+// no `buttonBackground`/`accentFill`/gradient role to misuse — `actionPrimary` + `stateNow` are the only
+// accent surfaces (≤ twice/screen, never chrome or a fill; J-0.4/J-2.4); `dayMark*` are marks, not fills.
 import SwiftUI
 
 enum ColorRole {

@@ -23,7 +23,7 @@
 // prominent button's role/tint only (`ColorRole.actionPrimary`), never a fill we paint (J-2.4).
 //
 // ── Chrome-thin density (J-5.1) ─────────────────────────────────────────────────────────────────────
-// Tight vertical padding from `Spacing.paired`; the bar hosts a target and disappears. No content
+// Tight vertical padding from `Spacing.sm`; the bar hosts a target and disappears. No content
 // padding, no fixed frames (J-0.3) — the buttons size to content + Dynamic Type.
 //
 // ── Accessibility identifiers are the CALLER's job ──────────────────────────────────────────────────
@@ -97,7 +97,7 @@ struct ActionBar: View {
         // One container so the (optional) secondary + the primary blend as a single piece of chrome —
         // glass can't sample glass, so grouping is required, not N independent glass surfaces (J-8.3).
         GlassEffectContainer {
-            HStack(spacing: Spacing.paired) {
+            HStack(spacing: Spacing.sm) {
                 if let secondary {
                     Button(secondary.title, action: secondary.action)
                         .buttonStyle(.glass)              // lesser, outline secondary (J-6.1)
@@ -116,7 +116,7 @@ struct ActionBar: View {
             .controlSize(.large)
         }
         // Chrome-thin: tight vertical padding, the standard horizontal inset — the bar recedes (J-5.1).
-        .padding(.vertical, Spacing.paired)
+        .padding(.vertical, Spacing.sm)
         .padding(.horizontal, Spacing.screenInset)
         .frame(maxWidth: .infinity)
     }
@@ -146,7 +146,7 @@ struct ActionBar: View {
 private func placeholderStage<Bar: View>(@ViewBuilder bar: () -> Bar) -> some View {
     ZStack(alignment: .bottom) {
         ColorRole.surfacePage.ignoresSafeArea()
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             ForEach(0..<6, id: \.self) { _ in
                 Text("Content scrolls under the floating action bar.")
                     .font(Typography.body)

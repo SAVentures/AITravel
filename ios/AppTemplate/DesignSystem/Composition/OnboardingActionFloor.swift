@@ -40,7 +40,7 @@ struct OnboardingActionFloor: View {
 
     var body: some View {
         GlassEffectContainer {
-            VStack(spacing: Spacing.paired) {
+            VStack(spacing: Spacing.sm) {
                 Button(primaryTitle, action: primaryAction)
                     .buttonStyle(.glassProminent)
                     .tint(ColorRole.actionPrimary)        // accent via tint only, never a fill (J-2.4)
@@ -59,8 +59,8 @@ struct OnboardingActionFloor: View {
             .controlSize(.large)
         }
         .padding(.horizontal, Spacing.screenInset)
-        .padding(.top, Spacing.paired)
-        .padding(.bottom, Spacing.paired)
+        .padding(.top, Spacing.sm)
+        .padding(.bottom, Spacing.sm)
         .frame(maxWidth: .infinity)
     }
 }
@@ -102,7 +102,7 @@ struct OnboardingActionFloor: View {
 private func placeholderStage<Floor: View>(@ViewBuilder floor: () -> Floor) -> some View {
     ZStack(alignment: .bottom) {
         ColorRole.surfacePage.ignoresSafeArea()
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             ForEach(0..<8, id: \.self) { _ in
                 Text("Content scrolls under the floating onboarding action floor.")
                     .font(Typography.body)

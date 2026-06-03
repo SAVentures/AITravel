@@ -52,7 +52,7 @@ struct GettingAroundStepView: View {
                 action: { store.retreatOnboardingStep() }
             )
             .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.paired)
+            .padding(.top, Spacing.sm)
             .accessibilityIdentifier("onboarding.back")
         }
     }
@@ -60,7 +60,7 @@ struct GettingAroundStepView: View {
     // MARK: - Hero
 
     @ViewBuilder private func hero(_ p: GettingAroundStepPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Text(p.heroEyebrow)
                 .font(Typography.caption)
                 .tracking(Typography.trackEyebrowCaption)
@@ -80,14 +80,14 @@ struct GettingAroundStepView: View {
     // MARK: - The AI rec card
 
     @ViewBuilder private func recCard(_ p: GettingAroundStepPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             Text(p.recEyebrow)
                 .font(Typography.caption)
                 .tracking(Typography.trackEyebrowCaption)
                 .textCase(.uppercase)
                 .foregroundStyle(ColorRole.textTertiary)
 
-            HStack(alignment: .top, spacing: Spacing.itemGap) {
+            HStack(alignment: .top, spacing: Spacing.md) {
                 // The ONE editorial italic moment: roman lead-in + italic display tail (the mode word).
                 (
                     Text(p.recLineLead)
@@ -105,11 +105,11 @@ struct GettingAroundStepView: View {
             Rectangle()
                 .fill(ColorRole.separator)
                 .frame(height: separatorThickness)
-                .padding(.top, Spacing.paired)
+                .padding(.top, Spacing.sm)
 
-            VStack(alignment: .leading, spacing: Spacing.paired) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
                 ForEach(Array(p.reasonRows.enumerated()), id: \.offset) { _, reason in
-                    HStack(alignment: .top, spacing: Spacing.paired) {
+                    HStack(alignment: .top, spacing: Spacing.sm) {
                         TimeHint(reason)
                         Spacer(minLength: 0)
                     }
@@ -133,7 +133,7 @@ struct GettingAroundStepView: View {
     // MARK: - "Your call" divider
 
     private var divider: some View {
-        HStack(spacing: Spacing.itemGap) {
+        HStack(spacing: Spacing.md) {
             line
             Text("Your call")
                 .font(Typography.caption)
@@ -154,9 +154,9 @@ struct GettingAroundStepView: View {
     // MARK: - The two-tier mode control
 
     @ViewBuilder private func modeControl(_ p: GettingAroundStepPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
             // Tier 1 — "Mostly": single-select segmented control.
-            VStack(alignment: .leading, spacing: Spacing.paired) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
                 tierHead(title: "Mostly", hint: "what we optimize around")
 
                 SegmentedSelector(
@@ -169,7 +169,7 @@ struct GettingAroundStepView: View {
                 )
 
                 // The suggested hint + its ONE stateNow dot (the body's single accent, J-2.4).
-                HStack(spacing: Spacing.paired) {
+                HStack(spacing: Spacing.sm) {
                     Circle()
                         .fill(ColorRole.stateNow)
                         .frame(width: suggestedDotSize, height: suggestedDotSize)
@@ -183,7 +183,7 @@ struct GettingAroundStepView: View {
             }
 
             // Tier 2 — "Also OK": multi-select chip row.
-            VStack(alignment: .leading, spacing: Spacing.paired) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
                 tierHead(title: "Also OK", hint: "we can mix these in")
 
                 AlsoOKChipRow(
@@ -197,13 +197,13 @@ struct GettingAroundStepView: View {
     }
 
     @ViewBuilder private func tierHead(title: String, hint: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.itemGap) {
+        HStack(alignment: .firstTextBaseline, spacing: Spacing.md) {
             Text(title)
                 .font(Typography.caption)
                 .tracking(Typography.trackEyebrowCaption)
                 .textCase(.uppercase)
                 .foregroundStyle(ColorRole.textTertiary)
-            Spacer(minLength: Spacing.paired)
+            Spacer(minLength: Spacing.sm)
             Text(hint)
                 .font(Typography.subhead)
                 .foregroundStyle(ColorRole.textSecondary)
@@ -235,7 +235,7 @@ private struct AlsoOKChipRow: View {
     let onToggle: (TransportMode) -> Void
 
     var body: some View {
-        FlowLayout(spacing: Spacing.paired) {
+        FlowLayout(spacing: Spacing.sm) {
             ForEach(modes, id: \.self) { mode in
                 FilterChip(
                     label: mode.label,

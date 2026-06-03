@@ -36,7 +36,7 @@ struct TripShapeStepView: View {
             }
 
             footVoice(for: p)
-                .padding(.top, Spacing.sectionGap)
+                .padding(.top, Spacing.xl)
         }
         .overlay(alignment: .topLeading) {
             GlassCircleButton(
@@ -45,7 +45,7 @@ struct TripShapeStepView: View {
                 action: { store.retreatOnboardingStep() }
             )
             .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.paired)
+            .padding(.top, Spacing.sm)
             .accessibilityIdentifier("onboarding.back")
         }
     }
@@ -54,7 +54,7 @@ struct TripShapeStepView: View {
 
     @ViewBuilder
     private func hero(_ p: TripShapeStepPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.hairline) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(p.heroEyebrow.uppercased())
                 .font(Typography.caption)
                 .tracking(Typography.trackEyebrowCaption)
@@ -68,17 +68,17 @@ struct TripShapeStepView: View {
                 .font(Typography.body)
                 .foregroundStyle(ColorRole.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, Spacing.paired)
+                .padding(.top, Spacing.sm)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, Spacing.sectionGap)
+        .padding(.top, Spacing.xl)
     }
 
     // MARK: - Body A/B
 
     @ViewBuilder
     private func shapeCardsBody(_ p: TripShapeStepPresenter) -> some View {
-        VStack(spacing: Spacing.itemGap) {
+        VStack(spacing: Spacing.md) {
             ForEach(p.shapeCards) { card in
                 TripShapeCard(
                     id: card.id,
@@ -93,7 +93,7 @@ struct TripShapeStepView: View {
                 )
             }
         }
-        .padding(.top, Spacing.sectionGap)
+        .padding(.top, Spacing.xl)
     }
 
     // Erased so the card only reserves the slot, regardless of the embedded control's type.
@@ -109,7 +109,7 @@ struct TripShapeStepView: View {
 
     @ViewBuilder
     private func tasteFormBody(_ p: TripShapeStepPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
             tasteBlock(eyebrow: "How long") {
                 DayStepper(value: p.tasteDays, range: OnboardingRange.tripDays) {
                     store.onboarding?.setDays($0)
@@ -131,7 +131,7 @@ struct TripShapeStepView: View {
                 )
             }
         }
-        .padding(.top, Spacing.sectionGap)
+        .padding(.top, Spacing.xl)
     }
 
     // A labelled taste-form block: caps eyebrow (+ optional right-aligned hint) over its control.
@@ -141,14 +141,14 @@ struct TripShapeStepView: View {
         hint: String? = nil,
         @ViewBuilder control: () -> Control
     ) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(alignment: .firstTextBaseline) {
                 Text(eyebrow.uppercased())
                     .font(Typography.caption)
                     .tracking(Typography.trackEyebrowCaption)
                     .foregroundStyle(ColorRole.textTertiary)
                 if let hint {
-                    Spacer(minLength: Spacing.paired)
+                    Spacer(minLength: Spacing.sm)
                     Text(hint)
                         .font(Typography.subhead)
                         .foregroundStyle(ColorRole.textSecondary)
@@ -162,8 +162,8 @@ struct TripShapeStepView: View {
     // The chip → Interest mapping comes from zipping the presenter's ordered cases with its chip models.
     @ViewBuilder
     private func interestGrid(_ p: TripShapeStepPresenter) -> some View {
-        let columns = [GridItem(.adaptive(minimum: interestChipMinWidth), spacing: Spacing.paired, alignment: .leading)]
-        LazyVGrid(columns: columns, alignment: .leading, spacing: Spacing.paired) {
+        let columns = [GridItem(.adaptive(minimum: interestChipMinWidth), spacing: Spacing.sm, alignment: .leading)]
+        LazyVGrid(columns: columns, alignment: .leading, spacing: Spacing.sm) {
             ForEach(Array(zip(p.interests, p.interestChips)), id: \.0) { interest, chip in
                 FilterChip(
                     label: chip.label,
@@ -193,7 +193,7 @@ struct TripShapeStepView: View {
         }
     }
 
-    @ScaledMetric(relativeTo: .subheadline) private var interestChipMinWidth: CGFloat = Sizing.chipMin
+    @ScaledMetric(relativeTo: .subheadline) private var interestChipMinWidth: CGFloat = Sizing.Component.chipColumn
 
     @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = Spacing.chromeClearance
 }

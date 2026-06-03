@@ -41,7 +41,7 @@ struct HScrollSectionSnapshotTests {
         assertDesignSnapshot(
             HScrollSection("Recent", meta: "Last 6 months", accessibilityIDPrefix: "rail.recent") {
                 ForEach(["Lisbon", "Tokyo", "Mexico City", "Reykjavík"], id: \.self) { city in
-                    VStack(alignment: .leading, spacing: Spacing.hairline) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text(city)
                             .font(Typography.name)
                             .foregroundStyle(ColorRole.textPrimary)
@@ -51,7 +51,7 @@ struct HScrollSectionSnapshotTests {
                             .textCase(.uppercase)
                             .foregroundStyle(ColorRole.textTertiary)
                     }
-                    .padding(Spacing.cardInset)
+                    .padding(Spacing.lg)
                     .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
                 }
             }
@@ -71,7 +71,7 @@ struct HScrollSectionSnapshotTests {
                     Text(name)
                         .font(Typography.name)
                         .foregroundStyle(ColorRole.textPrimary)
-                        .padding(Spacing.cardInset)
+                        .padding(Spacing.lg)
                         .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
                 }
             }

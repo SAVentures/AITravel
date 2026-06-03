@@ -1,10 +1,7 @@
 /*
  The −/value/+ day stepper. Ports `.stepper` from mockups/screens/onboarding/state-{a,c}-screen-02-trip-shape.html.
-
- The number is the DISPLAY face so the count reads as the value; the unit is MONO so it reads as measurement.
- This is CONTENT, never glass (J-0.1): the ± buttons are plain glyph buttons on a solid well, not `.glass`.
- The value reads as one adjustable element (VoiceOver swipe), while the discrete ± buttons keep their own
- ids for the XCUITest path.
+ CONTENT, never glass (J-0.1): plain ± glyph buttons on a solid well. The value is one adjustable
+ element (VoiceOver swipe); the discrete ± buttons keep their own ids for the XCUITest path.
 */
 import SwiftUI
 
@@ -18,8 +15,8 @@ struct DayStepper: View {
     /// Fired with the new (already-clamped) value. Not called when at a bound.
     let onChange: (Int) -> Void
 
-    /// 44pt tap target floor that grows with Dynamic Type — a bare `44` would not scale (T-6.4).
-    @ScaledMetric(relativeTo: .title2) private var buttonHitTarget: CGFloat = 44
+    /// HIG tap-target floor that grows with Dynamic Type — a bare literal would not scale (T-6.4).
+    @ScaledMetric(relativeTo: .title2) private var buttonHitTarget: CGFloat = Sizing.minTapTarget
 
     init(
         value: Int,
@@ -59,7 +56,7 @@ struct DayStepper: View {
             }
             .accessibilityIdentifier("daystepper.increment")
         }
-        .padding(Spacing.hairline)
+        .padding(Spacing.xs)
         .background(ColorRole.fillSecondary, in: .capsule)
         // One adjustable element so VoiceOver swipes change the count; the discrete buttons stay tappable.
         .accessibilityElement(children: .contain)
@@ -76,7 +73,7 @@ struct DayStepper: View {
     // MARK: - The display-number + mono-unit face
 
     private var valueFace: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.hairline) {
+        HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
             Text("\(clamped)")
                 .font(Typography.title)
                 .tracking(Typography.titleTracking)
@@ -86,7 +83,7 @@ struct DayStepper: View {
                 .font(Typography.footnote) // mono — the unit reads as measurement (T-1.2)
                 .foregroundStyle(ColorRole.textSecondary)
         }
-        .padding(.horizontal, Spacing.itemGap)
+        .padding(.horizontal, Spacing.md)
         // The value is announced by the container's `.accessibilityValue`; hide the raw text so it isn't read twice.
         .accessibilityHidden(true)
     }
@@ -137,7 +134,7 @@ private struct DayStepperGlyphButtonStyle: ButtonStyle {
     StatefulPreviewWrapper(4) { value in
         DayStepper(value: value.wrappedValue, range: 1...14) { value.wrappedValue = $0 }
     }
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }
 
@@ -145,7 +142,7 @@ private struct DayStepperGlyphButtonStyle: ButtonStyle {
     StatefulPreviewWrapper(1) { value in
         DayStepper(value: value.wrappedValue, range: 1...14) { value.wrappedValue = $0 }
     }
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }
 
@@ -153,7 +150,7 @@ private struct DayStepperGlyphButtonStyle: ButtonStyle {
     StatefulPreviewWrapper(14) { value in
         DayStepper(value: value.wrappedValue, range: 1...14) { value.wrappedValue = $0 }
     }
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }
 

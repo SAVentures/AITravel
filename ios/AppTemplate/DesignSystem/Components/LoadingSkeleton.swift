@@ -1,43 +1,10 @@
-// LoadingSkeleton.swift — redacted placeholder rows at the real content footprint (05-components §9;
-// 06-judgment J-9.3; 07-testing.md §6.4).
+// LoadingSkeleton.swift — redacted placeholder rows at the REAL content footprint, so nothing reflows
+// when data lands (05-components §9; ports mockups/components/Components.html §09 `.skel`).
 //
-// The loading state for a list/card region: redacted bars laid out at the REAL footprint of the content
-// that will arrive, so nothing reflows when data lands (05-components §9). At most ONE shimmer runs on
-// screen — a single continuous sweep across the whole skeleton, not a loop per bar (J-9.3: at most one
-// continuous motion). Everything else is static.
-//
-// PORTS FROM: `mockups/components/Components.html` §09 `.skel`
-//   surface  `.skel { background: var(--surface-grouped); border-radius: var(--r-card);
-//             box-shadow: var(--shadow-rest); overflow: hidden; }`
-//                                              → `ColorRole.surfaceGrouped` + `Radius.card` + `.shadowRest()`
-//   row      `.skrow { grid 44px 1fr; gap: 13px; padding: 14px 16px; }`
-//                                              → leading square + text column, `Spacing.itemGap` gap,
-//                                                `Spacing.cardInset` inset (the real list-row footprint)
-//   bar      `.skel .b { background: var(--paper-200); border-radius: 6px; height: 12px; }`
-//                                              → redaction bar: `ColorRole.fillSecondary` ground (the
-//                                                neutral redaction overlay role) + `Radius.tag` corners
-//   square   `.skel .b.sq { 44×44; border-radius: 9px; }`   → the leading thumbnail placeholder (`Radius.thumb`)
-//   widths   `.w1 { 55% }` `.w2 { 80%; height: 9px }`       → primary-line + secondary-line bar widths
-//   shimmer  `.skel .b::after { linear-gradient sweep; animation: shim 1.3s infinite; }`
-//                                              → ONE highlight sweep across the whole skeleton (J-9.3)
-//
-// ── The redaction-bar color ──────────────────────────────────────────────────────────────────────────
-// The mockup fills the bars with `--paper-200` (a flat well tone). In the SEMANTIC tier the role for a
-// neutral redaction overlay is `ColorRole.fillSecondary` (a low-opacity ink fill) — the plan's
-// `ColorRole.fill*` instruction. Authoring against the role (not the raw `paper-200` primitive) keeps the
-// file token-pure (J-0.2): zero literals, zero `Primitive.*`.
-//
-// ── Motion: static under BOTH Reduce Motion and the snapshot seam ─────────────────────────────────────
-// The shimmer goes STATIC (no animation; the highlight parked off-screen at rest) when EITHER:
-//   • `@Environment(\.accessibilityReduceMotion)` is on — continuous motion goes static, not deleted
-//     (04-motion §7, J-9.5); the redacted footprint still communicates "loading".
-//   • `\.disablesOneShotMotion` is injected `true` — the snapshot seam (07-testing.md §6.4) so a render
-//     snapshot settles to rest instead of catching the sweep mid-flight and flaking.
-// The sweep itself uses `Motion.standard(...)` (the one house easing) repeated forever — never a raw
-// `.timingCurve`/`.linear` inline (J-0.2 / J-9.2). This is the only continuous motion the component owns.
-//
-// Value-type args only; no `AppStore`, no domain model (05-design-system.md §8). NEVER glass — this is
-// content, glass is floating chrome only (J-0.1 / J-8).
+// At most ONE shimmer on screen: a single continuous sweep across the whole skeleton (J-9.3). It goes
+// STATIC (highlight parked off-screen) under EITHER Reduce Motion (J-9.5 — the footprint still reads
+// "loading") OR the injected `disablesOneShotMotion` snapshot seam (07-testing.md §6.4, so a snapshot
+// settles to rest instead of catching a mid-flight frame). Content, never glass (J-0.1).
 import SwiftUI
 
 // MARK: - The snapshot / one-shot-motion seam (07-testing.md §6.4)
@@ -87,11 +54,11 @@ struct LoadingSkeleton: View {
     /// Motion is static when EITHER the user has Reduce Motion on OR the snapshot seam disables it.
     private var motionDisabled: Bool { reduceMotion || disablesOneShotMotion }
 
-    // The redaction-bar heights scale with Dynamic Type so the placeholder keeps the real footprint at
-    // every text size (T-6.4) — never a bare fixed CGFloat. Seeded from the mockup's bar heights.
-    @ScaledMetric(relativeTo: .body) private var primaryBarHeight: CGFloat = 12
-    @ScaledMetric(relativeTo: .subheadline) private var secondaryBarHeight: CGFloat = 9
-    @ScaledMetric(relativeTo: .body) private var squareSide: CGFloat = 44
+    // Redaction-bar / square heights scale with Dynamic Type so the placeholder holds the real footprint
+    // at every text size (T-6.4). The square mirrors a 44 tap-target cell (one source: Sizing.minTapTarget).
+    @ScaledMetric(relativeTo: .body) private var primaryBarHeight: CGFloat = Sizing.Component.skeletonPrimaryBar
+    @ScaledMetric(relativeTo: .subheadline) private var secondaryBarHeight: CGFloat = Sizing.Component.skeletonSecondaryBar
+    @ScaledMetric(relativeTo: .body) private var squareSide: CGFloat = Sizing.minTapTarget
 
     var body: some View {
         VStack(spacing: 0) {
@@ -121,7 +88,7 @@ struct LoadingSkeleton: View {
     // MARK: - A redacted row at the real list-row footprint
 
     private var skeletonRow: some View {
-        HStack(spacing: Spacing.itemGap) {
+        HStack(spacing: Spacing.md) {
             // Leading thumbnail placeholder (the `.b.sq` square).
             RoundedRectangle(cornerRadius: Radius.thumb)
                 .fill(ColorRole.fillSecondary)
@@ -129,15 +96,15 @@ struct LoadingSkeleton: View {
 
             // The text column: a primary line + a shorter, slimmer secondary line (`.w1` / `.w2`),
             // left-aligned (J-7.1). `maxWidth` fractions hold the real two-line text footprint.
-            VStack(alignment: .leading, spacing: Spacing.paired) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
                 bar(height: primaryBarHeight, widthFraction: 0.55)
                 bar(height: secondaryBarHeight, widthFraction: 0.80)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        // The real list-row inset: horizontal `cardInset`, vertical `itemGap` (the `.skrow` 14/16 footprint).
-        .padding(.horizontal, Spacing.cardInset)
-        .padding(.vertical, Spacing.itemGap)
+        // The real list-row inset (the `.skrow` 14/16 footprint).
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.md)
     }
 
     /// One redaction bar — a `fillSecondary` capsule-cornered rectangle at a fraction of the column width.

@@ -61,7 +61,7 @@ struct BaseLocationStepView: View {
                 action: { store.retreatOnboardingStep() }
             )
             .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.paired)
+            .padding(.top, Spacing.sm)
             .accessibilityIdentifier("onboarding.back")
         }
     }
@@ -69,7 +69,7 @@ struct BaseLocationStepView: View {
     // MARK: - Hero
 
     private var hero: some View {
-        VStack(alignment: .leading, spacing: Spacing.paired) {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("Base location")
                 .font(Typography.caption)
                 .tracking(Typography.trackEyebrowCaption)
@@ -103,23 +103,23 @@ struct BaseLocationStepView: View {
     // MARK: - Smart recommendation
 
     private var smartRecommendation: some View {
-        VStack(alignment: .leading, spacing: Spacing.sectionGap) {
+        VStack(alignment: .leading, spacing: Spacing.xl) {
 
-            VStack(alignment: .leading, spacing: Spacing.cardInset) {
+            VStack(alignment: .leading, spacing: Spacing.lg) {
                 BaseMapCard(model: presenter.mapModel, snapshotMode: mapSnapshotMode)
 
-                VStack(alignment: .leading, spacing: Spacing.cardInset) {
+                VStack(alignment: .leading, spacing: Spacing.lg) {
                     AIVoice(eyebrow: presenter.whyEyebrow, line: presenter.whyVoice)
 
-                    VStack(alignment: .leading, spacing: Spacing.paired) {
+                    VStack(alignment: .leading, spacing: Spacing.sm) {
                         ForEach(presenter.reachRows) { row in
                             TimeHint(row.hint)
                                 .accessibilityIdentifier("baselocation.reach.\(row.id)")
                         }
                     }
                 }
-                .padding(.horizontal, Spacing.cardInset)
-                .padding(.bottom, Spacing.cardInset)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.bottom, Spacing.lg)
             }
             .containerShape(.rect(cornerRadius: Radius.card)) // the map inherits this concentric corner
             .cardSurface()
@@ -208,10 +208,10 @@ private enum BaseModeOption: String, CaseIterable, Identifiable, Hashable {
 private struct AltNeighborhoodCard: View {
     let alt: BaseLocationStepPresenter.AltModel
 
-    @ScaledMetric(relativeTo: .body) private var minCardWidth: CGFloat = Sizing.cardMin
+    @ScaledMetric(relativeTo: .body) private var minCardWidth: CGFloat = Sizing.Component.cardMinWidth
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.hairline) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(alt.name)
                 .font(Typography.name)
                 .foregroundStyle(ColorRole.textPrimary)
@@ -221,7 +221,7 @@ private struct AltNeighborhoodCard: View {
                 .foregroundStyle(ColorRole.textSecondary)
         }
         .frame(minWidth: minCardWidth, alignment: .leading)
-        .padding(Spacing.cardInset)
+        .padding(Spacing.lg)
         .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(alt.name), \(alt.meta)")

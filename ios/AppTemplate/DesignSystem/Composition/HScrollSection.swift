@@ -29,14 +29,14 @@ struct HScrollSection<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.itemGap) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(alignment: .firstTextBaseline) {
                 Text(title)
                     .font(Typography.name)
                     .foregroundStyle(ColorRole.textPrimary)
 
                 if let meta {
-                    Spacer(minLength: Spacing.itemGap)
+                    Spacer(minLength: Spacing.md)
                     Text(meta)
                         .font(Typography.caption)
                         .tracking(Typography.trackEyebrowCaption)
@@ -48,7 +48,7 @@ struct HScrollSection<Content: View>: View {
             .padding(.horizontal, Spacing.screenInset)
 
             ScrollView(.horizontal) {
-                HStack(alignment: .top, spacing: Spacing.paired) {
+                HStack(alignment: .top, spacing: Spacing.sm) {
                     content
                 }
             }
@@ -65,7 +65,7 @@ struct HScrollSection<Content: View>: View {
 #Preview("Recent rail") {
     HScrollSection("Recent", meta: "Last 6 months", accessibilityIDPrefix: "rail.recent") {
         ForEach(["Lisbon", "Tokyo", "Mexico City", "Reykjavík"], id: \.self) { city in
-            VStack(alignment: .leading, spacing: Spacing.hairline) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(city)
                     .font(Typography.name)
                     .foregroundStyle(ColorRole.textPrimary)
@@ -75,7 +75,7 @@ struct HScrollSection<Content: View>: View {
                     .textCase(.uppercase)
                     .foregroundStyle(ColorRole.textTertiary)
             }
-            .padding(Spacing.cardInset)
+            .padding(Spacing.lg)
             .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
         }
     }
@@ -88,7 +88,7 @@ struct HScrollSection<Content: View>: View {
             Text(name)
                 .font(Typography.name)
                 .foregroundStyle(ColorRole.textPrimary)
-                .padding(Spacing.cardInset)
+                .padding(Spacing.lg)
                 .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.row))
         }
     }

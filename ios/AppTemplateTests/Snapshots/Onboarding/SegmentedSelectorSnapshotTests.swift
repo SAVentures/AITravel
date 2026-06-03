@@ -169,7 +169,7 @@ struct SegmentedSelectorSnapshotTests {
 @MainActor
 private func canvas<Content: View>(@ViewBuilder content: () -> Content) -> some View {
     content()
-        .padding(Spacing.cardInset)
+        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(ColorRole.surfacePage)
 }

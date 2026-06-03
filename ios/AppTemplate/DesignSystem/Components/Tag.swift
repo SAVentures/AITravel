@@ -1,28 +1,9 @@
-// Tag.swift — the read-only status tag (05-components §5; J-2.4 / J-10.2; 08-slop A-1/C-1).
-//
-// A small, capsule-shaped, READ-ONLY label for status/category — "Ramen", "Open now",
-// "Reserved · 8 PM" (the mockup `.tag`, components.html §05). It is content, not chrome: NEVER glass
-// (J-0.1), and it does NOT handle taps — the interactive register is `FilterChip` (C5).
-//
-// Anatomy ported from the mockup `.tag`:
-//   • capsule shape at the `Radius.tag` rung — the smallest content radius (J-10.1/J-10.2).
-//   • a short label in the MONO family (`Typography.caption`), uppercased, with caps tracking applied
-//     at the call site (the role doesn't bake it in — T-5.2). Mono is reserved here for measurement /
-//     short status caps, never sentence text (J-3.5, 08-slop B-10).
-//   • a neutral `fillTertiary` ground (the mockup's `--fill-tertiary`); the label ink is the
-//     secondary text role (the mockup draws it in the `--ink-600` / textSecondary tone).
-//
-// §5.1 — a tag carries state via ONE accent mark OR a neutral fill — never a side-border, never a
-// gradient fill (J-2.4, 08-slop A-1/A-2/C-1). The optional `state` variant adds a single leading
-// `stateNow` dot; the COLOR is always paired with the label text so the status survives
-// color-blindness (02-color §6, never color alone). There is no bordered/gradient path to misuse.
-//
-// @ScaledMetric (T-6.4): the dot is a non-text metric, so it scales with the label via
-// `@ScaledMetric(relativeTo:)` rather than a fixed CGFloat (J-0.3). Sizing is content-hugging — no
-// fixed frame.
-//
-// Value-type args only (no AppStore, no domain object — 05 §8); the local `TagModel` fixture below
-// drives the previews and the Wave E snapshots.
+// Tag.swift — the read-only status tag: a small capsule label for status/category (05-components §5).
+// Ports the mockup `.tag` (components.html §05): a `Radius.tag` capsule, a short MONO caps label
+// (`Typography.caption`, caps tracking at the call site — T-5.2), on a neutral `fillTertiary` ground.
+// State is carried by ONE accent mark OR a neutral fill — never a side-border or gradient (§5.1, J-2.4,
+// 08-slop A-1/C-1); the `.now` dot is always paired with the label (never color alone — 02-color §6).
+// Content, never glass (J-0.1); content-hugging (J-0.3). Value-type args only (05 §8).
 import SwiftUI
 
 struct Tag: View {
@@ -46,10 +27,10 @@ struct Tag: View {
     }
 
     /// The leading dot for the `.now` mark, scaled with the caption text style so it tracks Dynamic Type.
-    @ScaledMetric(relativeTo: .caption2) private var dotSize: CGFloat = 6
+    @ScaledMetric(relativeTo: .caption2) private var dotSize: CGFloat = Sizing.dot
 
     var body: some View {
-        HStack(spacing: Spacing.paired) {
+        HStack(spacing: Spacing.sm) {
             if mark == .now {
                 Circle()
                     .fill(ColorRole.stateNow)
@@ -60,10 +41,9 @@ struct Tag: View {
                 .tracking(Typography.trackCapsCaption)
                 .foregroundStyle(ColorRole.textSecondary)
         }
-        // Content-hugging capsule: hairline (4) vertical / paired (8) horizontal inset — the mockup
-        // `.tag` `padding: 4px 8px`. No fixed frame (J-0.3); content drives the size.
-        .padding(.vertical, Spacing.hairline)
-        .padding(.horizontal, Spacing.paired)
+        // Content-hugging capsule — the mockup `.tag` `padding: 4px 8px` (J-0.3; content drives size).
+        .padding(.vertical, Spacing.xs)
+        .padding(.horizontal, Spacing.sm)
         .background(ColorRole.fillTertiary, in: .rect(cornerRadius: Radius.tag))
         // Colour is paired with the label, so the status is announced as text — never colour alone.
         .accessibilityElement(children: .combine)
@@ -86,11 +66,11 @@ private struct TagFixture: Identifiable {
         .init(label: "Michelin", mark: .neutral),
         .init(label: "Open now", mark: .now),
     ]
-    HStack(spacing: Spacing.paired) {
+    HStack(spacing: Spacing.sm) {
         ForEach(fixtures) { fixture in
             Tag(fixture.label, mark: fixture.mark)
         }
     }
-    .padding(Spacing.cardInset)
+    .padding(Spacing.lg)
     .background(ColorRole.surfacePage)
 }

@@ -258,3 +258,31 @@ underspecified (`05 §1` said only "sparingly"). The property→category rule ma
 and kills the ad-hoc tier debate; the documented seam keeps dark mode a clean future token swap. This
 supersedes the loose `bookRowCoverSize`-style Component-tier guidance; it does not change the 2026-06-03
 `Sizing` tier (which is now framed as the canonical component-dimension category).
+
+---
+
+## 2026-06-03 — Token foundation: t-shirt spacing scale + Grid-based component dimensions
+
+**Decision.** Reworked the design-token foundation (conventions studied from first-saas-repo, adapted to
+our codegen→Swift pipeline):
+1. **`Spacing` is now a t-shirt scale** — `xs=4 sm=8 md=12 lg=16 xl=24 2xl=32 3xl=48 4xl=64` — replacing
+   the role-named gap ladder (`hairline/paired/itemGap/cardInset/sectionGap/hero`). Value-preserving
+   1:1 map (`hairline→xs … hero→2xl`); ~205 call-sites migrated app-wide via deprecated forwarding
+   aliases (added, then deleted once refs hit zero — a green build with them gone proves completeness).
+   `screenInset`/`chromeClearance` kept as named layout roles; component insets nest in `Spacing.Component`.
+2. **Component DIMENSIONS are `Grid.x(n)` multiples, not primitives.** `Grid.x(_ steps:Int) = Primitive.s1
+   * clamp(steps, 0…96)` (4pt unit, bounded). `Sizing` (flat `dot`/`minTapTarget`) + `Sizing.Component`
+   (single-component dims) are all `Grid.x(n)`. **No bespoke `--size-*` primitives** — those were removed
+   from `foundations.css`. Mockups mirror this as `calc(var(--s-1) * n)`.
+3. Off-grid component literals snapped onto the grid (≤4px), re-recorded in 11 snapshot suites.
+
+**Why.** The foundation was built with a sparse, gap-only spacing spine (stopped at 56, no size scale),
+so component dimensions had no home — we'd been minting bespoke "size primitives" (`--size-map-pin`, etc.)
+that duplicated the scale and polluted the primitive tier. Studying first-saas confirmed the real gap was
+the spacing tier (a dense scale that also covers sizes) and that bespoke dimensions belong *derived from
+the grid*, not as primitives — and that our `Grid.x` (on-grid, bounded, no literals) is in fact stricter
+than first-saas's literal component sizes. The t-shirt scale is the conventional, discoverable API.
+
+**Supersedes.** The role-named gap ladder; the earlier 2026-06-03 "token organization" §1.1 "Sizing stays
+flat" framing (Sizing now uses `Grid.x` + a `Component` band) and the bespoke `--size-*` primitives from
+the same day's component-tokenization entry. Theming seam unchanged (`ColorRole` is the dark-mode swap point).
