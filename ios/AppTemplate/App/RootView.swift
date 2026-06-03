@@ -10,10 +10,9 @@ import SwiftUI
 /// dismisses back to this placeholder.
 struct RootView: View {
     @Environment(AppStore.self) private var store
+    @State private var showsOnboarding = false
 
     var body: some View {
-        @Bindable var store = store
-
         placeholderRoot
             // Kick the flow on launch — only when no draft is present (so a re-appearance / a seeded
             // preview does not re-fetch). The read path lives on the store (`06-screens.md §4`).
@@ -22,19 +21,22 @@ struct RootView: View {
                     await store.loadOnboarding()
                 }
             }
-            // The onboarding takeover. Bound to the presence of a draft: hydration presents it, the
-            // dismiss-to-root commands clear it (`onboarding = nil`) and the cover dismisses.
-            .fullScreenCover(
-                isPresented: Binding(
-                    get: { store.onboarding != nil },
-                    set: { isPresented in
-                        // SwiftUI drives this false on an interactive dismiss; mirror it to the store so
-                        // the source of truth stays in sync (the flow's own × also clears it).
-                        if !isPresented { store.cancelOnboarding() }
-                    }
-                )
-            ) {
+            // The onboarding takeover. Driven by a local `@State` Bool that mirrors the presence of a
+            // draft. `of:` is evaluated *during* body, so SwiftUI registers `store.onboarding` as a
+            // dependency of this body and re-renders when hydration sets it (`06-screens.md §2.5` — a
+            // cover for a focused takeover).
+            .onChange(of: store.onboarding != nil, initial: true) { _, present in
+                showsOnboarding = present
+            }
+            .fullScreenCover(isPresented: $showsOnboarding) {
                 OnboardingFlowView()
+            }
+            // SwiftUI drives `showsOnboarding` false on an interactive/swipe dismiss; mirror it to the
+            // store so the source of truth stays in sync (the flow's own × / completion also clear it).
+            .onChange(of: showsOnboarding) { _, shows in
+                if !shows && store.onboarding != nil {
+                    store.cancelOnboarding()
+                }
             }
     }
 
