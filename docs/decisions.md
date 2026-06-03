@@ -66,3 +66,29 @@ ladder. A global `--opacity-*` ramp would be a junk-drawer token (08-slop). The 
 is different — it recurs across selectable cards — so that one WAS tokenized (`--stroke-selected: 2px`
 → `Primitive.strokeSelected` → `Stroke.selected`). Opacity finish values stay component-local until a
 second component proves a shared ramp is warranted.
+
+---
+
+## 2026-06-03 — Onboarding: action floor is now FLOATING Liquid Glass — SUPERSEDES the W1-09 solid-floor exception
+
+**Decision.** Per user direction, `OnboardingActionFloor`
+(`DesignSystem/Composition/OnboardingActionFloor.swift`) is rewritten to be a **FLOATING** action floor
+using the **system Liquid Glass material**, not a solid floor. The primary CTA is the system
+`.buttonStyle(.glassProminent)` (`.tint(ColorRole.actionPrimary)`, `.controlSize(.large)`,
+`.buttonBorderShape(.capsule)`); the optional second action is the lesser `.buttonStyle(.glass)` ghost.
+Both are grouped in one `GlassEffectContainer` so they blend as a single piece of chrome (no glass-on-glass,
+J-8.3). There is **no** opaque `surfacePage` floor, **no** top hairline, and **no** hand-rolled
+translucency — the action floats over the scrolling content. The public init API is unchanged
+(`primaryTitle` / `primaryEnabled` / `primaryAccessibilityID` / `ghostTitle` / `ghostAccessibilityID` /
+`ghostAction` / `primaryAction`), so the step-view call sites are untouched.
+
+**This SUPERSEDES the earlier decision "2026-06-02 — Onboarding W1-09: SOLID action floor — exception to
+'glass on floating chrome only' (J-0.1)".** That exception (an opaque paper floor + hairline holding a
+`PillButton(.primary)` / `.ghost`) is no longer in effect. Glass-on-floating-chrome (J-0.1, visual
+non-negotiable #1) now applies **normally** to the onboarding CTA — the onboarding action floor is the
+default floating-glass pattern, exactly like `ActionBar`, just with a primary-over-ghost vocabulary. No
+J-0.1 carve-out remains for the onboarding floor.
+
+**Related.** The sticky GLASS `OnboardingProgressHeader` was split at the same time: the progress
+(counter + 5 neutral segments) became the in-content `OnboardingProgressBar` component, and the leading
+× / back became a separate floating `GlassCircleButton` the screens overlay (driven by `LeadingGlyph`).

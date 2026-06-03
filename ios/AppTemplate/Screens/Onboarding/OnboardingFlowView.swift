@@ -8,9 +8,10 @@
 //
 // The per-step views (`DestinationStepView` … `GeneratingStepView`) are built by parallel agents and
 // referenced by name with no args — each reads the store + builds its own presenter, composes
-// `ScreenScaffold(.immersive)` + the sticky `OnboardingProgressHeader` + the `OnboardingActionFloor`,
-// and wires its own step nav (`06-screens.md §2` immersive chrome). This container only routes between
-// them and animates the step transition with the house curve (`Motion.standard`, restrained motion).
+// `ScreenScaffold(.immersive)` + the in-content `OnboardingProgressBar` + a floating leading
+// `GlassCircleButton` (close/back) + the `OnboardingActionFloor`, and wires its own step nav
+// (`06-screens.md §2` immersive chrome). This container only routes between them and animates the step
+// transition with the house curve (`Motion.standard`, restrained motion).
 import SwiftUI
 
 /// The immersive onboarding container. Renders nothing until a draft is hydrated; once present, it

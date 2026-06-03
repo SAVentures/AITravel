@@ -9,21 +9,24 @@
 // domain state, places design-system components fed by a stateless `BaseLocationStepPresenter`, and
 // triggers change through model methods on the draft (`setBaseMode` / `select(base:)`) + the store's step
 // command (`advanceOnboardingStep`). It NEVER hand-wires `.toolbar` / `.navigationTitle` / `ScrollView` /
-// structural `.padding` — chrome + scroll come from `ScreenScaffold(.immersive)`, the sticky header from
-// `OnboardingProgressHeader`, the thumb-zone CTA from `OnboardingActionFloor`.
+// structural `.padding` — chrome + scroll come from `ScreenScaffold(.immersive)`, the in-content progress
+// from `OnboardingProgressBar`, the floating back glyph from `GlassCircleButton`, the thumb-zone CTA from
+// `OnboardingActionFloor`.
 //
 // Chrome intent: `.immersive` — a takeover (tab bar hidden), per the onboarding flow (06-screens §2).
 //
 // ── Composition primitives + components placed ─────────────────────────────────────────────────────────
-//   ScreenScaffold(.immersive, actions:) · OnboardingProgressHeader (sticky) · OnboardingActionFloor
-//   (the floor) · ScreenSection · RhythmSpacer · HScrollSection (the alt rail) — composition;
+//   ScreenScaffold(.immersive, actions:) · OnboardingProgressBar (in-content, FIRST) · GlassCircleButton
+//   (floating leading back glyph, overlaid) · OnboardingActionFloor (the floor) · ScreenSection ·
+//   RhythmSpacer · HScrollSection (the alt rail) — composition;
 //   SegmentedSelector · BaseMapCard · AIVoice · TimeHint · EmptyStateView — components.
 //
 // ── J-rules honored ────────────────────────────────────────────────────────────────────────────────────
 //   J-0.1 — the map card is CONTENT, never glass (it sits on `cardSurface`, not a glass material); glass
-//           lives only on the floating progress header. The base mode pill is content (ink-pill selected).
+//           lives only on the floating leading `GlassCircleButton`. The base mode pill is content
+//           (ink-pill selected). The in-content `OnboardingProgressBar` is NOT glass.
 //   J-2.4 — one accent budget: the CTA's blue + the one AI "why" dot. The selected base-mode segment is
-//           ink, not accent; the progress header is neutral.
+//           ink, not accent; the progress bar is neutral.
 //   J-3.6 / J-6.2 — exactly one editorial italic moment: the AI "why" line.
 //   J-0.2 / J-0.3 — semantic tokens only; Dynamic Type throughout (no literals, no fixed content frames).
 import SwiftUI
@@ -39,6 +42,10 @@ struct BaseLocationStepView: View {
     /// The stateless presenter over the store — all screen-specific derivation. Rebuilt each `body` pass
     /// (06-screens §3), so it is a cheap value, not stored state.
     private var presenter: BaseLocationStepPresenter { BaseLocationStepPresenter(store: store) }
+
+    /// The top clearance band that pins the scroll content below the floating leading `GlassCircleButton`
+    /// (back glyph) so nothing collides at rest; scales with Dynamic Type (J-0.3) rather than a fixed point.
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
 
     var body: some View {
         ScreenScaffold(.immersive, actions: {
@@ -62,6 +69,11 @@ struct BaseLocationStepView: View {
             )
         }) {
             ScreenSection {
+                // The in-content progress bar — counter + neutral segments, no glass. FIRST element,
+                // scrolls with the content (step index 2 → "03 / 05"). The scaffold already insets content
+                // horizontally by `Spacing.screenInset`, so the bar needs no extra inset here.
+                OnboardingProgressBar(stepIndex: 2)
+
                 // The hero — mono eyebrow + display question + the calming sub (mockup `.hero`).
                 hero
 
@@ -76,15 +88,24 @@ struct BaseLocationStepView: View {
                     manualStub
                 }
             }
+            // Clear the floating leading `GlassCircleButton` (top-leading overlay): the section begins
+            // BELOW the back glyph so the progress bar + hero don't collide with it at rest, then scroll
+            // under it. Scaled with Dynamic Type so the band tracks text size (J-0.3).
+            .padding(.top, topChrome)
         }
-        // The sticky frosted progress header pins above the scrolling content (step index 2 → "03 / 05";
-        // back glyph → retreat a step). The ONE glass surface on the screen (J-0.1).
-        .safeAreaInset(edge: .top) {
-            OnboardingProgressHeader(
-                stepIndex: 2,
-                leadingGlyph: .back,
-                leadingAction: { store.retreatOnboardingStep() }
+        // The floating leading affordance: the back glyph as a `GlassCircleButton`, overlaid top-leading
+        // on the scaffold (floating chrome, NOT in the scroll content) → retreat a step. The ONE glass
+        // surface on the screen (J-0.1). The `.immersive` safe-area handling keeps it below the notch; the
+        // top pad sets it in the top safe area (mockup).
+        .overlay(alignment: .topLeading) {
+            GlassCircleButton(
+                systemImage: "chevron.left",
+                accessibilityLabel: "Back",
+                action: { store.retreatOnboardingStep() }
             )
+            .padding(.leading, Spacing.screenInset)
+            .padding(.top, Spacing.paired)
+            .accessibilityIdentifier("onboarding.back")
         }
     }
 

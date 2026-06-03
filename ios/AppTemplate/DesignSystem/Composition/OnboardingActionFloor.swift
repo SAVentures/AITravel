@@ -1,50 +1,49 @@
-// OnboardingActionFloor.swift — a COMPOSITION primitive: the SOLID immersive-flow CTA floor
-// (05-components §2; J-0.1 EXCEPTION / J-6.1). The solid sibling of the glass `ActionBar`.
+// OnboardingActionFloor.swift — a COMPOSITION primitive: the FLOATING Liquid Glass CTA for the immersive
+// onboarding flow (05-design-system §9; 05-components §2; J-0.1 / J-6.1). The onboarding sibling of
+// `ActionBar` — the same floating-glass-chrome pattern, just with a primary-over-ghost vocabulary.
 //
-// The onboarding config floor pinned in the bottom thumb zone: a full-width primary CTA and an optional
-// full-width ghost below it. Ports the mockup `.ob-action` floor + `.ob-cta` + `.ob-ghost`
-// (screen-shell.css §"Solid action floor — config CTA"). This is the floor every immersive onboarding
-// step composes via `ScreenScaffold(actions:)`.
+// The onboarding step's primary action, floating in the bottom thumb zone over the scrolling content.
+// Ports the mockup `.ob-cta` / `.ob-ghost` actions, now rendered with the SYSTEM Liquid Glass material
+// instead of the old solid floor. This is the floor every immersive onboarding step composes via
+// `ScreenScaffold(actions:)`.
 //
-// ── SOLID, not glass — the deliberate carve-out from "glass on floating chrome only" (J-0.1) ──────────
-// The default for floating chrome is the system Liquid Glass material (`ActionBar`). This floor is the
-// considered EXCEPTION: the immersive onboarding config floor is SOLID by design (the mockup floor is an
-// opaque paper floor, not a frosted bar) — a takeover flow wants a calm, opaque base under the CTA, not a
-// translucency sampling the content scrolling behind it. So this primitive paints an OPAQUE
-// `ColorRole.surfacePage` floor with a top hairline `separator`, and never touches `glassEffect` /
-// `.buttonStyle(.glass)` / `GlassEffectContainer`. This exception is logged in `docs/decisions.md`; the
-// glass `ActionBar` remains the default for every non-immersive screen. (No gradient fill — gradients as
-// fills are slop, J-2.4 / 08-slop; the mockup's transparent→solid fade is rendered as a solid floor.)
+// ── Floating Liquid Glass — glass on floating chrome ONLY (J-0.1), now applies normally ────────────────
+// The earlier solid-floor exception (`docs/decisions.md` 2026-06-02 W1-09) is SUPERSEDED per user
+// direction: there is NO solid `surfacePage` floor, NO top hairline, NO opaque background — the action
+// floats over content. The glass comes from the SYSTEM button styles (`.buttonStyle(.glassProminent)` /
+// `.buttonStyle(.glass)`), the iOS 26 Liquid Glass material — never a hand-rolled translucency, never
+// `glassChrome()` on content. The new supersede entry is logged in `docs/decisions.md`.
+//
+// ── Grouped in ONE GlassEffectContainer (05-components §2; 05-design-system §6) ───────────────────────
+// Glass can't sample glass, so the primary + (optional) ghost that must blend/morph as one piece of
+// chrome share a SINGLE `GlassEffectContainer` (J-8.3). The container is the grouping seam; the button
+// styles are the material — we do NOT additionally wrap the floor in `glassChrome()`.
 //
 // ── One primary per region (J-6.1) ───────────────────────────────────────────────────────────────────
-// Exactly one accent CTA — a `PillButton(.primary)` (the budgeted `ColorRole.actionPrimary` fill, via the
-// button, never a fill we paint here). The optional second action is a `PillButton(.ghost)` — transparent,
-// low-stakes ("Pick a specific hotel or address") — never a second primary (J-6.1).
-//
-// ── Reuse, don't rebuild ──────────────────────────────────────────────────────────────────────────────
-// The buttons are `PillButton` (the tier-driven content button) — so the pill shape, the ≥44pt
-// Dynamic-Type-scaled tap target, and the ≤100ms press all come from there. This floor owns only the
-// SOLID ground, the hairline, the chrome-thin padding, and the primary-over-ghost stack.
+// Exactly one `.glassProminent` CTA — the accent rides the prominent button's tint only
+// (`ColorRole.actionPrimary`), never a fill we paint (J-2.4). The optional second action is the lesser
+// `.glass` ghost ("Pick a specific hotel or address") — never a second prominent button (J-6.1).
 //
 // ── Accessibility identifiers are the CALLER's job ───────────────────────────────────────────────────
 // The floor takes labels/actions/ids as args and bakes NO fixed id; a screen passes
 // `primaryAccessibilityID` (e.g. "onboarding.cta") / `ghostAccessibilityID` so its own contract owns the
 // id namespace.
 //
-// Semantic tokens only — no literal spacing/colors, no `Primitive.*` (J-0.2).
+// Semantic tokens only — no literal spacing/colors, no `Primitive.*` (J-0.2). No fixed frames (J-0.3) —
+// the buttons size to content + Dynamic Type.
 import SwiftUI
 
-/// The SOLID bottom action floor for the immersive onboarding flow: a full-width `PillButton(.primary)`
-/// CTA over an optional full-width `PillButton(.ghost)`, on an opaque `surfacePage` floor with a top
-/// hairline.
+/// The FLOATING Liquid Glass bottom action floor for the immersive onboarding flow: a full-width
+/// `.glassProminent` primary CTA over an optional full-width `.glass` ghost, grouped in one
+/// `GlassEffectContainer` so they blend as a single piece of floating chrome.
 ///
 /// Value-arg form — the screen supplies the verb-led titles (`J-11.3`: "Continue with Lisbon", "Pick a
 /// specific hotel or address"), the actions, the optional `primaryEnabled` gate, and the
-/// accessibility-identifier passthroughs. The floor owns the look (solid, chrome-thin density,
-/// one-primary restraint); the screen owns the data and the ids.
+/// accessibility-identifier passthroughs. The floor owns the look (floating glass, one-primary restraint);
+/// the screen owns the data and the ids.
 ///
-/// SOLID by design (J-0.1 exception — see file header + `docs/decisions.md`): unlike the glass
-/// `ActionBar`, the immersive config floor is opaque. Used only by the onboarding takeover flow.
+/// Floating chrome only (J-0.1): the action floats over scrolling content. Glass-on-floating-chrome now
+/// applies normally — the prior solid-floor exception (`docs/decisions.md` W1-09) is superseded.
 struct OnboardingActionFloor: View {
 
     private let primaryTitle: String
@@ -56,11 +55,11 @@ struct OnboardingActionFloor: View {
     private let ghostAction: (() -> Void)?
 
     /// - Parameters:
-    ///   - primaryTitle: the CTA's verb-led label (`J-11.3`). The accent rides the `PillButton(.primary)`
-    ///     role only (`ColorRole.actionPrimary`), never a fill we paint (J-2.4).
+    ///   - primaryTitle: the CTA's verb-led label (`J-11.3`). The accent rides the `.glassProminent` tint
+    ///     only (`ColorRole.actionPrimary`), never a fill we paint (J-2.4).
     ///   - primaryEnabled: gates the CTA when the step isn't satisfiable yet; the floor stays present.
     ///   - primaryAccessibilityID: caller-supplied id (e.g. `"onboarding.cta"`); the floor bakes none.
-    ///   - ghostTitle: an optional low-stakes ghost action below the CTA. Pass `nil` for primary-only.
+    ///   - ghostTitle: an optional low-stakes `.glass` ghost action below the CTA. `nil` for primary-only.
     ///   - ghostAccessibilityID: caller-supplied id for the ghost (e.g. `"onboarding.ghost"`).
     ///   - ghostAction: the ghost's tap handler (paired with `ghostTitle`).
     ///   - primaryAction: the CTA's tap handler.
@@ -83,41 +82,34 @@ struct OnboardingActionFloor: View {
     }
 
     var body: some View {
-        // Primary over an optional ghost — the `.ob-cta` / `.ob-ghost` stack. The hairline-tight gap
-        // between them keeps the ghost reading as a lesser appendage to the CTA, not a sibling (J-6.1).
-        VStack(spacing: Spacing.hairline) {
-            PillButton(title: primaryTitle, tier: .primary, action: primaryAction)
-                .frame(maxWidth: .infinity)            // full-width CTA (the `.ob-cta` width: 100%)
-                .disabled(!primaryEnabled)
-                .accessibilityIdentifier(primaryAccessibilityID ?? "")
+        // One container so the (optional) ghost + the primary blend as a single piece of chrome — glass
+        // can't sample glass, so grouping is required, not N independent glass surfaces (J-8.3).
+        GlassEffectContainer {
+            VStack(spacing: Spacing.paired) {
+                Button(primaryTitle, action: primaryAction)
+                    .buttonStyle(.glassProminent)         // the ONE prominent CTA (J-6.1)
+                    .tint(ColorRole.actionPrimary)        // accent via tint only, never a fill (J-2.4)
+                    .frame(maxWidth: .infinity)           // full-width CTA (the `.ob-cta` width: 100%)
+                    .disabled(!primaryEnabled)
+                    .accessibilityIdentifier(primaryAccessibilityID ?? "")
 
-            if let ghostTitle, let ghostAction {
-                PillButton(title: ghostTitle, tier: .ghost, action: ghostAction)
-                    .frame(maxWidth: .infinity)        // full-width ghost (`.ob-ghost` width: 100%)
-                    .accessibilityIdentifier(ghostAccessibilityID ?? "")
+                if let ghostTitle, let ghostAction {
+                    Button(ghostTitle, action: ghostAction)
+                        .buttonStyle(.glass)              // lesser, low-stakes ghost (J-6.1)
+                        .frame(maxWidth: .infinity)       // full-width ghost (`.ob-ghost` width: 100%)
+                        .accessibilityIdentifier(ghostAccessibilityID ?? "")
+                }
             }
+            .buttonBorderShape(.capsule)                  // content buttons are pills (J-10.2)
+            .controlSize(.large)
         }
-        // Chrome-thin: the floor hosts the action and recedes — top/horizontal inset from `cardInset`,
-        // tight inter-button gap from `hairline`. Content + Dynamic Type size the buttons (J-0.3).
-        .padding(.horizontal, Spacing.cardInset)
-        .padding(.top, Spacing.cardInset)
+        // Chrome-thin: the standard horizontal inset + a thumb-zone bottom breath — the floor floats and
+        // recedes (J-5.1). Content + Dynamic Type size the buttons (J-0.3); no opaque floor, no hairline.
+        .padding(.horizontal, Spacing.screenInset)
+        .padding(.top, Spacing.paired)
         .padding(.bottom, Spacing.paired)
         .frame(maxWidth: .infinity)
-        // SOLID floor (the J-0.1 exception): an opaque `surfacePage` ground with a top hairline — NOT
-        // glass, NOT a gradient fill. The hairline separates the floor from the content scrolling above.
-        .background(alignment: .top) {
-            ColorRole.surfacePage
-                .overlay(alignment: .top) {
-                    ColorRole.separator
-                        .frame(height: separatorThickness)
-                }
-                .ignoresSafeArea(edges: .bottom)
-        }
     }
-
-    /// The top hairline thickness — a 1pt-on-the-grid separator scaled with text so the seam holds at
-    /// large Dynamic Type; never a fixed visual frame for the floor itself (J-0.3, J-4.3).
-    @ScaledMetric(relativeTo: .body) private var separatorThickness: CGFloat = 1
 }
 
 // MARK: - Previews (one per meaningful state · Wave-1 rule)
@@ -153,14 +145,14 @@ struct OnboardingActionFloor: View {
     }
 }
 
-/// Previews only: stacks placeholder content under the floor so the solid floor reads against scrolling
-/// content (the floor pins to the bottom of an immersive step, content scrolling above its hairline).
+/// Previews only: stacks placeholder content under the floor so the glass reads against real material and
+/// the thumb-zone placement is visible (the floor floats over scrolling content in a real screen).
 private func placeholderStage<Floor: View>(@ViewBuilder floor: () -> Floor) -> some View {
     ZStack(alignment: .bottom) {
         ColorRole.surfacePage.ignoresSafeArea()
         VStack(alignment: .leading, spacing: Spacing.itemGap) {
             ForEach(0..<8, id: \.self) { _ in
-                Text("Content scrolls above the solid onboarding action floor.")
+                Text("Content scrolls under the floating onboarding action floor.")
                     .font(Typography.body)
                     .foregroundStyle(ColorRole.textPrimary)
             }

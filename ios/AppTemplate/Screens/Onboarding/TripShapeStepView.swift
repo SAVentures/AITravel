@@ -11,8 +11,9 @@
 // the `TripDraft` model methods (`select(strategy:)` / `setDays` / `toggleInterest` / `setPace`) and the
 // store's step-nav commands. No domain state in `@State` — the draft lives on `AppStore`.
 //
-// Chrome: `ScreenScaffold(.immersive)` (takeover — tab bar hidden), a sticky `OnboardingProgressHeader`
-// pinned above the content (step index 1 of 5, a back glyph → `retreatOnboardingStep()`), and the SOLID
+// Chrome: `ScreenScaffold(.immersive)` (takeover — tab bar hidden), a floating `GlassCircleButton` back
+// glyph overlaid top-leading (→ `retreatOnboardingStep()`), the in-content `OnboardingProgressBar`
+// (step index 1 of 5, counter + segments, no glass) as the FIRST content element, and the SOLID
 // `OnboardingActionFloor` in the thumb zone (the CTA → `advanceOnboardingStep()`). Exactly ONE foot
 // `AIVoice` (the one editorial italic moment, J-6.2). Selected card = ink ring + check, never the accent
 // (J-2.4); selected chip / pace segment = solid ink, never the accent (the components' load-bearing call).
@@ -35,13 +36,15 @@ struct TripShapeStepView: View {
                 primaryAction: { store.advanceOnboardingStep() }
             )
         }) {
-            // The sticky frosted header scrolls with the content (the named mockups put it inside the
-            // scroll); it owns the back glyph → retreat. Step index 1 of 5.
-            OnboardingProgressHeader(
-                stepIndex: 1,
-                leadingGlyph: .back,
-                leadingAction: { store.retreatOnboardingStep() }
-            )
+            // Clear the floating leading `GlassCircleButton` (top-leading overlay): a top band so the
+            // progress bar + hero open BELOW the back glyph and don't collide at rest, then scroll under
+            // it. Scaled with Dynamic Type so the band tracks text size (J-0.3).
+            Color.clear.frame(height: topChrome)
+
+            // The in-content progress bar — counter + neutral segments, no glass. FIRST element, scrolls
+            // with the content (the named mockups put it inside the scroll). Step index 1 of 5. The
+            // scaffold already insets content horizontally by `Spacing.screenInset`, so no extra inset.
+            OnboardingProgressBar(stepIndex: 1)
 
             hero(p)
 
@@ -53,6 +56,19 @@ struct TripShapeStepView: View {
             // The one editorial italic moment on the screen (J-6.2) — the foot AI line.
             footVoice(for: p)
                 .padding(.top, Spacing.sectionGap)
+        }
+        // The floating leading affordance: the back glyph as a `GlassCircleButton`, overlaid top-leading
+        // on the scaffold (floating chrome, NOT in the scroll content) → retreat a step. The `.immersive`
+        // safe-area handling keeps it below the notch; the top pad sets it in the top safe area (mockup).
+        .overlay(alignment: .topLeading) {
+            GlassCircleButton(
+                systemImage: "chevron.left",
+                accessibilityLabel: "Back",
+                action: { store.retreatOnboardingStep() }
+            )
+            .padding(.leading, Spacing.screenInset)
+            .padding(.top, Spacing.paired)
+            .accessibilityIdentifier("onboarding.back")
         }
     }
 
@@ -213,6 +229,10 @@ struct TripShapeStepView: View {
     /// Dynamic Type (J-0.3) rather than a fixed point value. Seeded so a short chip ("Art") and a long one
     /// ("Architecture") both lay out cleanly across two-ish columns at body size.
     @ScaledMetric(relativeTo: .subheadline) private var interestChipMinWidth: CGFloat = 104
+
+    /// The top clearance band that pins the scroll content below the floating leading `GlassCircleButton`
+    /// (back glyph) so nothing collides at rest; scales with Dynamic Type (J-0.3) rather than a fixed point.
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
 }
 
 // MARK: - Screen-local conformances / constants

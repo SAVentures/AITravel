@@ -9,11 +9,13 @@
 //
 // ── Chrome + composition ──────────────────────────────────────────────────────────────────────────────
 // Immersive takeover: `ScreenScaffold(.immersive)` (tab bar hidden) with the floating
-// `OnboardingActionFloor` in the `actions:` thumb-zone slot. The content is the sticky
-// `OnboardingProgressHeader` (step 0, close glyph) + a hero (mono eyebrow + display question + sub) +
-// `SearchWell` + `AIVoice` + an `HScrollSection` recent rail + a 2-column `LazyVGrid` of city tiles.
-// No hand-wired `.toolbar` / `.navigationTitle` / `.padding` for structure (the scaffold owns chrome +
-// the screen inset); no `ScrollView` (the scaffold owns it).
+// `OnboardingActionFloor` in the `actions:` thumb-zone slot. The leading affordance is a floating
+// `GlassCircleButton` (× close → `cancelOnboarding()`) overlaid top-leading on the scaffold (floating
+// chrome, NOT in the scroll content). The content opens with the in-content `OnboardingProgressBar`
+// (step 0 · counter + segments, no glass — it scrolls with the content), then a hero (mono eyebrow +
+// display question + sub) + `SearchWell` + `AIVoice` + an `HScrollSection` recent rail + a 2-column
+// `LazyVGrid` of city tiles. No hand-wired `.toolbar` / `.navigationTitle` / `.padding` for structure
+// (the scaffold owns chrome + the screen inset); no `ScrollView` (the scaffold owns it).
 //
 // ── Selection = ink ring + ink check, NEVER accent (J-2.4) ────────────────────────────────────────────
 // `PlaceCard` carries the definitive (lifted) / fuzzy (received) certainty register (J-8). But its own
@@ -26,7 +28,7 @@
 // ── Logic out of the view ─────────────────────────────────────────────────────────────────────────────
 // Reads the store via `@Environment(AppStore.self)`; holds NO domain `@State`. Tile tap →
 // `store.onboarding?.select(city:)` (a pure model method); CTA → `store.advanceOnboardingStep()`;
-// close → `store.cancelOnboarding()` (store commands). Semantic tokens only — zero literals.
+// close (the floating ×) → `store.cancelOnboarding()` (store commands). Semantic tokens only — zero literals.
 import SwiftUI
 
 /// Onboarding step 01 — the destination picker. Layout + wiring only; reads `DestinationStepPresenter`.
@@ -55,24 +57,34 @@ struct DestinationStepView: View {
             )
         }) {
             VStack(alignment: .leading, spacing: Spacing.sectionGap) {
-                header(presenter)
+                // The in-content progress bar — counter + neutral segments, no glass. FIRST element,
+                // scrolls with the content. The scaffold already insets content horizontally by
+                // `Spacing.screenInset` (its `.contentMargins`), so the bar needs no extra inset here.
+                OnboardingProgressBar(stepIndex: 0)
                 hero(presenter)
                 searchWell(presenter)
                 aiVoice(presenter)
                 recentRail(presenter)
                 grid(presenter)
             }
+            // Clear the floating leading `GlassCircleButton` (top-leading overlay): the content begins
+            // BELOW it so the progress bar + hero don't collide with the × initially, then scrolls under
+            // it. Scaled with Dynamic Type so the band tracks text size (J-0.3).
+            .padding(.top, topChrome)
         }
-    }
-
-    // MARK: - Sticky progress header (step 0 · close)
-
-    private func header(_ presenter: DestinationStepPresenter) -> some View {
-        OnboardingProgressHeader(
-            stepIndex: 0,
-            leadingGlyph: .close,
-            leadingAction: { store.cancelOnboarding() }
-        )
+        // The floating leading affordance: the × close glyph as a `GlassCircleButton`, overlaid
+        // top-leading on the scaffold (floating chrome, NOT in the scroll content). The `.immersive`
+        // safe-area handling keeps it below the notch; the top pad sets it in the top safe area (mockup).
+        .overlay(alignment: .topLeading) {
+            GlassCircleButton(
+                systemImage: "xmark",
+                accessibilityLabel: "Close",
+                action: { store.cancelOnboarding() }
+            )
+            .padding(.leading, Spacing.screenInset)
+            .padding(.top, Spacing.paired)
+            .accessibilityIdentifier("onboarding.close")
+        }
     }
 
     // MARK: - Hero — mono eyebrow + display question + sub (mockup `.hero`)
@@ -234,6 +246,10 @@ struct DestinationStepView: View {
     /// The ink ring thickness (mockup's 2pt ring), scaled with Dynamic Type so it holds at large sizes
     /// rather than staying a fixed point value (J-0.3).
     @ScaledMetric(relativeTo: .body) private var selectionRingWidth: CGFloat = 2
+
+    /// The top clearance band that pins the scroll content below the floating leading `GlassCircleButton`
+    /// (× close) so nothing collides at rest; scales with Dynamic Type (J-0.3) rather than a fixed point.
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
 }
 
 // MARK: - Previews — one per A/B/C seed (06-screens §8; AppStore.preview seam, no .shared)

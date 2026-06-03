@@ -11,10 +11,11 @@
 //   `mockups/screens/onboarding/screen-04-getting-around.html`        (shared A / C — Lisbon €)
 //   `mockups/screens/onboarding/state-b-screen-04-getting-around.html` (B — Kyoto ¥)
 //
-// Composition (06-screens §2): `ScreenScaffold(.immersive)` + the sticky `OnboardingProgressHeader`
-// (stepIndex 3, `.back`) pinned at the top, the `OnboardingActionFloor` in the bottom thumb zone via
-// `actions:`, and `ScreenSection` / `RhythmSpacer` carrying the vertical rhythm — no hand-wired chrome,
-// padding, or `ScrollView`.
+// Composition (06-screens §2): `ScreenScaffold(.immersive)` + a floating `GlassCircleButton` back glyph
+// overlaid top-leading (→ `retreatOnboardingStep()`), the in-content `OnboardingProgressBar` (stepIndex 3,
+// counter + segments, no glass) as the FIRST content element, the `OnboardingActionFloor` in the bottom
+// thumb zone via `actions:`, and `ScreenSection` / `RhythmSpacer` carrying the vertical rhythm — no
+// hand-wired chrome, padding, or `ScrollView`.
 //
 // The ONE editorial italic moment (J-3.6 / J-6.2 / OPEN-DECISION-7): only the rec line's mode word
 // ("transit.") is italic — built here as a roman lead-in + an italic display tail. The AI eyebrow above
@@ -37,12 +38,15 @@ struct GettingAroundStepView: View {
                 primaryAction: { store.advanceOnboardingStep() }
             )
         }) {
-            // The sticky frosted header — stepIndex 3 (4 / 05), back glyph → retreat one step.
-            OnboardingProgressHeader(
-                stepIndex: OnboardingStep.gettingAround.index,
-                leadingGlyph: .back,
-                leadingAction: { store.retreatOnboardingStep() }
-            )
+            // Clear the floating leading `GlassCircleButton` (top-leading overlay): a top band so the
+            // progress bar + hero open BELOW the back glyph and don't collide at rest, then scroll under
+            // it. Scaled with Dynamic Type so the band tracks text size (J-0.3).
+            Color.clear.frame(height: topChrome)
+
+            // The in-content progress bar — counter + neutral segments, no glass. FIRST element, scrolls
+            // with the content; stepIndex 3 (4 / 05). The scaffold already insets content horizontally by
+            // `Spacing.screenInset`, so the bar needs no extra inset here.
+            OnboardingProgressBar(stepIndex: OnboardingStep.gettingAround.index)
 
             RhythmSpacer(.section)
 
@@ -58,6 +62,19 @@ struct GettingAroundStepView: View {
             }
 
             RhythmSpacer(.hero)
+        }
+        // The floating leading affordance: the back glyph as a `GlassCircleButton`, overlaid top-leading
+        // on the scaffold (floating chrome, NOT in the scroll content) → retreat one step. The `.immersive`
+        // safe-area handling keeps it below the notch; the top pad sets it in the top safe area (mockup).
+        .overlay(alignment: .topLeading) {
+            GlassCircleButton(
+                systemImage: "chevron.left",
+                accessibilityLabel: "Back",
+                action: { store.retreatOnboardingStep() }
+            )
+            .padding(.leading, Spacing.screenInset)
+            .padding(.top, Spacing.paired)
+            .accessibilityIdentifier("onboarding.back")
         }
     }
 
@@ -228,6 +245,10 @@ struct GettingAroundStepView: View {
 
     /// The suggested-hint dot, scaled with the caption caps text so it stays optically aligned (T-6.4).
     @ScaledMetric(relativeTo: .caption2) private var suggestedDotSize: CGFloat = 6
+
+    /// The top clearance band that pins the scroll content below the floating leading `GlassCircleButton`
+    /// (back glyph) so nothing collides at rest; scales with Dynamic Type (J-0.3) rather than a fixed point.
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
 }
 
 // MARK: - Screen-local conformance
