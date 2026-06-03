@@ -41,7 +41,7 @@ nonisolated struct GenerationStep: Identifiable, Codable, Equatable, Hashable, S
 // MARK: - GenerationPlan
 
 /// The full generate-step plan: an ordered checklist of 6 steps plus display copy and
-/// timing metadata. Not `Identifiable` — it is a value held directly on `TripDraft`,
+/// timing metadata. Not `Identifiable` — it is a value held directly on `TripDraftModel`,
 /// never stored in an independent keyed collection.
 nonisolated struct GenerationPlan: Codable, Equatable, Hashable, Sendable {
     /// The six planning steps, ordered leading → trailing.

@@ -7,5 +7,5 @@
 // linking, with the cover presentation owning the actual takeover (`06-screens.md §2.5`).
 import Foundation
 
-/// The route for the onboarding takeover. Payload-free — the active `TripDraft` lives on the store.
+/// The route for the onboarding takeover. Payload-free — the active `TripDraftModel` lives on the store.
 struct OnboardingRoute: Hashable {}

@@ -6,8 +6,8 @@
 // the leaf value types directly — they are already wire-safe, so there is no per-leaf DTO
 // (02-models.md §1.2 / §4).
 //
-// `toDomain()` builds the seed `TripDraft` reference graph on the main actor (02-models.md §4).
-// Only the DTOs and the leaf value types are `Codable`; `TripDraft` is not.
+// `toDomain()` builds the seed `TripDraftModel` reference graph on the main actor (02-models.md §4).
+// Only the DTOs and the leaf value types are `Codable`; `TripDraftModel` is not.
 import Foundation
 
 // MARK: - OnboardingContextDTO
@@ -83,28 +83,28 @@ extension OnboardingContextDTO {
     }
 }
 
-// MARK: - toDomain — build the seed TripDraft (02-models.md §4)
+// MARK: - toDomain — build the seed TripDraftModel (02-models.md §4)
 
 extension OnboardingContextDTO {
 
     /// The default trip length, in days, a fresh draft starts at (plan W2-09).
     private static let defaultTripDays = 4
 
-    /// Build the seed `TripDraft` from the catalog, on the main actor.
+    /// Build the seed `TripDraftModel` from the catalog, on the main actor.
     ///
     /// Seeds `destination`, a default `tripDays`, `currentStep = .destination`, the `transport`
     /// from `transportRec.suggestedMode`, the `generationPlan`, `tasteProfile = tasteDefaults`, the
     /// derived `onboardingState`, and carries the catalog as `context`. The draft id is
     /// `"draft-<onboardingState>"`.
     @MainActor
-    func toDomain() -> TripDraft {
+    func toDomain() -> TripDraftModel {
         let suggested = transportRec.suggestedMode
         let seedTransport = TransportSelection(
             primary: suggested,
             alsoOK: [],
             suggested: suggested
         )
-        return TripDraft(
+        return TripDraftModel(
             context: self,
             id: "draft-\(onboardingState.rawValue)",
             destination: destination,

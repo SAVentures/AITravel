@@ -2,7 +2,7 @@
 //
 // Per `06-screens.md §3`: a stateless `<Screen>Presenter` value type over the store, constructed in
 // `body`, returning data / view-models (never `View`s). It owns the generate step's screen-specific
-// mapping — the `GenerationPlan` model (a leaf value type on `TripDraft.generationPlan`) is mapped here
+// mapping — the `GenerationPlan` model (a leaf value type on `TripDraftModel.generationPlan`) is mapped here
 // to the design-system component's value-type view-models (`GenerationStepVM` + `HandoffVM`), so the
 // view stays layout + wiring only. The store owns the clock that mutates the plan; this presenter just
 // projects the current plan into the component's vocabulary on every `body` pass (kept cheap).

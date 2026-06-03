@@ -69,7 +69,7 @@ struct DestinationStepPresenter {
 
     /// The active draft, or `nil` when onboarding is dismissed / pre-hydration. The presenter stays
     /// total when absent (the container renders nothing in that case).
-    private var draft: TripDraft? { store.onboarding }
+    private var draft: TripDraftModel? { store.onboarding }
 
     /// The seed catalog carried on the draft.
     private var context: OnboardingContextDTO? { draft?.context }

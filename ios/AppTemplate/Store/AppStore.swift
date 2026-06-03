@@ -35,7 +35,7 @@ final class AppStore {
     /// dismiss-to-root commands); views mutate *through* the draft's model methods or the store's
     /// commands, never by reassigning it (`03-store.md §2`). It is the one `@Observable` reference
     /// graph the immersive flow accumulates across its five steps.
-    private(set) var onboarding: TripDraft?
+    private(set) var onboarding: TripDraftModel?
 
     /// The transient load state for `loadOnboarding()` (the read path, `03-store.md §2/§4`).
     var onboardingLoadState: LoadState = .idle
@@ -57,7 +57,7 @@ final class AppStore {
     // views while the commands live in their own feature file, `03-store.md §7`).
 
     /// Replace the active draft (hydration) or clear it to `nil` (the dismiss-to-root command).
-    func setOnboarding(_ draft: TripDraft?) {
+    func setOnboarding(_ draft: TripDraftModel?) {
         onboarding = draft
     }
 
@@ -76,7 +76,7 @@ final class AppStore {
 
     /// A fresh, locally-constructed store seeded directly with an onboarding draft — for `#Preview`s
     /// and render snapshots, which must NOT `await loadOnboarding()` (`06-screens.md §8`,
-    /// `03-store.md §4`). It builds a `.mock()`-backed store, maps the context to its seed `TripDraft`
+    /// `03-store.md §4`). It builds a `.mock()`-backed store, maps the context to its seed `TripDraftModel`
     /// via `toDomain()` through the same-file `setOnboarding(_:)` seam (so it can drive the
     /// `private(set)` graph), parks the draft on `step`, and marks the load `.loaded`.
     ///

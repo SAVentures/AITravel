@@ -1,7 +1,7 @@
-// TripDraftDTO.swift — the value-type wire mirror of the `TripDraft` reference model (plan W2-01/W2-09).
+// TripDraftDTO.swift — the value-type wire mirror of the `TripDraftModel` reference model (plan W2-01/W2-09).
 //
-// `TripDraft` is `@MainActor` and not `Codable`, so the wire / seed-parity boundary uses this value
-// DTO (02-models.md §4). `TripDraftDTO` mirrors every field of `TripDraft` — including the immutable
+// `TripDraftModel` is `@MainActor` and not `Codable`, so the wire / seed-parity boundary uses this value
+// DTO (02-models.md §4). `TripDraftDTO` mirrors every field of `TripDraftModel` — including the immutable
 // `context: OnboardingContextDTO` catalog — so the mapping is **total**:
 //
 //     dto.toDomain().toDTO() == dto        (round-trip invariant — unit-tested, 07-testing.md §4.2)
@@ -12,9 +12,9 @@ import Foundation
 
 // MARK: - TripDraftDTO
 
-/// The value-type mirror of `TripDraft`. `Codable, Equatable, Sendable` — the wire / parity shape.
+/// The value-type mirror of `TripDraftModel`. `Codable, Equatable, Sendable` — the wire / parity shape.
 ///
-/// Mirrors every `TripDraft` field field-for-field, including the immutable `context` catalog, so
+/// Mirrors every `TripDraftModel` field field-for-field, including the immutable `context` catalog, so
 /// the `toDomain()` / `toDTO()` round-trip is total (02-models.md §4).
 nonisolated struct TripDraftDTO: Codable, Equatable, Sendable {
 
@@ -72,9 +72,9 @@ nonisolated struct TripDraftDTO: Codable, Equatable, Sendable {
     }
 }
 
-// MARK: - TripDraft → TripDraftDTO (snapshot the live reference back)
+// MARK: - TripDraftModel → TripDraftDTO (snapshot the live reference back)
 
-extension TripDraft {
+extension TripDraftModel {
 
     /// Snapshot this live reference graph back into a value DTO (02-models.md §4). Captures every
     /// field so the round-trip is total.
@@ -96,15 +96,15 @@ extension TripDraft {
     }
 }
 
-// MARK: - TripDraftDTO → TripDraft (build the reference graph on the main actor)
+// MARK: - TripDraftDTO → TripDraftModel (build the reference graph on the main actor)
 
 extension TripDraftDTO {
 
-    /// Build the `TripDraft` reference graph from this snapshot, on the main actor. Every field is
+    /// Build the `TripDraftModel` reference graph from this snapshot, on the main actor. Every field is
     /// carried through verbatim so `dto.toDomain().toDTO() == dto` holds (02-models.md §4).
     @MainActor
-    func toDomain() -> TripDraft {
-        TripDraft(
+    func toDomain() -> TripDraftModel {
+        TripDraftModel(
             context: context,
             id: id,
             destination: destination,

@@ -8,7 +8,7 @@
 // → raw `String` enums, synthesized `Codable` for free (02-models §3.1).
 //
 // All three types are leaf value types (02-models §1.2): they are not mutable rows in a list; they
-// are held as values on the `TripDraft` reference model and are already wire-safe, so no DTO is needed.
+// are held as values on the `TripDraftModel` reference model and are already wire-safe, so no DTO is needed.
 import Foundation
 
 // MARK: - PinKind
@@ -52,7 +52,7 @@ nonisolated struct BasePin: Identifiable, Codable, Equatable, Hashable, Sendable
 /// Coordinates are stored as flat `Double` lat/long fields; the view that drives `BaseMapCard`
 /// maps them to `CLLocationCoordinate2D` (02-models §3.2). No import of MapKit or CoreLocation here.
 ///
-/// This is a leaf value type (02-models §1.2): it is held as `TripDraft.baseSelection: BaseLocation?`
+/// This is a leaf value type (02-models §1.2): it is held as `TripDraftModel.baseSelection: BaseLocation?`
 /// and is not itself a mutable row in a list, so it is a `struct`, not a reference model.
 nonisolated struct BaseLocation: Identifiable, Codable, Equatable, Hashable, Sendable {
     let id: String

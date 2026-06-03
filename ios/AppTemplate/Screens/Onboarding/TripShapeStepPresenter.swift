@@ -64,7 +64,7 @@ struct TripShapeStepPresenter {
     let store: AppStore
 
     /// The active draft, or `nil` pre-hydration. The view renders nothing without it.
-    private var draft: TripDraft? { store.onboarding }
+    private var draft: TripDraftModel? { store.onboarding }
 
     // MARK: Branch
 

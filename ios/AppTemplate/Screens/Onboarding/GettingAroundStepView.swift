@@ -4,7 +4,7 @@
 // transport mode, lays out the reasons (€ / ¥) + a quiet conditional caveat, then hands the decision to
 // the user via a two-tier control — a single-select "Mostly" mode (what we optimize around) + a
 // multi-select "Also OK" set (what we can mix in). Layout + wiring only: all derivation lives in
-// `GettingAroundStepPresenter`; mutations go to the `TripDraft` model methods (`setPrimaryMode` /
+// `GettingAroundStepPresenter`; mutations go to the `TripDraftModel` model methods (`setPrimaryMode` /
 // `toggleAlsoOK`) and the store's step nav (`advanceOnboardingStep`).
 //
 // NAMES ITS MOCKUPS (the fidelity gate, 06-screens §9):
@@ -24,7 +24,7 @@
 import SwiftUI
 
 /// Onboarding Step 04 — the transport-mode step. Reads `AppStore` from the environment, derives via
-/// `GettingAroundStepPresenter`, and holds no domain state (the selection lives on the `TripDraft`).
+/// `GettingAroundStepPresenter`, and holds no domain state (the selection lives on the `TripDraftModel`).
 struct GettingAroundStepView: View {
     @Environment(AppStore.self) private var store
 

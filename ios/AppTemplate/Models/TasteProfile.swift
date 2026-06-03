@@ -56,7 +56,7 @@ nonisolated enum Pace: String, CaseIterable, Codable, Equatable, Hashable, Senda
 // MARK: - TasteProfile
 
 /// A snapshot of the user's taste preferences collected in the onboarding taste form
-/// (Step 02, state C). Held as `TripDraft.tasteProfile: TasteProfile?`.
+/// (Step 02, state C). Held as `TripDraftModel.tasteProfile: TasteProfile?`.
 ///
 /// Leaf value type — already wire-safe; no separate DTO (`02-models.md §1.2`).
 nonisolated struct TasteProfile: Codable, Equatable, Hashable, Sendable {

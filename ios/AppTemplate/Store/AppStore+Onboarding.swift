@@ -2,7 +2,7 @@
 //
 // Per `03-store.md §3/§7`: networked / flow-control orchestration lives on `AppStore` as thin
 // command wrappers in a per-feature extension file (its methods inherit the type's `@MainActor`
-// isolation for free); the pure in-place state transitions live on the `TripDraft` model
+// isolation for free); the pure in-place state transitions live on the `TripDraftModel` model
 // (`02-models.md §2`) and are called through thin nav wrappers here. The *store-shared* derivations
 // (`savedHere` / `savedAnywhere` / `onboardingState`) live here, on the store — NOT in the views —
 // so they feed every presenter from one place (`06-screens.md §3`, the task's branch-driver rule).
@@ -15,7 +15,7 @@ extension AppStore {
     /// Hydrate the onboarding draft from the network (the read path, `03-store.md §4`).
     ///
     /// `api.send(...)` is the one suspension point; the `OnboardingContextDTO` is `Sendable` and is
-    /// decoded off the main actor, then mapped to the seed `TripDraft` here on `@MainActor` via
+    /// decoded off the main actor, then mapped to the seed `TripDraftModel` here on `@MainActor` via
     /// `toDomain()` (which also carries the catalog as `context` and sets the derived
     /// `onboardingState`). On any throw the load state captures the error message so a view can
     /// `switch` on it.
@@ -48,13 +48,13 @@ extension AppStore {
     // MARK: - Step navigation
 
     /// Advance the immersive flow's step cursor by one (clamped). A thin wrapper over the
-    /// `TripDraft.advanceStep()` model method — step nav is store-level flow control
+    /// `TripDraftModel.advanceStep()` model method — step nav is store-level flow control
     /// (`03-store.md §3`), the clamp lives on the model.
     func advanceOnboardingStep() {
         onboarding?.advanceStep()
     }
 
-    /// Retreat the step cursor by one (clamped). Thin wrapper over `TripDraft.retreatStep()`.
+    /// Retreat the step cursor by one (clamped). Thin wrapper over `TripDraftModel.retreatStep()`.
     func retreatOnboardingStep() {
         onboarding?.retreatStep()
     }

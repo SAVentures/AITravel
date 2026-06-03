@@ -45,7 +45,7 @@ nonisolated enum TransportMode: String, CaseIterable, Codable, Equatable, Hashab
 /// acceptable alternatives, and the AI-suggested mode.
 ///
 /// Leaf value type — `Codable, Equatable, Hashable, Sendable` (`02-models.md §1.2`).
-/// Held directly on `TripDraft` (the reference model); no DTO of its own.
+/// Held directly on `TripDraftModel` (the reference model); no DTO of its own.
 nonisolated struct TransportSelection: Codable, Equatable, Hashable, Sendable {
     /// The mode the user selected as their primary preference.
     var primary: TransportMode

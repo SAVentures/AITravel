@@ -8,7 +8,7 @@
 // One step, one chrome, one CTA, two structurally-different bodies (OPEN DECISION 2): the presenter's
 // `step02Mode` switches `.shapeCards` (A/B) vs `.tasteForm` (C). Layout + wiring ONLY (`06-screens.md
 // §1`): all derivation + the model → component mapping live in `TripShapeStepPresenter`; mutations go to
-// the `TripDraft` model methods (`select(strategy:)` / `setDays` / `toggleInterest` / `setPace`) and the
+// the `TripDraftModel` model methods (`select(strategy:)` / `setDays` / `toggleInterest` / `setPace`) and the
 // store's step-nav commands. No domain state in `@State` — the draft lives on `AppStore`.
 //
 // Chrome: `ScreenScaffold(.immersive)` (takeover — tab bar hidden), a floating `GlassCircleButton` back

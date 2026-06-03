@@ -18,7 +18,7 @@ import SwiftUI
 
 /// Stateless derivation for `GettingAroundStepView`. Constructed in `body` from the store so the store's
 /// per-field dependency tracking is preserved (`06-screens.md §3`). All derived data reads the live
-/// `TripDraft` (the chosen transport + the seed `TransportRec` catalog); no `View` is built.
+/// `TripDraftModel` (the chosen transport + the seed `TransportRec` catalog); no `View` is built.
 struct GettingAroundStepPresenter {
 
     /// The single source of truth this step reads. Held, never mutated here.
@@ -28,7 +28,7 @@ struct GettingAroundStepPresenter {
 
     /// The active onboarding draft. `nil` only when there is no flow in progress (the view renders
     /// nothing in that case, but the presenter stays total).
-    private var draft: TripDraft? { store.onboarding }
+    private var draft: TripDraftModel? { store.onboarding }
 
     /// The AI transport recommendation served in the seed catalog (the € / ¥ reasons, the context note,
     /// the suggested mode). The single source for this step's recommendation copy.

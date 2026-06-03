@@ -1,6 +1,6 @@
-// TripDraft.swift — the ONE reference model for the onboarding flow (plan W2-01).
+// TripDraftModel.swift — the ONE reference model for the onboarding flow (plan W2-01).
 //
-// `TripDraft` is the single mutable graph the onboarding flow accumulates across its five steps
+// `TripDraftModel` is the single mutable graph the onboarding flow accumulates across its five steps
 // and the UI observes per-field. It is owned by `AppStore` and mutated in place, so it is modeled
 // as a `@MainActor @Observable final class` — step edits invalidate only their readers
 // (02-models.md §1.1).
@@ -18,7 +18,7 @@
 // so the live draft can read the saved-place counts and the seed options without re-fetching.
 import Foundation
 
-// MARK: - TripDraft
+// MARK: - TripDraftModel
 
 /// The single mutable onboarding draft — a `@MainActor @Observable` reference model the flow
 /// accumulates across steps. Owned by `AppStore`, mutated in place via the model methods below.
@@ -27,7 +27,7 @@ import Foundation
 /// seed parity round-trip is `TripDraftDTO` (`toDTO()` / `restore(from:)`).
 @MainActor
 @Observable
-final class TripDraft: Identifiable {
+final class TripDraftModel: Identifiable {
 
     // MARK: Immutable catalog
 
@@ -104,7 +104,7 @@ final class TripDraft: Identifiable {
 
 // MARK: - Model methods (pure, in-place state transitions — 02-models.md §2)
 
-extension TripDraft {
+extension TripDraftModel {
 
     /// Step 01 — pick the destination city.
     func select(city: City) {
@@ -188,7 +188,7 @@ extension TripDraft {
 
 // MARK: - restore(from:) — apply a value snapshot back onto the live reference
 
-extension TripDraft {
+extension TripDraftModel {
 
     /// Apply a `TripDraftDTO` value snapshot back onto this live reference, in place
     /// (02-models.md §4 — the rollback / parity seam). `context` and `id` are immutable, so the

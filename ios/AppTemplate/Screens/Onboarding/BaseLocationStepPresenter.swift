@@ -3,7 +3,7 @@
 // Ports the NAMED mockups `state-a-screen-03-base-location.html` (Alfama),
 // `state-b-screen-03-base-location.html` (Gion), and `state-c-screen-03-base-location.html` (Baixa).
 //
-// A stateless value type over `(store)` (06-screens.md §3): it reads the active `TripDraft` off the store
+// A stateless value type over `(store)` (06-screens.md §3): it reads the active `TripDraftModel` off the store
 // and returns only data / view-models — never a `View`, never `AppStore` mutation. All screen-specific
 // derivation lives here so the view stays layout + wiring (06-screens.md §2 / §8). Rebuilt cheaply each
 // `body` pass.
@@ -32,7 +32,7 @@ struct BaseLocationStepPresenter {
 
     /// The active onboarding draft. All derivation reads through it; when there is no draft the screen is
     /// not on-stage, so the optional reads collapse to safe defaults.
-    private var draft: TripDraft? { store.onboarding }
+    private var draft: TripDraftModel? { store.onboarding }
 
     // MARK: - Base mode (segmented selection)
 
