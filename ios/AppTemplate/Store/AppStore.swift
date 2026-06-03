@@ -71,4 +71,26 @@ final class AppStore {
         generationTask?.cancel()
         generationTask = nil
     }
+
+    // MARK: - Preview / snapshot seam (synchronous — no `await`)
+
+    /// A fresh, locally-constructed store seeded directly with an onboarding draft — for `#Preview`s
+    /// and render snapshots, which must NOT `await loadOnboarding()` (`06-screens.md §8`,
+    /// `03-store.md §4`). It builds a `.mock()`-backed store, maps the context to its seed `TripDraft`
+    /// via `toDomain()` through the same-file `setOnboarding(_:)` seam (so it can drive the
+    /// `private(set)` graph), parks the draft on `step`, and marks the load `.loaded`.
+    ///
+    /// Mock data comes only from `SampleData` factories (e.g. `SampleData.onboardingAContext()`); pick
+    /// the rendered branch (A/B/C) by choosing the context, the rendered step by `step`. No `.shared`.
+    static func preview(
+        _ context: OnboardingContextDTO,
+        step: OnboardingStep = .destination
+    ) -> AppStore {
+        let store = AppStore(api: .mock())
+        let draft = context.toDomain()
+        draft.currentStep = step
+        store.setOnboarding(draft)
+        store.onboardingLoadState = .loaded
+        return store
+    }
 }
