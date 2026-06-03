@@ -241,3 +241,20 @@ so tokenizing was the moment to snap. Component dimensions had no home in `Spaci
 ruled it a defensible semantic home (cross-screen, role-named, parallel to `Radius`/`Stroke`). The ≤4px
 render shifts are within fidelity rhythm tolerance; the base-location mockup `.alt` now references
 `var(--size-card-min)`. No render-snapshot baseline covered these call-sites, so none were re-recorded.
+
+---
+
+## 2026-06-03 — Token organization: property→category + Component band; theming seam
+
+**Decision.** Formalized where design values live (`05-design-system.md` §1.1–1.3, conventions ported
+from the first-saas-repo token system): a value's home = its property type's category; component-specific
+values nest in a per-category `Component` band, except `Sizing`, which is wholly the component-dimension
+category (its members stay flat). Added a category map (§1.2) for discoverability and documented the
+dark-mode swap seam (§1.3 — `ColorRole` is the single resolve point; foundations.css carries a one-line
+reservation comment). No token values, no codegen, no view changes.
+
+**Why.** Last session's "do we invent a `Sizing` tier?" debate exposed that the Component tier was
+underspecified (`05 §1` said only "sparingly"). The property→category rule makes the home deterministic
+and kills the ad-hoc tier debate; the documented seam keeps dark mode a clean future token swap. This
+supersedes the loose `bookRowCoverSize`-style Component-tier guidance; it does not change the 2026-06-03
+`Sizing` tier (which is now framed as the canonical component-dimension category).

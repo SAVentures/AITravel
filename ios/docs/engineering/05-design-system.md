@@ -22,7 +22,7 @@ doc owns the *Swift contract* that ports them.
 |---|---|---|---|
 | **Primitive** | raw values — `ink900`, `space4 = 16`, `radiusLg = 18` | **generated** from `foundations.css` (§2) | semantic tier only |
 | **Semantic** | *intent* — `textPrimary → ink900`, `surface → paper0`, `sectionGap → space4` | hand-authored Swift | screens, components, modifiers |
-| **Component** | local decisions for a complex component — `bookRowCoverSize` | hand-authored, *sparingly* | that one component |
+| **Component** | a component's own value — a nested `Component` band of the category matching its property (§1.1) | hand-authored, *sparingly* | that one component |
 
 ```swift
 // Tokens/Primitive.generated.swift   (generated — do not edit)
@@ -51,6 +51,53 @@ enum Spacing { static let sectionGap = Primitive.space4; static let itemGap = Pr
 Naming is **role, not value**: `textPrimary` not `inkIndigo`; `surface` not `paper0`; `actionPrimary`
 not `indigo500`. A rebrand or a future dark mode is then a re-point of the semantic tier, not a
 find-and-replace across screens. Token enums are **caseless** (`static` members, no instances).
+
+### 1.1 Where a value goes — property → category, with a `Component` band
+
+A value's home is one question: **what property is it?** → that category file. Within a category:
+
+- **Semantic roles** sit flat at the top (`Radius.card`, `Spacing.sectionGap`, `Stroke.separator`).
+- **Component-specific values** nest in an `enum Component` band — added only when a real component
+  needs one, never pre-created empty.
+
+```swift
+enum Radius {
+    static let card = Primitive.rCard               // semantic role (broad use)
+    // when one component needs its own radius, it nests here:
+    // enum Component { static let promoBanner = Primitive.rCard }
+}
+
+enum Sizing {                                        // inherently component-level (see below)
+    static let cardMin = Primitive.sizeCardMin       // a horizontal-scroll card's min width
+    static let dot     = Primitive.sizeDot
+}
+```
+
+This kills the "do I invent a tier?" question: corner radius → `Radius`, border width → `Stroke`,
+inset/gap → `Spacing`, fixed width/height/diameter → `Sizing`. **`Sizing` is the exception to the band
+rule:** element sizes are inherently component-level (there is no general "size ladder"), so the whole
+enum *is* the component-dimension band — its members stay flat.
+
+### 1.2 The category map
+
+| Category | Property | Semantic examples | Component values |
+|---|---|---|---|
+| `ColorRole` | color | `textPrimary`, `actionPrimary` | rare → `Component` |
+| `Typography` | text style | `body`, `title`, `caption` | rare → `Component` |
+| `Spacing` | gaps / insets | 6-rung ladder + `screenInset`, `chromeClearance` | `Component` |
+| `Radius` | corner radius | `tag`→`pill` ladder | `Component` |
+| `Stroke` | border width | `separator`, `selected` | `Component` |
+| `Sizing` | fixed dimension | — (none; inherently component) | the whole enum |
+| `Shadows` | elevation | `rest` / `hero` / `glass` | `Component` |
+| `Motion` | duration / easing | duration ladder + easings | `Component` |
+
+### 1.3 Dark mode is a token swap — the seam
+
+No dark mode today (light-only by decision). The architecture keeps it a clean future swap: because
+views reference **semantic tokens only**, `ColorRole` is the single point that changes. Adding dark
+later = a `[data-theme]` block in `foundations.css` → codegen emits a theme-keyed primitive set →
+`ColorRole` resolves by environment instead of `static let`. No screen, component, or other token tier
+moves. Nothing to do now beyond keeping the no-primitives-in-views rule green.
 
 ---
 
