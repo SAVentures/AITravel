@@ -56,10 +56,6 @@ struct TripShapeStepView: View {
     @ViewBuilder
     private func hero(_ p: TripShapeStepPresenter) -> some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text(p.heroEyebrow.uppercased())
-                .font(Typography.caption)
-                .tracking(Typography.trackEyebrowCaption)
-                .foregroundStyle(ColorRole.textTertiary)
             Text(p.heroQuestion)
                 .font(Typography.titleLarge)
                 .tracking(Typography.titleLargeTracking)

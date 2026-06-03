@@ -280,7 +280,7 @@ extension SampleData {
                 id: "shape-fixed-days",
                 strategy: .fixedDays,
                 eyebrow: "A · Fixed days",
-                title: "Pack four great days.",
+                title: "Pack great days.",
                 tagline: nil,
                 metricStrip: [
                     MetricFragment(text: "hits 14 of 23", emphasis: true),

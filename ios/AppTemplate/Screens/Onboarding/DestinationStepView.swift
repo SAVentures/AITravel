@@ -59,8 +59,6 @@ struct DestinationStepView: View {
                 } else {
                     /* Grouped so the default-layout block fades as one unit while the well lifts. */
                     VStack(alignment: .leading, spacing: Spacing.xl) {
-                        aiVoice(presenter)
-                        recentRail(presenter)
                         grid(presenter)
                     }
                     .transition(.opacity)
@@ -89,11 +87,6 @@ struct DestinationStepView: View {
 
     private func hero(_ presenter: DestinationStepPresenter) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text(presenter.eyebrow)
-                .font(Typography.caption)
-                .tracking(Typography.trackEyebrowCaption)
-                .textCase(.uppercase)
-                .foregroundStyle(ColorRole.textTertiary)
             Text(presenter.question)
                 .font(Typography.titleLarge)
                 .foregroundStyle(ColorRole.textPrimary)
@@ -171,61 +164,13 @@ struct DestinationStepView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Recent rail
-
-    private func recentRail(_ presenter: DestinationStepPresenter) -> some View {
-        HScrollSection("Recent", meta: "Last 6 months", accessibilityIDPrefix: "rail.recent") {
-            ForEach(presenter.recentCities) { tile in
-                recentChip(tile)
-            }
-        }
-    }
-
-    private func recentChip(_ tile: CityTileModel) -> some View {
-        Button {
-            store.onboarding?.select(city: tile.city)
-        } label: {
-            HStack(spacing: Spacing.sm) {
-                Image(systemName: tile.isSelected ? "checkmark" : "photo")
-                    .font(Typography.footnote)
-                    .fontWeight(tile.isSelected ? .bold : .regular)
-                    .foregroundStyle(tile.isSelected ? ColorRole.surfacePage : ColorRole.textTertiary)
-                    .padding(Spacing.sm)
-                    .background(tile.isSelected ? ColorRole.textPrimary : ColorRole.fillTertiary, in: .circle)
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text(tile.city.name)
-                        .font(Typography.name)
-                        .foregroundStyle(ColorRole.textPrimary)
-                    Text(tile.city.country)
-                        .font(Typography.caption)
-                        .tracking(Typography.trackCapsCaption)
-                        .textCase(.uppercase)
-                        .foregroundStyle(ColorRole.textTertiary)
-                }
-            }
-            .padding(.vertical, Spacing.sm)
-            .padding(.horizontal, Spacing.lg)
-            .background(ColorRole.fillTertiary, in: .capsule)
-            /* Selection = ink ring on the capsule, never the accent (J-2.4) — matches the grid tile. */
-            .overlay {
-                if tile.isSelected {
-                    Capsule()
-                        .strokeBorder(ColorRole.textPrimary, lineWidth: selectionRingWidth)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("rail.recent.\(tile.city.id)")
-        .accessibilityAddTraits(tile.isSelected ? [.isButton, .isSelected] : .isButton)
-    }
 
     // MARK: - More-cities grid
 
     private func grid(_ presenter: DestinationStepPresenter) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(alignment: .firstTextBaseline) {
-                Text("More cities")
+                Text("Cities")
                     .font(Typography.name)
                     .foregroundStyle(ColorRole.textPrimary)
                 Spacer(minLength: Spacing.md)

@@ -38,13 +38,13 @@ enum Primitive {
     static let day3 = Color(.sRGB, red: 0.3123, green: 0.5122, blue: 0.6313, opacity: 1.0000)
     static let day4 = Color(.sRGB, red: 0.5717, green: 0.4299, blue: 0.6160, opacity: 1.0000)
 
-    static let typeTitleLargeSize: CGFloat = 34
-    static let typeTitleSize: CGFloat = 22
-    static let typeNameSize: CGFloat = 17
-    static let typeBodySize: CGFloat = 17
-    static let typeCalloutSize: CGFloat = 16
-    static let typeSubheadSize: CGFloat = 15
-    static let typeFootnoteSize: CGFloat = 13
+    static let typeTitleLargeSize: CGFloat = 28
+    static let typeTitleSize: CGFloat = 18
+    static let typeNameSize: CGFloat = 14
+    static let typeBodySize: CGFloat = 14
+    static let typeCalloutSize: CGFloat = 13
+    static let typeSubheadSize: CGFloat = 13
+    static let typeFootnoteSize: CGFloat = 12
     static let typeCaptionSize: CGFloat = 11
     static let s1: CGFloat = 4
     static let s2: CGFloat = 8

@@ -92,14 +92,14 @@
      Each role binds to a Dynamic Type text style (noted) — the size is the @Large
      reference, used as `Font.custom(family, size:, relativeTo: <style>)` for the
      custom display/UI faces so they still scale (T-6.1). A screen spends ≤4 roles;
-     hierarchy is weight-before-size — name/body/headline all sit at 17 (T-2.1). */
-  --type-title-large-size:   34px;  --type-title-large-weight: var(--weight-bold);      /* display · .largeTitle  */
-  --type-title-size:         22px;  --type-title-weight:       var(--weight-semibold);  /* display · .title2      */
-  --type-name-size:          17px;  --type-name-weight:        var(--weight-semibold);  /* display · .headline    */
-  --type-body-size:          17px;  --type-body-weight:        var(--weight-regular);   /* ui · .body             */
-  --type-callout-size:       16px;  --type-callout-weight:     var(--weight-regular);   /* ui · .callout          */
-  --type-subhead-size:       15px;  --type-subhead-weight:     var(--weight-regular);   /* ui · .subheadline      */
-  --type-footnote-size:      13px;  --type-footnote-weight:    var(--weight-regular);   /* mono · .footnote       */
+     hierarchy is weight-before-size — name/body/headline all sit at 14 (T-2.1). */
+  --type-title-large-size:   28px;  --type-title-large-weight: var(--weight-bold);      /* display · .largeTitle  */
+  --type-title-size:         18px;  --type-title-weight:       var(--weight-semibold);  /* display · .title2      */
+  --type-name-size:          14px;  --type-name-weight:        var(--weight-semibold);  /* display · .headline    */
+  --type-body-size:          14px;  --type-body-weight:        var(--weight-regular);   /* ui · .body             */
+  --type-callout-size:       13px;  --type-callout-weight:     var(--weight-regular);   /* ui · .callout          */
+  --type-subhead-size:       13px;  --type-subhead-weight:     var(--weight-regular);   /* ui · .subheadline      */
+  --type-footnote-size:      12px;  --type-footnote-weight:    var(--weight-regular);   /* mono · .footnote       */
   --type-caption-size:       11px;  --type-caption-weight:     var(--weight-regular);   /* mono · .caption1/.caption2 */
 
   /* ── SPACING ─ 8pt spine · 4pt sub-step ───────────────────────────────────*/

@@ -32,7 +32,7 @@ struct AIVoice: View {
             // The voice line: display face, italic — the one editorial moment (J-3.6). Solid ink, never
             // gradient text (02-color §5). `text-wrap: pretty` ≈ balanced multi-line wrapping.
             Text(line)
-                .font(Typography.name.italic())
+                .font(Typography.callout.italic())
                 .foregroundStyle(ColorRole.textPrimary)
                 .multilineTextAlignment(.leading)
         }
