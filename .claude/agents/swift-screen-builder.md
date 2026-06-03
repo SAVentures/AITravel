@@ -32,6 +32,13 @@ identifiers, the **exemplar to mirror**, and the **Done-when acceptance criteria
   - places design-system **components** (data in, no store) and reads derived data from its presenter;
   - triggers change via a **store command** (networked, optimistic) or a **model method** (pure local) —
     never reaches a concrete provider, never mutates the graph directly.
+  - **Wires every interactive element (the interactivity inventory, `06-screens.md §4.1`).** Before
+    reporting done, list each affordance the mockup shows — card · row · pill · chip · stepper · search
+    field · segmented control — and the single sink it writes to: a **model method**, a **store command**,
+    a **route**, or **ephemeral `@State` a sink reads**. Every `Button`/`.onTapGesture`/editable
+    `TextField` hits a sink; an empty closure, a read-only field bound to nothing, or a tappable-looking
+    `HStack` with no gesture is a **defect**. (This is the search-bar/recent-pills miss; it's invisible to
+    the build and the snapshot — only the inventory + an XCUITest catch it.)
 - **`ios/AppTemplate/Screens/<Name>/<Name>Presenter.swift`** — a **stateless value type** over
   `(store, …ids)` that returns data/view-models (never `View`s). All screen-specific derivation lives
   here (keep it cheap — rebuilt each `body` pass). A trivial screen needs no presenter.
@@ -65,9 +72,9 @@ Run the **slop scan** (`08-slop.md`) and the J-rules (`06-judgment.md`) in your 
 ## Report
 
 Status; files written (View, Presenter, Route, catalog, preview); the **named mockup** it ports; the
-chrome intent + composition primitives + components used; the store command / model method it calls; the
-accessibility identifiers added; and whether a new catalog section / `AppStore` property needs a serial
-coordinator edit.
+chrome intent + composition primitives + components used; the **interactivity inventory** (each affordance
+→ its sink, §4.1) so a reviewer can confirm nothing ships dead; the accessibility identifiers added; and
+whether a new catalog section / `AppStore` property needs a serial coordinator edit.
 
 **Navigation:** name the SwiftLSP ops you used and any `Grep` fallback (with why). If a cross-file LSP
 op returned empty while `hover` worked, flag it — that's a stale index for the coordinator to rebuild.

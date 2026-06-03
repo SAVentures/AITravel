@@ -222,6 +222,34 @@ Mutations, by whether the network is involved:
 animation toggle). **No screen owns domain state** — it lives in `AppStore`. A view never instantiates
 an `AppStore`, never references a concrete provider, and never hand-rolls layout.
 
+### 4.1 Interactivity — every affordance is wired (the inventory)
+
+Every element that *looks* interactive **is** interactive — wired to a real effect. A control that
+renders but does nothing — a styled `HStack` with no gesture, a `Button` with an empty closure, a
+read-only/ignored `TextField`, an `onTap: {}` stub — is a **defect, not a deferred detail**. It passes
+the build, the render snapshot, and a glance; only a live tap or an XCUITest catches it. (The destination
+search bar and recent pills shipped dead exactly this way.)
+
+**Build the inventory before a screen is done:** list every interactive element and name its single sink.
+
+| Affordance | Sink |
+|---|---|
+| edits/toggles local domain data, no network | **model method** (pure, in-place) — `draft.select(city:)`, `book.toggleFavorite()` |
+| persists / can fail | **store command** (optimistic + rollback) — `await store.borrow(bookID:)` |
+| moves between screens | **navigation** — `path.append(.detail(id))`, a sheet/cover flag |
+| pure UI, no domain effect | **ephemeral `@State`** read by a sink — focus, expand, the live query field |
+
+- A `Button` / `.onTapGesture` / editable `TextField` must hit one of these — never an empty closure.
+- An editable field must write where a sink reads it each keystroke (a presenter filter, a draft field);
+  never a `TextField` bound to a value nothing observes.
+- "Looks tappable" = card · row · pill · chip · stepper · search field · segmented control. Each gets a
+  sink, or it must not look tappable.
+- The sink is a model method / store command / route (§4) — never inline logic in the view.
+
+Gates: `swift-screen-builder` produces the inventory and wires each element; `fidelity-reviewer` checks
+every mockup affordance maps to a real action; the XCUITest layer proves the wiring at runtime (a snapshot
+proves appearance, not wiring — `07-testing.md §7`).
+
 ---
 
 ## 5. Navigation

@@ -39,11 +39,11 @@ Read both, side by side, at the same state (seed + scenario).
 5. **The visual non-negotiables** — glass on chrome only; Dynamic Type holds; no literal/off-token
    spacing; and **no slop tells** (`08-slop.md` — side-tab borders, gradient text, glassmorphism
    decoration, reflex defaults). Cite J-rules / slop ids.
-6. **Interactive affordances are real, not painted** — every element that *looks* tappable (pill, chip,
-   tile, search field, stepper) maps to a real `Button`/`.onTapGesture`/editable `TextField`, not a
+6. **Interactive affordances are real, not painted** (the interactivity inventory, `06-screens.md §4.1`) —
+   every element that *looks* tappable (pill, chip, tile, search field, stepper) maps to a real
+   `Button`/`.onTapGesture`/editable `TextField` with a sink (model method / store command / route), not a
    display-only `HStack`/`Text` or `onTap: {}` stub. Snapshots prove appearance, not wiring, so a
-   renders-fine-but-dead control slips every other gate — confirm each action exists and name any
-   read-only stub explicitly.
+   renders-fine-but-dead control slips every other gate — confirm each affordance's sink and name any stub.
 
 ## Substrate vs. drift — don't cry wolf
 

@@ -92,7 +92,7 @@ Start at `00` → `01` → the doc your task needs. The `ios-plan-writer` reads 
 | **`03-store`** | `AppStore` ownership + state shape, the two-tier mutation split, optimistic write + rollback commands, hydration vs. `loadSeed`, `simulatedNow` | (store work) |
 | **`04-networking`** | Provider-swappable `APIClient`, the one-file-per-endpoint `APIRequest` contract, DTO boundary, `APIError`, the **stateless** `MockProvider` + scenarios | `swift-networking-endpoint` |
 | **`05-design-system`** | Three-tier **semantic** tokens + codegen, Dynamic Type, the Liquid Glass system material, modifiers/components/composition primitives, **foundation-freeze**, and the **craft criteria** | `swift-design-system` |
-| **`06-screens`** | View = layout + wiring, the **UI shell** (tab/top/action bars, sheet-vs-push), presenters, routes, the catalog, previews, the **fidelity gate**, accessibility identifiers | `swift-screen-builder` |
+| **`06-screens`** | View = layout + wiring, the **UI shell** (tab/top/action bars, sheet-vs-push), presenters, routes, the **interactivity inventory** (every affordance wired, §4.1), the catalog, previews, the **fidelity gate**, accessibility identifiers | `swift-screen-builder` |
 | **`07-testing`** | The whole four-layer pyramid (unit · integration · render-snapshot **lock** · XCUITest), determinism, the coverage gate | `swift-test-writer` (+ snapshot/UI writers) |
 
 > **Testing is one doc.** The prior app split it across `07`/`08`/`09`; v2 consolidates all four layers
