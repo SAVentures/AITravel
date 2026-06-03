@@ -111,6 +111,11 @@ extension TripDraft {
         destination = city
     }
 
+    /// Step 01 — clear the chosen destination (e.g. when a new search begins).
+    func clearDestination() {
+        destination = nil
+    }
+
     /// Step 02 (A/B) — pick the trip-shape strategy.
     func select(strategy: TripShapeStrategy) {
         shapeStrategy = strategy

@@ -55,8 +55,14 @@ struct DestinationStepPresenter {
     /// The single source of truth the screen reads. Held, never mutated here.
     let store: AppStore
 
-    init(store: AppStore) {
+    /// The live search query from the well (ephemeral UI state the view owns). Empty → no filtering,
+    /// the full catalog shows (the static-mockup default). Non-empty → the rail + grid keep only cities
+    /// whose name matches (case/diacritic-insensitive). The filter lives HERE, not the view (J-5).
+    let searchText: String
+
+    init(store: AppStore, searchText: String = "") {
         self.store = store
+        self.searchText = searchText
     }
 
     // MARK: - Catalog access (the immutable seed the provider served)
@@ -138,14 +144,30 @@ struct DestinationStepPresenter {
 
     /// The "More cities" 2×2 grid (mockup `.pop`): every `cityOptions` city, the chosen one in the
     /// `.definitive` register (selected), the rest `.fuzzy`. The `City` → tile map lives here, per task.
+    /// When the search well carries a query, the grid keeps only the matching cities (the filter is the
+    /// presenter's, not the view's — J-5).
     var gridCities: [CityTileModel] {
-        (context?.cityOptions ?? []).map { tile(for: $0) }
+        matchingCities.map { tile(for: $0) }
     }
 
     /// The horizontal "Recent" rail (mockup `.rail`): the same catalog surfaced as mini chips. The seed
-    /// carries one city catalog, so the rail reads from it too (data-driven, never invented).
+    /// carries one city catalog, so the rail reads from it too (data-driven, never invented). Filtered by
+    /// the same query as the grid, so searching narrows BOTH surfaces in lockstep.
     var recentCities: [CityTileModel] {
-        (context?.cityOptions ?? []).map { tile(for: $0) }
+        matchingCities.map { tile(for: $0) }
+    }
+
+    /// The catalog narrowed by the live search query: when empty, the full catalog (the static-mockup
+    /// default); otherwise the cities whose `name` contains the query, case- and diacritic-insensitive.
+    ///
+    /// Exposed so the view's SEARCH-RESULTS mode (keyboard up / query typed) can render these as a
+    /// vertical result list, while the non-searching layout keeps using `recentCities` / `gridCities`.
+    /// The filter is the presenter's, never the view's (J-5).
+    var matchingCities: [City] {
+        let cities = context?.cityOptions ?? []
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return cities }
+        return cities.filter { $0.name.localizedCaseInsensitiveContains(query) }
     }
 
     // MARK: - CTA

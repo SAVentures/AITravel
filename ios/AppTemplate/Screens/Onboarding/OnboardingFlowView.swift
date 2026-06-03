@@ -37,7 +37,6 @@ struct OnboardingFlowView: View {
                     .animation(Motion.standard(), value: presenter.currentStep)
             }
         }
-        .accessibilityIdentifier("onboarding.flow")
     }
 
     /// Route the cursor → the per-step view. Each step view reads the store + its own presenter and
