@@ -27,9 +27,48 @@ final class AppStore {
     /// (`01-architecture.md §7`, `04-networking.md`).
     let api: APIClient
 
+    // MARK: Onboarding feature state (commands + derivation live in `AppStore+Onboarding.swift`)
+
+    /// The active onboarding draft, or `nil` when onboarding is dismissed / at root.
+    ///
+    /// `private(set)` so only `AppStore` replaces the graph (at hydration, and on the
+    /// dismiss-to-root commands); views mutate *through* the draft's model methods or the store's
+    /// commands, never by reassigning it (`03-store.md §2`). It is the one `@Observable` reference
+    /// graph the immersive flow accumulates across its five steps.
+    private(set) var onboarding: TripDraft?
+
+    /// The transient load state for `loadOnboarding()` (the read path, `03-store.md §2/§4`).
+    var onboardingLoadState: LoadState = .idle
+
+    /// The cancellable clock that walks the generation plan on the live path. Kept so
+    /// `completeGeneration()` / `cancelOnboarding()` can cancel an in-flight sweep; tests drive the
+    /// synchronous `advanceGeneration()` seam directly instead and never start this task
+    /// (`03-store.md §3`, plan W3-02 / OPEN DECISION 3).
+    private var generationTask: Task<Void, Never>?
+
     /// The App root owns one instance (defaulting to `.live`); previews and tests pass their own
     /// `.mock(...)` client. No singleton — see the type doc.
     init(api: APIClient = .live) {
         self.api = api
+    }
+
+    // MARK: Onboarding mutation seams (same-file, so the `AppStore+Onboarding.swift` extension can
+    // drive the `private(set)` graph and the `private` task — keeping both read-only / invisible to
+    // views while the commands live in their own feature file, `03-store.md §7`).
+
+    /// Replace the active draft (hydration) or clear it to `nil` (the dismiss-to-root command).
+    func setOnboarding(_ draft: TripDraft?) {
+        onboarding = draft
+    }
+
+    /// Store the cancellable generation clock so a later command can cancel it.
+    func setGenerationTask(_ task: Task<Void, Never>?) {
+        generationTask = task
+    }
+
+    /// Cancel any in-flight generation clock and forget it.
+    func cancelGenerationTask() {
+        generationTask?.cancel()
+        generationTask = nil
     }
 }
