@@ -17,7 +17,7 @@ struct BaseLocationStepView: View {
     private var presenter: BaseLocationStepPresenter { BaseLocationStepPresenter(store: store) }
 
     // Clearance band pinning scroll content below the floating back glyph so nothing collides at rest.
-    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = Spacing.chromeClearance
 
     var body: some View {
         ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, actions: {
@@ -208,7 +208,7 @@ private enum BaseModeOption: String, CaseIterable, Identifiable, Hashable {
 private struct AltNeighborhoodCard: View {
     let alt: BaseLocationStepPresenter.AltModel
 
-    @ScaledMetric(relativeTo: .body) private var minCardWidth: CGFloat = 134
+    @ScaledMetric(relativeTo: .body) private var minCardWidth: CGFloat = Sizing.cardMin
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.hairline) {

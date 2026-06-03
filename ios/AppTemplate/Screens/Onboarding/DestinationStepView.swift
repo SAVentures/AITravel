@@ -274,9 +274,9 @@ struct DestinationStepView: View {
 
     /// The ink ring thickness (mockup's 2pt ring), scaled with Dynamic Type so it holds at large sizes
     /// rather than staying a fixed point value (J-0.3).
-    @ScaledMetric(relativeTo: .body) private var selectionRingWidth: CGFloat = 2
+    @ScaledMetric(relativeTo: .body) private var selectionRingWidth: CGFloat = Stroke.selected
 
-    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68   // clears the floating × at rest
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = Spacing.chromeClearance   // clears the floating × at rest
 }
 
 // MARK: - Previews

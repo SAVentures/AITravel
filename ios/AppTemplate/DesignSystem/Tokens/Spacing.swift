@@ -43,4 +43,9 @@ enum Spacing {
     /// 16 — the standard horizontal screen margin on compact width. Prefer wiring this through the
     /// layout-margin guide (`.safeAreaPadding` / `.contentMargins`) rather than a raw `.padding(16)` (03 §4).
     static let screenInset: CGFloat = Primitive.s3
+
+    /// 64 — the clearance band below the floating ×/back glyph so scroll content doesn't collide with the
+    /// chrome at rest. A named LAYOUT role like `screenInset` — exempt from the gap ladder (it is not a
+    /// between-group rhythm gap). 64 is on the 8pt spine (8×8); it was snapped from a prior 68.
+    static let chromeClearance: CGFloat = Primitive.spaceChromeClear
 }

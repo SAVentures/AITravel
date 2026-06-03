@@ -112,6 +112,9 @@
   --gap-section:  24px;  /* section header ↔ content */
   --gap-breath:   32px;  /* hero ↔ first control     */
 
+  /* named LAYOUT role — not a gap-ladder rung (like the screen margin, 03 §4) */
+  --space-chrome-clear: 64px;  /* clearance below the floating ×/back glyph so content clears it at rest (8×8) */
+
   /* ── RADIUS ladder ─ chrome = pill · content = rounded-rect ──────────────*/
   --r-tag:   6px;    /* tags, smallest chips      */
   --r-thumb: 8px;    /* thumbnails               */
@@ -119,8 +122,16 @@
   --r-card:  16px;   /* cards, sheets (the cap)  */
   --r-pill:  999px;  /* chrome, buttons, chips   */
 
+  /* ── SIZING ─ component dimensions · not gaps, not radii (semantic Sizing tier) ──
+     Fixed element sizes by role. Each on the 8pt spine; applied as min/ideal sizes
+     (seed @ScaledMetric / minWidth), never a hard frame (03 §1, 05 §5). */
+  --size-dot:      8px;    /* status/indicator dot diameter          */
+  --size-card-min: 136px;  /* horizontal-scroll card min width (8×17) */
+  --size-chip-min: 104px;  /* adaptive-grid chip min column   (8×13) */
+
   /* ── STROKE ─ selection ring / hairline widths ───────────────────────────*/
   --stroke-selected: 2px;  /* the ink selection ring on a chosen card (J-2.4)  */
+  --stroke-separator: 1px;  /* a 1pt rule — separator/divider/border thickness (pairs with --separator); 03 §1/§6 carve-out */
 
   /* ── ELEVATION ─ three tiers, restrained (03 §9) ─────────────────────────*/
   --shadow-rest:  0 1px 2px oklch(0.30 0.02 245 / 0.05),

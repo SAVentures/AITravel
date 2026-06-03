@@ -222,3 +222,22 @@ than blocking on them:
 
 4. **Map screens:** L4 runs with `UITEST_STATIC_MAP=1`; a decorative static-placeholder element (no id,
    no label) trips `.elementDetection` and is suppressed narrowly. The map is one labeled a11y element.
+
+---
+
+## 2026-06-03 — Tokenize onboarding `@ScaledMetric` literals; snap to grid; new `Sizing` tier
+
+**Decision.** Removed the literal `@ScaledMetric` seeds in the 5 onboarding `*StepView`s (a semantic-token
+non-negotiable violation) by routing each through a token. While tokenizing, **snapped off-grid values
+onto the 8pt spine**: chrome clearance 68→64 (8×8), alt-card min 134→136 (8×17), suggested dot 6→8 (s-2).
+Two were **not** snapped: the 1pt separator (the 03 §1 stroke carve-out → new `Stroke.separator`) and the
+104 chip-min (already 8×13). Added one named layout role `Spacing.chromeClearance` (sibling to
+`screenInset`, exempt from the gap ladder) and a **new `Sizing` semantic tier** (`dot`/`cardMin`/`chipMin`)
+for component dimensions.
+
+**Why.** 68/134/6 were off-grid (a bug under 03 §1); the literal seed was also a token-discipline failure,
+so tokenizing was the moment to snap. Component dimensions had no home in `Spacing` (gap ladder) /
+`Radius` / `Stroke`; `05 §1` names no `Sizing` enum, so the new tier is a non-obvious call — design-reviewer
+ruled it a defensible semantic home (cross-screen, role-named, parallel to `Radius`/`Stroke`). The ≤4px
+render shifts are within fidelity rhythm tolerance; the base-location mockup `.alt` now references
+`var(--size-card-min)`. No render-snapshot baseline covered these call-sites, so none were re-recorded.

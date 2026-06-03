@@ -193,9 +193,9 @@ struct TripShapeStepView: View {
         }
     }
 
-    @ScaledMetric(relativeTo: .subheadline) private var interestChipMinWidth: CGFloat = 104
+    @ScaledMetric(relativeTo: .subheadline) private var interestChipMinWidth: CGFloat = Sizing.chipMin
 
-    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = Spacing.chromeClearance
 }
 
 // MARK: - Screen-local conformances / constants

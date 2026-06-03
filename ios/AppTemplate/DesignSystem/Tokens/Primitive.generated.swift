@@ -60,12 +60,17 @@ enum Primitive {
     static let gapCard: CGFloat = 16
     static let gapSection: CGFloat = 24
     static let gapBreath: CGFloat = 32
+    static let spaceChromeClear: CGFloat = 64
     static let rTag: CGFloat = 6
     static let rThumb: CGFloat = 8
     static let rRow: CGFloat = 12
     static let rCard: CGFloat = 16
     static let rPill: CGFloat = 999
+    static let sizeDot: CGFloat = 8
+    static let sizeCardMin: CGFloat = 136
+    static let sizeChipMin: CGFloat = 104
     static let strokeSelected: CGFloat = 2
+    static let strokeSeparator: CGFloat = 1
 
     static let weightRegular: Double = 400
     static let weightMedium: Double = 500

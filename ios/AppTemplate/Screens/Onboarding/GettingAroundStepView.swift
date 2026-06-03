@@ -212,9 +212,9 @@ struct GettingAroundStepView: View {
 
     // MARK: - Scaled metrics
 
-    @ScaledMetric(relativeTo: .body) private var separatorThickness: CGFloat = 1
-    @ScaledMetric(relativeTo: .caption2) private var suggestedDotSize: CGFloat = 6
-    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
+    @ScaledMetric(relativeTo: .body) private var separatorThickness: CGFloat = Stroke.separator
+    @ScaledMetric(relativeTo: .caption2) private var suggestedDotSize: CGFloat = Sizing.dot
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = Spacing.chromeClearance
 }
 
 // MARK: - Screen-local conformance

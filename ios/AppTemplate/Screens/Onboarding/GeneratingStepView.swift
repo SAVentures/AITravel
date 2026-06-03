@@ -15,7 +15,7 @@ struct GeneratingStepView: View {
     @Environment(AppStore.self) private var store
 
     // Clearance band below the floating Cancel × so content doesn't collide at rest; scaled (J-0.3).
-    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = 68
+    @ScaledMetric(relativeTo: .body) private var topChrome: CGFloat = Spacing.chromeClearance
 
     var body: some View {
         let presenter = GeneratingStepPresenter(store: store)
