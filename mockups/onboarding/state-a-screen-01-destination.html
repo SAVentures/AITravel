@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Onboarding · 01 · Destination</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<link rel="stylesheet" href="screen-shell.css" />
+<style>
+/* ── Step 1 · Destination ─────────────────────────────────────────────── */
+.sect { padding: 0 22px; }
+
+/* search well — fill, pill, no border (a control well, not a card) */
+.search {
+  margin: 22px 22px 0;
+  display: flex; align-items: center; gap: 10px;
+  height: 50px; padding: 0 16px;
+  background: var(--fill-tertiary); border-radius: var(--r-pill);
+}
+.search svg { width: 18px; height: 18px; color: var(--ink-400); flex: none; }
+.search .val { flex: 1; font-size: 16px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
+.search .kbd { font-family: var(--font-mono); font-size: 12px; color: var(--ink-400); }
+
+/* AI voice — quiet inset, italic line + one blue dot */
+.ai-block { margin: 24px 22px 0; }
+
+/* recent rail */
+.rail-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 22px; margin: 32px 0 12px; }
+.rail-head .l { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.018em; color: var(--ink-900); }
+.rail-head .r { font-family: var(--font-mono); font-size: 10px; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--text-tertiary); }
+.rail { display: flex; gap: 8px; padding: 0 22px 2px; overflow-x: auto; scrollbar-width: none; }
+.rail::-webkit-scrollbar { display: none; }
+.rcc {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 9px;
+  padding: 8px 14px 8px 8px; background: var(--paper-200); border-radius: var(--r-pill);
+}
+.rcc .ph { width: 28px; height: 28px; border-radius: 999px; background: var(--paper-300); display: grid; place-items: center; color: var(--ink-400); }
+.rcc .ph svg { width: 14px; height: 14px; }
+.rcc .nm { font-size: 13.5px; font-weight: 600; color: var(--ink-900); letter-spacing: -0.01em; }
+.rcc .mt { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-500); margin-top: 1px; }
+
+/* popular grid — definitive (selected) vs fuzzy (the rest) */
+.pop { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 22px; }
+.pcard {
+  position: relative; border-radius: var(--r-card); overflow: hidden;
+  background: var(--paper-100); padding: 10px;
+}
+.pcard .photo {
+  height: 92px; border-radius: var(--r-thumb); background: var(--paper-200);
+  display: flex; align-items: center; justify-content: center; color: var(--ink-300); margin-bottom: 11px;
+}
+.pcard .photo svg { width: 24px; height: 24px; }
+.pcard .nm { font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.018em; color: var(--ink-900); }
+.pcard .mt { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-500); margin-top: 3px; }
+/* fuzzy register for the unchosen cities */
+.pcard:not(.sel) .nm { color: var(--ink-600); }
+/* definitive — the selected destination: white, lifted, ink ring + ink check */
+.pcard.sel {
+  background: var(--surface-grouped); box-shadow: var(--shadow-rest), 0 0 0 2px var(--ink-900);
+  padding: 10px;
+}
+.pcard .check {
+  position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; border-radius: 999px;
+  background: var(--ink-900); color: var(--paper-0); display: none; place-items: center;
+}
+.pcard.sel .check { display: grid; }
+.pcard .saved {
+  position: absolute; top: 14px; right: 14px;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--ink-600); background: var(--paper-0); padding: 4px 7px; border-radius: var(--r-tag); box-shadow: var(--shadow-rest);
+}
+.pcard.sel .saved { display: none; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen">
+    <div class="island"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-icons">
+        <svg width="18" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx=".7" fill="currentColor"/><rect x="4.8" y="5" width="3.2" height="7" rx=".7" fill="currentColor"/><rect x="9.6" y="2.5" width="3.2" height="9.5" rx=".7" fill="currentColor"/><rect x="14.4" y="0" width="3.2" height="12" rx=".7" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 17 12"><path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/><path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/><circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/></svg>
+        <svg width="25" height="12" viewBox="0 0 27 13"><rect x="0.5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="24.5" y="4" width="1.6" height="5" rx=".8" fill="currentColor" opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="viewport">
+      <div class="scroll">
+
+        <header class="ob-header">
+          <div class="ob-topbar">
+            <button class="ob-iconbtn" aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <span></span>
+            <span class="ob-counter"><b>01</b> / 05</span>
+          </div>
+          <div class="ob-progress">
+            <span class="ob-seg cur"></span><span class="ob-seg todo"></span><span class="ob-seg todo"></span><span class="ob-seg todo"></span><span class="ob-seg todo"></span>
+          </div>
+        </header>
+
+        <section class="hero">
+          <span class="eyebrow">Destination</span>
+          <h1 class="q">Where are you headed?</h1>
+          <p class="sub">Pick a city — we'll bring your saved places along.</p>
+        </section>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <span class="val">Lisbon</span>
+          <span class="kbd">return ↵</span>
+        </div>
+
+        <div class="ai-block">
+          <div class="ai">
+            <div class="lab"><span class="mk"></span> Reading your saved places</div>
+            <p class="line">You've saved <span style="font-style:normal;font-weight:600;color:var(--ink-900)">23 places</span> in Lisbon — clustered in Alfama and Bairro Alto, with a few out in Belém.</p>
+          </div>
+        </div>
+
+        <div class="rail-head">
+          <span class="l">Recent</span>
+          <span class="r">last 6 months</span>
+        </div>
+        <div class="rail">
+          <div class="rcc">
+            <span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 18l5-5 4 3 4-5 5 6"/><circle cx="8" cy="8" r="1.6"/></svg></span>
+            <div><div class="nm">Lisbon</div><div class="mt">Apr · saved</div></div>
+          </div>
+          <div class="rcc">
+            <span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 18l5-5 4 3 4-5 5 6"/><circle cx="8" cy="8" r="1.6"/></svg></span>
+            <div><div class="nm">Tokyo</div><div class="mt">Mar</div></div>
+          </div>
+          <div class="rcc">
+            <span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 18l5-5 4 3 4-5 5 6"/><circle cx="8" cy="8" r="1.6"/></svg></span>
+            <div><div class="nm">Mexico City</div><div class="mt">Feb</div></div>
+          </div>
+          <div class="rcc">
+            <span class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 18l5-5 4 3 4-5 5 6"/><circle cx="8" cy="8" r="1.6"/></svg></span>
+            <div><div class="nm">Reykjavík</div><div class="mt">Dec</div></div>
+          </div>
+        </div>
+
+        <div class="rail-head">
+          <span class="l">More cities</span>
+          <span class="r">from your saves</span>
+        </div>
+        <div class="pop">
+          <div class="pcard sel">
+            <div class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></div>
+            <div class="photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 19l5-6 3 3.5L15 9l6 10"/><circle cx="8" cy="7" r="1.7"/></svg></div>
+            <div class="nm">Lisbon</div>
+            <div class="mt">Portugal · 23 saved</div>
+          </div>
+          <div class="pcard">
+            <div class="saved">plan started</div>
+            <div class="photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 19l5-6 3 3.5L15 9l6 10"/><circle cx="8" cy="7" r="1.7"/></svg></div>
+            <div class="nm">Tokyo</div>
+            <div class="mt">Japan · 6 saved</div>
+          </div>
+          <div class="pcard">
+            <div class="photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 19l5-6 3 3.5L15 9l6 10"/><circle cx="8" cy="7" r="1.7"/></svg></div>
+            <div class="nm">Mexico City</div>
+            <div class="mt">Mexico · Roma Norte</div>
+          </div>
+          <div class="pcard">
+            <div class="photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 19l5-6 3 3.5L15 9l6 10"/><circle cx="8" cy="7" r="1.7"/></svg></div>
+            <div class="nm">Marrakech</div>
+            <div class="mt">Morocco · medina</div>
+          </div>
+        </div>
+
+        <div class="spacer-floor"></div>
+      </div>
+
+      <div class="ob-action">
+        <button class="ob-cta">
+          Continue with Lisbon
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>

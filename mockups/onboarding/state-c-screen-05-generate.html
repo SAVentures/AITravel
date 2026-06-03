@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Travel — Onboarding · C · 05 · Drawing up the trip (first trip)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../foundations/foundations.css" />
+<link rel="stylesheet" href="screen-shell.css" />
+<style>
+/* ── Step 5 · Generation moment ───────────────────────────────────────── */
+/* the heartbeat — the ONE continuous motion. A neutral sweep, not a gradient fill. */
+.think { position: relative; height: 3px; margin: 22px 22px 0; border-radius: 999px; background: var(--ink-100); overflow: hidden; }
+.think::after { content: ""; position: absolute; top: 0; bottom: 0; left: -35%; width: 35%; border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--ink-400), transparent); animation: sweep 1700ms var(--ease-standard) infinite; }
+@keyframes sweep { to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .think::after { animation: none; left: 0; width: 100%; opacity: 0.4; } }
+
+.gen-hero { padding: 26px 22px 4px; }
+.gen-hero .line { font-size: 22px; }
+.gen-hero .sub { font-size: 14px; line-height: 1.5; color: var(--text-secondary); margin: 12px 0 0; max-width: 34ch; text-wrap: pretty; }
+
+/* the planning bullets — fuzzy (pending/in-motion) firming to definitive (done) */
+.steps { margin: 30px 22px 0; display: flex; flex-direction: column; gap: 18px; }
+.steps .s { display: grid; grid-template-columns: 20px 1fr; gap: 14px; align-items: start; }
+.steps .s .gl { width: 20px; height: 20px; display: grid; place-items: center; margin-top: 1px; }
+
+/* done — definitive: solid ink + check */
+.steps .s.done .gl { background: var(--ink-900); border-radius: 999px; color: var(--paper-0); }
+.steps .s.done .gl svg { width: 11px; height: 11px; }
+.steps .s.done .body { color: var(--ink-700); }
+
+/* current — in motion: a single blue ring (the 2nd, last accent use), italic display */
+.steps .s.cur .gl { border-radius: 999px; background: var(--accent-500); position: relative; }
+.steps .s.cur .gl::after { content: ""; position: absolute; inset: 5px; border-radius: 999px; background: var(--paper-0); }
+.steps .s.cur .body { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 16.5px; color: var(--ink-900); letter-spacing: -0.01em; }
+
+/* pending — fuzzy: hollow ink-200, recedes */
+.steps .s.todo .gl { border: 1.5px solid var(--ink-200); border-radius: 999px; }
+.steps .s.todo .body { color: var(--ink-400); }
+
+.steps .s .body { font-size: 15px; line-height: 1.45; color: var(--ink-900); }
+.steps .s .body b { font-weight: 600; }
+.steps .s .body .m { display: block; margin-top: 3px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.02em; color: var(--ink-500); }
+
+/* handoff peek — faint, fuzzy: the next surface isn't drawn yet */
+.handoff { position: absolute; left: 22px; right: 22px; bottom: 84px; padding: 16px 18px; background: var(--paper-100); border-radius: var(--r-card); opacity: 0.5; pointer-events: none; }
+.handoff .l { font-family: var(--font-mono); font-size: 9px; font-weight: 500; letter-spacing: var(--track-eyebrow); text-transform: uppercase; color: var(--ink-500); margin-bottom: 5px; }
+.handoff .t { font-family: var(--font-display); font-style: italic; font-weight: 500; font-size: 18px; letter-spacing: -0.015em; color: var(--ink-700); }
+
+.eta { position: absolute; left: 0; right: 0; bottom: 38px; text-align: center; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-tertiary); }
+.eta b { color: var(--ink-700); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="screen">
+    <div class="island"></div>
+    <div class="statusbar">
+      <span>9:41</span>
+      <span class="sb-icons">
+        <svg width="18" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx=".7" fill="currentColor"/><rect x="4.8" y="5" width="3.2" height="7" rx=".7" fill="currentColor"/><rect x="9.6" y="2.5" width="3.2" height="9.5" rx=".7" fill="currentColor"/><rect x="14.4" y="0" width="3.2" height="12" rx=".7" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 17 12"><path d="M8.5 3.2C10.8 3.2 12.9 4.1 14.4 5.6L15.5 4.5C13.7 2.7 11.2 1.5 8.5 1.5C5.8 1.5 3.3 2.7 1.5 4.5L2.6 5.6C4.1 4.1 6.2 3.2 8.5 3.2Z" fill="currentColor"/><path d="M8.5 6.8C9.9 6.8 11.1 7.3 12 8.2L13.1 7.1C11.8 5.9 10.2 5.1 8.5 5.1C6.8 5.1 5.2 5.9 3.9 7.1L5 8.2C5.9 7.3 7.1 6.8 8.5 6.8Z" fill="currentColor"/><circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/></svg>
+        <svg width="25" height="12" viewBox="0 0 27 13"><rect x="0.5" y=".5" width="23" height="12" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="2" y="2" width="20" height="9" rx="2" fill="currentColor"/><rect x="24.5" y="4" width="1.6" height="5" rx=".8" fill="currentColor" opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="viewport">
+      <div class="scroll">
+
+        <header class="ob-header">
+          <div class="ob-topbar">
+            <button class="ob-iconbtn" aria-label="Cancel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <span></span>
+            <span class="ob-counter"><b>05</b> / 05</span>
+          </div>
+          <div class="ob-progress">
+            <span class="ob-seg done"></span><span class="ob-seg done"></span><span class="ob-seg done"></span><span class="ob-seg done"></span><span class="ob-seg cur"></span>
+          </div>
+        </header>
+
+        <div class="think"></div>
+
+        <section class="gen-hero">
+          <div class="ai">
+            <div class="lab"><span class="mk"></span> Drawing up your trip</div>
+            <p class="line">A first draft to react to.</p>
+          </div>
+          <p class="sub">Working from Lisbon's best for food and history, your Baixa base, and a balanced pace. You'll shape it from here.</p>
+        </section>
+
+        <div class="steps">
+          <div class="s done">
+            <span class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>
+            <div class="body">Choosing <b>Lisbon's best</b> for food, history &amp; coffee<span class="m">14 picks shortlisted</span></div>
+          </div>
+          <div class="s done">
+            <span class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>
+            <div class="body">Clustering into <b>4 days</b><span class="m">Baixa · Alfama · Belém · Bairro Alto</span></div>
+          </div>
+          <div class="s done">
+            <span class="gl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>
+            <div class="body">Routing each day to <b>minimize backtracking</b><span class="m">2 loops · 1 line · 1 hub</span></div>
+          </div>
+          <div class="s cur">
+            <span class="gl"></span>
+            <div class="body">Sequencing the days so they flow geographically</div>
+          </div>
+          <div class="s todo">
+            <span class="gl"></span>
+            <div class="body">Spacing meals and rest</div>
+          </div>
+          <div class="s todo">
+            <span class="gl"></span>
+            <div class="body">Adding tips, and leaving room to <b>save as you explore</b></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="handoff">
+        <div class="l">Up next · Trip overview</div>
+        <div class="t">Lisbon · 4 days, your starting point.</div>
+      </div>
+      <div class="eta">Usually ready in <b>about 8 seconds</b></div>
+    </div>
+
+    <div class="home-bar"></div>
+  </div>
+</div>
+</body>
+</html>
