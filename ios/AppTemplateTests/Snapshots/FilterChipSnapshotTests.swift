@@ -18,9 +18,9 @@
 //                      "figure.walk"). The icon occupies the leading slot in both states; the
 //                      check glyph does NOT appear when a systemImage is set (FilterChip.swift
 //                      line 56). The fill and label ink match the default (unselected) register.
-//   with-icon-selected — selected, enabled, with the same glyph. Confirms the icon persists
-//                      into the selected register (ink fill + textOnAccent label), and that
-//                      the checkmark does NOT co-appear when a systemImage is present.
+//   with-icon-selected — selected, enabled, with the same glyph. On selection the category
+//                      glyph swaps to the checkmark (the icon slot shows the check, not the
+//                      original systemImage) and the chip moves into the ink fill register.
 //
 // Determinism (§6.4):
 //   - No live clock — FilterChip is a pure display component with no time-conditional state.
@@ -115,10 +115,10 @@ struct FilterChipSnapshotTests {
     // MARK: - with-icon-selected
 
     /// Selected, enabled, with the same category glyph ("figure.walk").
-    /// Confirms the icon persists into the selected register (solid ink fill + `textOnAccent`
-    /// label) and that the checkmark does NOT co-appear when a `systemImage` is provided
-    /// (FilterChip.swift line 56–60: the icon branch has no `isSelected` guard).
-    @Test("with-icon-selected — selected, enabled, category glyph + ink fill, no check glyph")
+    /// On selection the category glyph swaps to the checkmark — the leading slot shows the
+    /// check icon, not the original `systemImage` — and the chip moves into the solid ink fill
+    /// register. Uniform with no-icon chips for grayscale-survival (single selection signal).
+    @Test("with-icon-selected — selected, enabled, ink fill + check glyph (icon swaps to check on selection)")
     @MainActor func withIconSelected() {
         assertDesignSnapshot(
             chipCanvas {

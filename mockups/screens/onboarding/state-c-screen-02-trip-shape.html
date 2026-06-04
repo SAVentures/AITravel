@@ -28,8 +28,10 @@
 .chips { display: flex; flex-wrap: wrap; gap: 9px; }
 .chip { display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: var(--r-pill); font-family: var(--font-ui); font-size: 14px; font-weight: 600; background: var(--paper-100); color: var(--ink-600); cursor: pointer; }
 .chip .ck { display: none; }
+.chip .cat { display: inline-grid; place-items: center; }
 .chip.on { background: var(--ink-900); color: var(--paper-0); }
 .chip.on .ck { display: inline-grid; place-items: center; }
+.chip.on .cat { display: none; }
 .chip svg { width: 12px; height: 12px; }
 
 /* pace segmented */
@@ -87,15 +89,15 @@
         <div class="tblock">
           <div class="tlab"><span class="t">What you're into</span><span class="h">pick a few</span></div>
           <div class="chips">
-            <span class="chip on"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Food</span>
-            <span class="chip on"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>History</span>
-            <span class="chip on"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Coffee</span>
-            <span class="chip">Architecture</span>
-            <span class="chip">Views</span>
-            <span class="chip">Nightlife</span>
-            <span class="chip">Markets</span>
-            <span class="chip">Nature</span>
-            <span class="chip">Art</span>
+            <span class="chip on"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M7 11a2.5 2.5 0 0 0 0-5M7 11v10M17 3c-1.5 0-2.5 2-2.5 5s1 4 2.5 4M17 12v9"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Food</span>
+            <span class="chip on"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5M5 9v10M19 9v10M9.5 9v10M14.5 9v10M3 21h18"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>History</span>
+            <span class="chip on"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13v4a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 9h2a2 2 0 0 1 0 4h-2M6 3v2M10 3v2M14 3v2"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Coffee</span>
+            <span class="chip"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-4 8 4v13M4 21h16M9 21v-5h6v5M8 11h.01M12 11h.01M16 11h.01"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Architecture</span>
+            <span class="chip"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8 10h8M5 13v5M19 13v5"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Views</span>
+            <span class="chip"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8zM18 4v3M21.5 5.5h-3M16 8.5v1.5M16.5 9.2h-1"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Nightlife</span>
+            <span class="chip"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l1 12H5zM9 8V6a3 3 0 0 1 6 0v2"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Markets</span>
+            <span class="chip"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21C5 18 4 12 4 6c6 0 12 2 14 8-3 0-6 1-7 4zM7 9c3 1 6 4 7 8"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Nature</span>
+            <span class="chip"><span class="cat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 0 0 0 18c1.7 0 2-1.3 1.2-2.2-.8-.9-.3-2.3 1-2.3H17a4 4 0 0 0 4-4c0-4.8-4-9.5-9-9.5zM7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01"/></svg></span><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span>Art</span>
           </div>
         </div>
 

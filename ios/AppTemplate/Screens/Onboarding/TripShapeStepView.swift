@@ -164,6 +164,7 @@ struct TripShapeStepView: View {
             ForEach(Array(zip(p.interests, p.interestChips)), id: \.0) { interest, chip in
                 FilterChip(
                     label: chip.label,
+                    systemImage: interest.systemImage,
                     isSelected: chip.isSelected,
                     action: { store.onboarding?.toggleInterest(interest) }
                 )

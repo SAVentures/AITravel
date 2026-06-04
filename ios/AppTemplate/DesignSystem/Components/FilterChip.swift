@@ -23,9 +23,9 @@ struct FilterChipModel: Identifiable {
 struct FilterChip: View {
     /// The chip's label — a short noun phrase ("By day", "By type"). UI family, never caps body (J-3.5).
     let label: String
-    /// An optional leading category glyph (e.g. a transport mode). When present it shows in both states and
-    /// selection is carried by the ink fill (mirrors the icon-bearing SegmentedSelector); when absent, the
-    /// leading slot is the selection check.
+    /// An optional leading category glyph (e.g. a transport mode). Shown only when the chip is UNSELECTED;
+    /// selecting swaps it for the check, so selection always carries the non-color check glyph + ink fill
+    /// (02-color §6) — never the icon alone. When absent, the unselected chip simply hugs its label.
     let systemImage: String?
     /// Whether this chip is the selected one in its group. The caller enforces one-selected-per-group.
     let isSelected: Bool
@@ -50,15 +50,16 @@ struct FilterChip: View {
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 
-    // A category icon (always shown) takes precedence; otherwise the check is the non-color selection
-    // signal, shown only when selected so the chip hugs its label when not (02-color §6).
+    // Uniform "icon off, check on": selection always shows the check — the non-color selection signal that
+    // survives grayscale (02-color §6) — even for icon-bearing chips. Unselected shows the category icon (if
+    // any); with no icon the unselected chip hugs its label. The check keeps the icon's footnote weight.
     @ViewBuilder private var leadingGlyph: some View {
-        if let systemImage {
-            Image(systemName: systemImage)
+        if isSelected {
+            Image(systemName: "checkmark")
                 .font(Typography.footnote)
                 .accessibilityHidden(true)
-        } else if isSelected {
-            Image(systemName: "checkmark")
+        } else if let systemImage {
+            Image(systemName: systemImage)
                 .font(Typography.footnote)
                 .accessibilityHidden(true)
         }
