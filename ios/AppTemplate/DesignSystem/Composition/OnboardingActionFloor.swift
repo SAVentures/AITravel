@@ -46,13 +46,13 @@ struct OnboardingActionFloor: View {
                     .tint(ColorRole.actionPrimary)        // accent via tint only, never a fill (J-2.4)
                     .frame(maxWidth: .infinity)
                     .disabled(!primaryEnabled)
-                    .accessibilityIdentifier(primaryAccessibilityID ?? "")
+                    .accessibilityIdentifier(ifPresent: primaryAccessibilityID)
 
                 if let ghostTitle, let ghostAction {
                     Button(ghostTitle, action: ghostAction)
                         .buttonStyle(.glass)
                         .frame(maxWidth: .infinity)
-                        .accessibilityIdentifier(ghostAccessibilityID ?? "")
+                        .accessibilityIdentifier(ifPresent: ghostAccessibilityID)
                 }
             }
             .buttonBorderShape(.capsule)
@@ -62,6 +62,22 @@ struct OnboardingActionFloor: View {
         .padding(.top, Spacing.sm)
         .padding(.bottom, Spacing.sm)
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Optional-id passthrough
+
+private extension View {
+    /// Attaches `.accessibilityIdentifier` ONLY when `id` is non-nil. A nil id leaves the element
+    /// unstamped (no empty `""` id), so the `.elementDetection` audit never sees a decorative blank-id
+    /// node (Track B Task 1.3). The component owns the mechanism; the caller owns the value.
+    @ViewBuilder
+    func accessibilityIdentifier(ifPresent id: String?) -> some View {
+        if let id {
+            accessibilityIdentifier(id)
+        } else {
+            self
+        }
     }
 }
 

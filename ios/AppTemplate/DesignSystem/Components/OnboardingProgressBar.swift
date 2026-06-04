@@ -22,9 +22,15 @@ struct OnboardingProgressBar: View {
             progressSegments
             counter
         }
+        // The whole bar is ONE VoiceOver element: `children: .ignore` collapses the segments and
+        // the rendered `NN / 06` counter into this node, so the step is announced exactly once.
+        // Carrying a non-empty LABEL (not only a value) here gives the bar's footprint — which is
+        // what `.elementDetection` inspects — a backing accessible element, so the rendered counter
+        // text is no longer an orphan empty-id/empty-label node (OD-3 / plan Task 2.7). Hence the
+        // counter drops its `.accessibilityHidden(true)` — it has nothing to hide from anymore.
         .accessibilityElement(children: .ignore)
         .accessibilityIdentifier("onboarding.progress")
-        .accessibilityValue("Step \(stepIndex + 1) of \(totalSteps)")
+        .accessibilityLabel("Step \(displayStep) of \(totalSteps)")
     }
 
     // MARK: - Progress
@@ -64,7 +70,9 @@ struct OnboardingProgressBar: View {
         .font(Typography.caption)
         .tracking(Typography.trackEyebrowCaption)
         .monospacedDigit()
-        .accessibilityHidden(true)
+        // No `.accessibilityHidden(true)`: the parent `children: .ignore` already folds this text
+        // into the single labeled bar element, so this is not an orphan node — and hiding it is what
+        // produced the empty-id/empty-label `.elementDetection` flag this component now resolves.
     }
 
     private func stepLabel(_ n: Int) -> String {

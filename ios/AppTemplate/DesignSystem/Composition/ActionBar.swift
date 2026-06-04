@@ -102,7 +102,7 @@ struct ActionBar: View {
                     Button(secondary.title, action: secondary.action)
                         .buttonStyle(.glass)              // lesser, outline secondary (J-6.1)
                         .disabled(secondary.isDisabled)
-                        .accessibilityIdentifier(secondary.accessibilityID ?? "")
+                        .accessibilityIdentifier(ifPresent: secondary.accessibilityID)
                 }
 
                 Button(primaryTitle, action: primaryAction)
@@ -110,7 +110,7 @@ struct ActionBar: View {
                     .tint(ColorRole.actionPrimary)        // accent via tint only, never a fill (J-2.4)
                     .frame(maxWidth: .infinity)           // the CTA owns the width; secondary hugs
                     .disabled(primaryIsDisabled)
-                    .accessibilityIdentifier(primaryAccessibilityID ?? "")
+                    .accessibilityIdentifier(ifPresent: primaryAccessibilityID)
             }
             .buttonBorderShape(.capsule)                  // content buttons are pills (J-10.2)
             .controlSize(.large)
@@ -119,6 +119,22 @@ struct ActionBar: View {
         .padding(.vertical, Spacing.sm)
         .padding(.horizontal, Spacing.screenInset)
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Optional-id passthrough
+
+private extension View {
+    /// Attaches `.accessibilityIdentifier` ONLY when `id` is non-nil. A nil id leaves the element
+    /// unstamped (no empty `""` id), so the `.elementDetection` audit never sees a decorative blank-id
+    /// node (Track B Task 1.3). The bar owns the mechanism; the screen owns the id value.
+    @ViewBuilder
+    func accessibilityIdentifier(ifPresent id: String?) -> some View {
+        if let id {
+            accessibilityIdentifier(id)
+        } else {
+            self
+        }
     }
 }
 

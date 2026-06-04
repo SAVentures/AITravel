@@ -22,6 +22,10 @@ struct GlassCircleButton: View {
     /// A short verb/role label for assistive tech (the glyph carries no text — 05-components §1.1).
     let accessibilityLabel: String
 
+    /// Caller-supplied accessibility identifier (the component owns the *mechanism*; the caller owns the
+    /// *value*). Applied conditionally — `nil` attaches no identifier modifier, never an empty `""` id.
+    let accessibilityID: String?
+
     /// Selected/active conveys meaning: the glyph takes the accent tint AND the `.isSelected` trait, so
     /// the state is never color alone (J-2.4, 02-color §6).
     let isSelected: Bool
@@ -36,13 +40,27 @@ struct GlassCircleButton: View {
     init(
         systemImage: String,
         accessibilityLabel: String,
+        accessibilityID: String? = nil,
         isSelected: Bool = false,
         action: @escaping () -> Void
     ) {
         self.systemImage = systemImage
         self.accessibilityLabel = accessibilityLabel
+        self.accessibilityID = accessibilityID
         self.isSelected = isSelected
         self.action = action
+    }
+
+    /// Convenience init for the onboarding navigation glyphs (`back`/`close`). `LeadingGlyph` is the single
+    /// owner of the glyph → label → id mapping, so a screen passes only the case + its action and the
+    /// component resolves the symbol, the assistive-tech label, and the caller-owned identifier from it.
+    init(_ glyph: LeadingGlyph, action: @escaping () -> Void) {
+        self.init(
+            systemImage: glyph.systemImage,
+            accessibilityLabel: glyph.accessibilityLabel,
+            accessibilityID: glyph.accessibilityID,
+            action: action
+        )
     }
 
     var body: some View {
@@ -64,6 +82,24 @@ struct GlassCircleButton: View {
         .tint(isSelected ? ColorRole.actionPrimary : ColorRole.textPrimary)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        // Caller-owned id applied conditionally: a `nil` id attaches NO identifier modifier (never an
+        // empty `""` that would stamp a real-but-blank decorative node the audit then flags).
+        .accessibilityIdentifier(ifPresent: accessibilityID)
+    }
+}
+
+// MARK: - Conditional accessibility-identifier modifier
+
+private extension View {
+    /// Applies `.accessibilityIdentifier` only when `id` is non-nil — no `?? ""` foot-gun. A `nil` id
+    /// leaves the view untouched so it exposes no empty-id node in the accessibility tree.
+    @ViewBuilder
+    func accessibilityIdentifier(ifPresent id: String?) -> some View {
+        if let id {
+            accessibilityIdentifier(id)
+        } else {
+            self
+        }
     }
 }
 

@@ -54,11 +54,27 @@ struct HScrollSection<Content: View>: View {
             }
             .scrollIndicators(.hidden)
             .contentMargins(.horizontal, Spacing.screenInset, for: .scrollContent)
-            .accessibilityIdentifier(accessibilityIDPrefix ?? "")
+            .accessibilityIdentifier(ifPresent: accessibilityIDPrefix)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(meta.map { "\(title), \($0)" } ?? title)
+    }
+}
+
+// MARK: - Optional-id passthrough
+
+private extension View {
+    /// Attaches `.accessibilityIdentifier` ONLY when `id` is non-nil. A nil id leaves the rail
+    /// unstamped (no empty `""` id), so the `.elementDetection` audit never sees a decorative blank-id
+    /// child node (Track B Task 1.3). The section owns the mechanism; the screen owns the prefix value.
+    @ViewBuilder
+    func accessibilityIdentifier(ifPresent id: String?) -> some View {
+        if let id {
+            accessibilityIdentifier(id)
+        } else {
+            self
+        }
     }
 }
 
