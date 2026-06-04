@@ -34,7 +34,11 @@ Map each change to the coverage it must ship **in the same change**:
 3. **Surfaces ship a `#Preview`** — every new component/screen has one (also the snapshot seed), pinning a locally-constructed seeded `AppStore` (no `.shared`).
 4. **State-bearing elements carry a dot-namespaced `accessibilityIdentifier`** (§06 §10) so XCUITest can address them.
 5. **Tests are deterministic** — fixtures via `SampleData.library()` + pinned `simulatedNow` (`store.loadSeed`); no live clock or real network.
-6. **Gate result:** any required test missing → **block the commit** and dispatch the matching writer (`swift-test-writer` / `swift-snapshot-test-writer` / `swift-uitest-writer`). Re-run the gate after.
+6. **Accessibility-ownership gate** — run `.claude/scripts/a11y-ownership-lint.sh` (exit ≠ 0 blocks the commit). It catches, with zero false positives: the `?? ""` empty-id foot-gun, a component that exposes an id/label *passthrough* yet also bakes a constant id (the double-mechanism regression), and an unguarded `return true` in a `performAccessibilityAudit` handler. Plus two checks the script can't reliably automate (enum/prefix-derived ids defeat a static grep) — **verify these by hand on any a11y-touching change:**
+   - **declared-vs-queried ids** — every id a UITest queries (`app.buttons["x"]` …) must be one a screen/component declares; a queried-but-undeclared id is the double-stamp/dead-id class.
+   - **value/label assertion** — an element carrying an `accessibilityValue`/`accessibilityLabel` as its contract (progress bar, stepper, segmented group) must have a UITest asserting that `.value`/`.label`, not just `.exists`.
+   - Component a11y principle (§05): a component owns the *mechanism* (an `accessibilityID` passthrough + its own label/value/trait); the caller owns the *values*. A component owning its single stable id is fine; baking an id callers must vary is the anti-pattern.
+7. **Gate result:** any required test missing or the a11y lint failing → **block the commit** and dispatch the matching writer (`swift-test-writer` / `swift-snapshot-test-writer` / `swift-uitest-writer`) or fix the source. Re-run the gate after.
 
 ## Do not
 
