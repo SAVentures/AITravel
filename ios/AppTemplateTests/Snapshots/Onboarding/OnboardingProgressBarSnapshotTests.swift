@@ -85,6 +85,26 @@ struct OnboardingProgressBarSnapshotTests {
             named: "step-5"
         )
     }
+
+    // MARK: - step-2-ax5
+
+    /// AX5 compensating snapshot (§7.4). Same fixture as `step2` (stepIndex 2: two done,
+    /// one cur, three todo) but rendered at accessibilityExtraExtraExtraLarge (AX5) to lock
+    /// Dynamic Type scaling of the counter typography ("03 / 06") and the segment geometry at
+    /// maximum text size. This is the most visually rich mid-journey state — all three segment
+    /// color roles (done textTertiary, cur textPrimary, todo separatorOpaque) appear alongside
+    /// the counter. Freezes any regression where the counter font or segment height token
+    /// change silently clips or overflows the bar layout at AX5. Glass-free component —
+    /// renders fully at AX5.
+    /// (Task 3.4 — restores the AX5 compensating control lost per decisions.md 2026-06-03.)
+    @Test("step-2-ax5 — AX5 Dynamic Type: 2 done + 1 cur + 3 todo, counter 03 / 06 at accessibilityXXXL")
+    @MainActor func step2AX5() {
+        assertDesignSnapshot(
+            canvas { OnboardingProgressBar(stepIndex: 2) }
+                .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge),
+            named: "step-2-ax5"
+        )
+    }
 }
 
 // MARK: - Canvas helper

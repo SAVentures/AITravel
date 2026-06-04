@@ -6,7 +6,8 @@
 //                     or "tripshape.<id>.locked" (locked).
 //   Scenario  C   →  .tasteForm body: interest FilterChip elements at
 //                     "interest.<rawValue>" and DayStepper controls at
-//                     "daystepper.decrement" / "daystepper.value" / "daystepper.increment".
+//                     "daystepper.decrement" / "daystepper.increment" (interactive buttons);
+//                     container value asserted via .containing(.button, "daystepper.increment").
 //
 // ROOT CAUSE fix (combined / below-fold elements): TripShapeCard stacks are a vertically-laid-out
 // VStack; cards B and C sit below card A and may be below the initial viewport (the hero + back glyph
@@ -35,8 +36,14 @@
 //
 // CTA accessibility id confirmed against TripShapeStepView.swift (line 23): "tripshape.cta"
 //
-// DayStepper accessibility ids confirmed against DayStepper.swift (lines 52/55/60):
-//   "daystepper.decrement" / "daystepper.value" / "daystepper.increment"
+// DayStepper accessibility ids confirmed against DayStepper.swift (lines 49/52/57):
+//   "daystepper.decrement" / "daystepper.increment" — the two interactive buttons, queryable.
+//   "daystepper.value" (line 52) is stamped on valueFace, but valueFace is .accessibilityHidden(true)
+//   (line 98) — it is absent from the a11y tree and cannot be queried via staticTexts.
+//   The container HStack carries .accessibilityElement(children: .contain) + .accessibilityValue(...)
+//   (lines 62-63) but has no id; query it via
+//   app.otherElements.containing(.button, identifier: "daystepper.increment").firstMatch
+//   and assert its .value property directly.
 //
 // Launch/scroll/audit are centralized in OnboardingRobot (C0/C1 migration).
 // The file-local makeLaunchedApp, scrollToElement, and inline audit handler have been deleted;
@@ -207,8 +214,10 @@ final class OnboardingTripShapeUITests: XCTestCase {
     // Seed defaults: interests=[.food, .history, .coffee], pace=.balanced, days=4 (tasteDefaults).
     //
     // Confirmed identifier sources:
-    //   interest.<rawValue>  — TripShapeStepView.swift line 173 (interestGrid)
-    //   daystepper.decrement / .value / .increment — DayStepper.swift lines 52/55/60
+    //   interest.<rawValue>  — TripShapeStepView.swift line 167 (interestGrid)
+    //   daystepper.decrement / .increment — DayStepper.swift lines 49/57 (interactive buttons, queryable)
+    //   daystepper.value (DayStepper.swift:52) is on .accessibilityHidden(true) valueFace — NOT queryable.
+    //   Container value queried via app.otherElements.containing(.button, "daystepper.increment").firstMatch
 
     func testScenarioCTasteForm() throws {
         robot.launch(scenario: "onboardingC", startStep: "tripShape")
@@ -231,7 +240,6 @@ final class OnboardingTripShapeUITests: XCTestCase {
         // ── DayStepper controls must exist ──
         let decrementButton = robot.app.buttons["daystepper.decrement"]
         let incrementButton = robot.app.buttons["daystepper.increment"]
-        let valueLabel = robot.app.staticTexts["daystepper.value"]
 
         XCTAssertTrue(
             decrementButton.waitForExistence(timeout: 4),
@@ -241,9 +249,29 @@ final class OnboardingTripShapeUITests: XCTestCase {
             incrementButton.waitForExistence(timeout: 2),
             "daystepper.increment must exist in scenario C (taste form)"
         )
+
+        // ── DayStepper container value — initial state ──
+        // DayStepper.swift:62-63: the HStack wrapping all three sub-elements carries
+        //   .accessibilityElement(children: .contain) + .accessibilityValue("\(clamped) \(unit)")
+        // but has NO accessibilityIdentifier. The valueFace Text is .accessibilityHidden(true)
+        // (line 98) so staticTexts["daystepper.value"] is absent from the a11y tree.
+        //
+        // Query the container element that CONTAINS the increment button — XCUITest's
+        // .containing(_:identifier:) traverses the element tree upward and returns the first
+        // ancestor that matches, so this resolves the container HStack (otherElements kind under
+        // children: .contain). Its .value property reflects .accessibilityValue.
+        //
+        // Seed: SampleData.onboardingCContext() sets tasteDefaults.days = 4, unit = "days"
+        // (TripShapeStepPresenter.tasteDays = 4 → DayStepper value = "4 days").
+        let stepperContainer = robot.app.otherElements.containing(.button, identifier: "daystepper.increment").firstMatch
         XCTAssertTrue(
-            valueLabel.waitForExistence(timeout: 2),
-            "daystepper.value must exist in scenario C (taste form)"
+            stepperContainer.waitForExistence(timeout: 4),
+            "DayStepper container (children: .contain) must exist in scenario C"
+        )
+        XCTAssertEqual(
+            stepperContainer.value as? String,
+            "4 days",
+            "DayStepper container .accessibilityValue must be '4 days' at the seeded initial state (tasteDefaults.days=4)"
         )
 
         // Attach initial taste-form screenshot.
@@ -318,6 +346,18 @@ final class OnboardingTripShapeUITests: XCTestCase {
         XCTAssertEqual(
             daysResult, .completed,
             "tripshape.cta label must reflect the updated day count after increment; got '\(cta.label)'"
+        )
+
+        // ── DayStepper container value — post-increment ──
+        // After one increment from 4 the container's .accessibilityValue must update to "5 days".
+        // Re-use the same container query; the element reference is live so its .value already
+        // reflects the current state without re-querying.
+        let valuePredicate = NSPredicate(format: "value == '5 days'")
+        let valueExpectation = XCTNSPredicateExpectation(predicate: valuePredicate, object: stepperContainer)
+        let valueResult = XCTWaiter.wait(for: [valueExpectation], timeout: 4)
+        XCTAssertEqual(
+            valueResult, .completed,
+            "DayStepper container .accessibilityValue must be '5 days' after increment; got '\(stepperContainer.value as? String ?? "<nil>")'"
         )
 
         let afterStepperShot = XCTAttachment(screenshot: robot.app.screenshot())

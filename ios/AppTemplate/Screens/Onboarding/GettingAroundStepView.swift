@@ -46,14 +46,9 @@ struct GettingAroundStepView: View {
         }
         // Back glyph as floating chrome (NOT in scroll content), top-leading → retreat one step.
         .overlay(alignment: .topLeading) {
-            GlassCircleButton(
-                systemImage: "chevron.left",
-                accessibilityLabel: "Back",
-                action: { store.retreatOnboardingStep() }
-            )
-            .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.sm)
-            .accessibilityIdentifier("onboarding.back")
+            GlassCircleButton(.back, action: { store.retreatOnboardingStep() })
+                .padding(.leading, Spacing.screenInset)
+                .padding(.top, Spacing.sm)
         }
     }
 
@@ -113,6 +108,10 @@ struct GettingAroundStepView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardSurface()
+        // One addressable container (mirrors `baselocation.rec`): the eyebrow / rec line / reason rows
+        // read as its children rather than as loose siblings in the a11y tree.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("gettingaround.rec")
     }
 
     // MARK: - The conditional context note
@@ -160,6 +159,7 @@ struct GettingAroundStepView: View {
                     label: \.label,
                     systemImage: { $0.systemImage },
                     accessibilityIDPrefix: "transport.mostly",
+                    accessibilityLabel: "Primary transport",
                     scrollable: true,   // icon+label modes hug their content and scroll, never wrap to 2 lines
                     onSelect: { mode in store.onboarding?.setPrimaryMode(mode) }
                 )

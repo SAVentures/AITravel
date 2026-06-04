@@ -129,4 +129,29 @@ struct GenerationProgressViewSnapshotTests {
             named: "near-complete"
         )
     }
+
+    // MARK: - mid-progress-ax5
+
+    /// AX5 compensating snapshot (§7.4). Same fixture as `midProgress` (3 done, 1 current,
+    /// 2 pending) but rendered at accessibilityExtraExtraExtraLarge (AX5) to lock Dynamic Type
+    /// scaling of all GenerationStepRow glyph+typography states simultaneously: done body
+    /// (receded), current body (italic stateNow accent), pending body (receded), and the
+    /// optional detail lines. This is the most type-dense state — it exercises every step
+    /// status variant in a single frame at maximum text size. Freezes any regression where a
+    /// fixed row height or font-size token change clips or overflows step rows at AX5.
+    /// Glass-free component — renders fully at AX5.
+    /// (Task 3.4 — restores the AX5 compensating control lost per decisions.md 2026-06-03.)
+    @Test("mid-progress-ax5 — AX5 Dynamic Type: 3 done + 1 current + 2 pending at accessibilityXXXL")
+    func midProgressAX5() {
+        assertDesignSnapshot(
+            container(
+                GenerationProgressView(
+                    steps: midProgressSteps,
+                    handoff: handoff
+                )
+            )
+            .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge),
+            named: "mid-progress-ax5"
+        )
+    }
 }

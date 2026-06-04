@@ -16,6 +16,12 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
     let systemImage: (Option) -> String?
     /// Each segment becomes `\(accessibilityIDPrefix).\(option.id)`.
     let accessibilityIDPrefix: String
+    /// The caller-supplied GROUP label (e.g. "Date precision"). Owns the *value* of the a11y group;
+    /// the component owns the *mechanism* (it exposes the group element + reads `label(selection)` as
+    /// its value). Empty (the default) attaches no label modifier — never an empty-string foot-gun —
+    /// so the snapshot/preview fixtures that don't supply one stay byte-identical. Real callers pass a
+    /// non-empty label (Task 2.4: "Date precision" / "Base location mode" / "Primary transport").
+    var accessibilityLabel: String = ""
     /// When `true`, segments size to their content and the track scrolls horizontally — for option sets
     /// that won't fit the width without wrapping the labels (the transport `.mostly` row).
     var scrollable: Bool = false
@@ -25,9 +31,21 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
     @Namespace private var selectionPill
 
     var body: some View {
+        // ONE consistent a11y structure: the group element (`children: .contain`) + value/label live on
+        // the `track` for BOTH paths (see `track`). `.contain` is what makes the track a real, addressable
+        // group element while keeping each segment Button an independent, resolvable child — that covering
+        // container is what satisfies the `.elementDetection` audit (no "potentially inaccessible text"
+        // left uncontained on GettingAround). Moving the container off the track to the ScrollView left
+        // rendered text uncontained and reintroduced that failure, so the container stays on the track.
         if scrollable {
+            // The track sets `.fixedSize(horizontal: true)` (see `track`), so even with `.contain` it keeps
+            // its intrinsic content width instead of shrinking to the viewport — "Cycle" renders full and
+            // the ScrollView scrolls (no D-7 truncation). The ScrollView only provides the clipping
+            // viewport; it carries no a11y group of its own (that's on the track).
             ScrollView(.horizontal, showsIndicators: false) { track }
         } else {
+            // Fixed-width path: segments are `maxWidth: .infinity` at the track's own width, so `.contain`
+            // imposes no width the track didn't already have. No `.fixedSize` needed.
             track
         }
     }
@@ -64,6 +82,19 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
         // → the curve, not a spring (§3). Only the indicator's matched frame animates; no layout prop
         // (§8 / E-2). The tap-commit press scale stays in the ButtonStyle at the `tap` rung.
         .animation(Motion.standard(Motion.standard), value: selection)
+        // SCROLLABLE only: pin the track to its intrinsic content width BEFORE the group container applies.
+        // `.contain` (below) otherwise proposes the ScrollView's viewport width to the track, shrinking it
+        // and truncating the trailing segment ("Cycle" → "Cyc…", slop D-7). `.fixedSize(horizontal: true)`
+        // makes the track hug its content — identical intrinsic-width layout to a plain HStack, so the
+        // committed scrollable snapshot stays byte-identical — and the ScrollView scrolls the overflow.
+        // The fixed path needs none of this: its segments are `maxWidth: .infinity` at the track's own
+        // width, so `.contain` adds no constraint the track didn't already have.
+        .modifier(ScrollableTrackWidth(active: scrollable))
+        // ONE consistent a11y structure for BOTH paths: promote the track to the addressable group element
+        // carrying the selection value/label. `children: .contain` is the covering container the
+        // `.elementDetection` audit requires (rendered segment text is never left uncontained) while
+        // keeping each segment Button an independent, resolvable child (per-segment ids still resolve).
+        .accessibilityGroup(value: label(selection), label: accessibilityLabel)
     }
 
     /// The single ink pill, rendered only on the selected segment and tagged with the shared namespace
@@ -75,6 +106,52 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
             ColorRole.textPrimary
                 .clipShape(.rect(cornerRadius: Radius.pill))
                 .matchedGeometryEffect(id: "selectionPill", in: selectionPill)
+        }
+    }
+}
+
+// MARK: - A11y group
+
+private extension View {
+    /// Promotes the track to a single addressable group element carrying `value`, with `label` applied
+    /// only when non-empty. Applied on the `track` for BOTH paths (the scrollable path first pins the
+    /// track's width with `ScrollableTrackWidth` so `.contain` can't shrink it — see `track`).
+    /// `children: .contain` makes the track a real element (the covering container the `.elementDetection`
+    /// audit needs) WHILE leaving the segment Buttons inside it independent, individually-resolvable,
+    /// hittable children — so the per-segment ids keep resolving (`app.buttons["when.precision.exactDates"]`
+    /// etc.) and VoiceOver announces e.g. "Date precision, Exact dates". `.ignore`/`.combine` would
+    /// collapse the segments and HIDE those ids — never use them here. The conditional label (vs
+    /// `.accessibilityLabel(Text(""))`) avoids stamping a real-but-blank label on the snapshot/preview
+    /// fixtures that pass no label — the empty-id foot-gun.
+    @ViewBuilder
+    func accessibilityGroup(value: String, label: String) -> some View {
+        if label.isEmpty {
+            self
+                .accessibilityElement(children: .contain)
+                .accessibilityValue(value)
+        } else {
+            self
+                .accessibilityElement(children: .contain)
+                .accessibilityValue(value)
+                .accessibilityLabel(label)
+        }
+    }
+}
+
+// MARK: - Scrollable track width
+
+/// Pins the track to its intrinsic content width on the scrollable path only, so the a11y group
+/// container (`children: .contain`) can't shrink it to the ScrollView viewport and truncate the trailing
+/// segment (slop D-7). `vertical: false` leaves height free to scale with Dynamic Type (J-0.3). When
+/// inactive (the fixed-width path) it is a no-op, leaving that path's layout untouched.
+private struct ScrollableTrackWidth: ViewModifier {
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        if active {
+            content.fixedSize(horizontal: true, vertical: false)
+        } else {
+            content
         }
     }
 }

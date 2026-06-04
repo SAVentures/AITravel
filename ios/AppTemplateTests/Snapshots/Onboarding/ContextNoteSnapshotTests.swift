@@ -76,6 +76,30 @@ struct ContextNoteSnapshotTests {
             named: "text-only"
         )
     }
+
+    // MARK: - with-emphasis-ax5
+
+    /// AX5 compensating snapshot (§7.4). Same fixture as `withEmphasis` but rendered at
+    /// accessibilityExtraExtraExtraLarge (AX5) to lock Dynamic Type scaling of the eyebrow
+    /// caps, body text, and emphasis span at maximum text size. Freezes any regression where
+    /// a font-size token change, a fixed-frame, or a `lineLimit` silently breaks the layout
+    /// at the largest accessibility category. Glass-free component — renders fully at AX5.
+    /// (Task 3.4 — restores the AX5 compensating control lost per decisions.md 2026-06-03.)
+    @Test("with-emphasis-ax5 — AX5 Dynamic Type: glyph + eyebrow + semibold span at accessibilityXXXL")
+    @MainActor func withEmphasisAX5() {
+        assertDesignSnapshot(
+            canvas {
+                ContextNote(
+                    eyebrow: "For your dates",
+                    text: "Rain 2 of 4 days — transit keeps the plan dry without changing the shape.",
+                    emphasis: ["Rain 2 of 4 days"],
+                    systemImage: "cloud.rain"
+                )
+            }
+            .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge),
+            named: "with-emphasis-ax5"
+        )
+    }
 }
 
 // MARK: - Canvas helper

@@ -50,11 +50,11 @@ struct GeneratingStepView: View {
             GlassCircleButton(
                 systemImage: "xmark",
                 accessibilityLabel: "Close",
+                accessibilityID: "onboarding.cancel",
                 action: { store.cancelOnboarding() }
             )
             .padding(.leading, Spacing.screenInset)
             .padding(.top, Spacing.sm)
-            .accessibilityIdentifier("onboarding.cancel")
         }
         // The store owns the clock (OPEN DECISION 3); the view only observes the walk it kicks here.
         // TODO: navigate to Trip Overview when built — the real push lives store-side in

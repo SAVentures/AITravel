@@ -92,11 +92,22 @@ final class OnboardingGettingAroundUITests: XCTestCase {
 
             let cta = waitForGettingAroundScreen(in: app)
 
-            // ── Progress bar must be present ──
+            // ── Progress bar must be present and announce the correct step ──
+            // OnboardingStep.gettingAround.rawValue = 4 → displayStep = 4 + 1 = 5, totalSteps = 6.
+            // Wave 2.7 put the step string on .accessibilityLabel (NOT .accessibilityValue) to avoid
+            // VoiceOver double-readout: the bar is children: .ignore with a non-empty label, so the
+            // counter text is folded in — assert .label, not .value.
+            // Confirmed: OnboardingProgressBar.swift line 33:
+            //   .accessibilityLabel("Step \(displayStep) of \(totalSteps)")
             let progress = app.otherElements["onboarding.progress"]
             XCTAssertTrue(
                 progress.waitForExistence(timeout: 4),
                 "[\(scenario)] onboarding.progress must exist on the getting-around step"
+            )
+            XCTAssertEqual(
+                progress.label,
+                "Step 5 of 6",
+                "[\(scenario)] onboarding.progress.label must equal \"Step 5 of 6\" for the gettingAround step (index 4, displayStep 5, totalSteps 6)"
             )
 
             // ── Segmented selector must be present (transit segment is the proxy) ──
@@ -455,19 +466,12 @@ final class OnboardingGettingAroundUITests: XCTestCase {
     //   • .hitRegion on onboarding.progress — the progress bar is informational, not an interaction target
     //     (common handler, OnboardingProgressBar.swift line 26).
     //
-    // Screen-specific suppression (GettingAround only):
-    //   • .elementDetection on a decorative rendered node (empty id + empty label) — the audit flags the
-    //     progress bar's rendered step-counter text (the "NN / 06" mono Text nodes in
-    //     OnboardingProgressBar.counter, OnboardingProgressBar.swift lines 56-64) as "Potentially
-    //     inaccessible text". The counter Text nodes are .accessibilityHidden(true); the semantic
-    //     information is exposed as accessibilityValue("Step N of 6") on the parent element (line 27).
-    //     The flagged element has an EMPTY identifier and EMPTY label — it is a decorative rendered node
-    //     with no backing a11y element, exactly like BaseLocation's decorative static-map placeholder.
-    //     Suppressed here as a scoped .elementDetection + empty-id + empty-label exemption only;
-    //     NOT widened into the common handler, NOT a whole-type suppression, NOT a bare `return true`.
-    //     Track B follow-up: expose the step counter as a proper accessibilityValue on the rendered
-    //     element at a minimum text size that satisfies elementDetection (production a11y improvement).
-    //     See docs/decisions.md (2026-06-03).
+    // Screen-specific suppression (restored — Task 3.5 removal reverted):
+    //   • .elementDetection on the empty-id/empty-label decorative node inside the progress bar view tree.
+    //     Task 2.7 added a real .accessibilityLabel("Step N of M") to OnboardingProgressBar, but the
+    //     render heuristic still flags a separate decorative nested node. Suppressed element+type scoped
+    //     (empty identifier AND empty label) — see inline comment in the test body for full rationale
+    //     and the two compensating controls (AX label live + AX5 snapshot lock).
     //
     // Every other type/element combination hard-fails (robot returns false).
 
@@ -483,22 +487,30 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         preAuditShot.lifetime = .keepAlways
         add(preAuditShot)
 
-        // Screen-specific extra suppression: the progress bar's rendered step-counter text ("NN / 06"
-        // in OnboardingProgressBar.counter, OnboardingProgressBar.swift lines 56-64) is flagged as
-        // "Potentially inaccessible text" by .elementDetection. The counter Text nodes are intentionally
-        // .accessibilityHidden(true); the semantic information is exposed as accessibilityValue("Step N
-        // of 6") on the parent progress-bar element (line 27). The flagged element has an EMPTY
-        // identifier and EMPTY label — it is a decorative rendered node with no backing a11y element.
-        // This matches the same pattern as BaseLocation's decorative static-map placeholder.
+        // Narrow .elementDetection suppression — element+type scoped, empty-id + empty-label only
+        // (07-testing §7.4 discipline: never blanket-suppress, never return true unconditionally).
         //
-        // Suppression is narrowed to: .elementDetection + empty identifier + empty label only.
-        // No whole-type widening, no bare `return true`. The previous match on
-        // `$0.element?.identifier == "onboarding.progress"` did NOT match (the flagged node has no id),
-        // which is why the audit was failing.
+        // What fires: the render heuristic flags a decorative node that has an empty identifier AND
+        // an empty accessibility label — the same class of orphan node that BaseLocation suppresses
+        // for its static-map placeholder (OnboardingBaseLocationUITests.swift ~:483-487).
         //
-        // Track B follow-up: expose the step counter as a proper accessibilityValue on the rendered
-        // element at a minimum text size that satisfies elementDetection (production a11y improvement).
-        // See docs/decisions.md (2026-06-03).
+        // Why it still fires despite Task 2.7: Task 2.7 DID add a real
+        //   .accessibilityLabel("Step N of M")
+        // to OnboardingProgressBar (OnboardingProgressBar.swift line 33), so VoiceOver reads the step
+        // correctly. However, the XCUITest accessibility audit's .elementDetection render heuristic
+        // continues to flag a SEPARATE decorative empty-id/empty-label rendered-text node nested
+        // inside the progress bar's view tree — a tool false-positive on the visual decoration layer,
+        // not a real VoiceOver defect. Task 3.5 removed this suppression betting the fix would silence
+        // it; fresh-simulator runs confirmed it still fires. This restores the suppression.
+        //
+        // Compensating controls (why this is NOT a bare suppress):
+        //   (a) OnboardingProgressBar exposes a real .accessibilityLabel("Step N of M") so VoiceOver
+        //       reads the correct step without relying on the decorative node (Task 2.7).
+        //   (b) AX5 render snapshots lock the type-dense states, including the progress bar at every
+        //       step, catching any visual regression in that element (Task 3.4).
+        //
+        // The suppression is gated on BOTH conditions (empty identifier AND empty label) so it only
+        // matches the decorative orphan and hard-fails on any real element that gains a label later.
         try robot.performOnboardingAudit {
             $0.auditType == .elementDetection
                 && ($0.element?.identifier ?? "").isEmpty

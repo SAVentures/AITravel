@@ -72,14 +72,10 @@ struct DestinationStepView: View {
             }
         }
         .overlay(alignment: .topLeading) {
-            GlassCircleButton(
-                systemImage: "xmark",
-                accessibilityLabel: "Close",
-                action: { store.cancelOnboarding() }
-            )
-            .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.sm)
-            .accessibilityIdentifier("onboarding.close")
+            /* LeadingGlyph owns the glyph → label → id mapping; `.close` → id `onboarding.close`. */
+            GlassCircleButton(.close, action: { store.cancelOnboarding() })
+                .padding(.leading, Spacing.screenInset)
+                .padding(.top, Spacing.sm)
         }
     }
 
@@ -101,8 +97,15 @@ struct DestinationStepView: View {
     // MARK: - Search well
 
     private func searchWell() -> some View {
-        SearchWell(text: $searchText, placeholder: "Search a city", kbdHint: nil, focused: $searchFocused)
-            .accessibilityIdentifier("destination.search")   // screen-contract id the tests assert on
+        /* Caller owns the id string + human label; the component owns the passthrough + `.isSearchField`. */
+        SearchWell(
+            text: $searchText,
+            placeholder: "Search a city",
+            kbdHint: nil,
+            accessibilityID: "destination.search",   // screen-contract id the tests assert on
+            accessibilityLabel: "Search cities",
+            focused: $searchFocused
+        )
     }
 
     // MARK: - Search-results list

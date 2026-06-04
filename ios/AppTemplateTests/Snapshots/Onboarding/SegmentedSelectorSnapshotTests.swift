@@ -201,6 +201,35 @@ struct SegmentedSelectorSnapshotTests {
             named: "scrollable"
         )
     }
+
+    // MARK: - four-way-with-icons-ax5
+
+    /// AX5 compensating snapshot (§7.4). Same fixture as `fourWayWithIcons` (4-way transport,
+    /// Transit selected) but rendered at accessibilityExtraExtraExtraLarge (AX5) to lock
+    /// Dynamic Type scaling of the icon+label segment layout, the ink pill, and the fillTertiary
+    /// track at maximum text size. This is the most type-dense non-scrollable state — it exercises
+    /// both the icon glyph and the text label in every segment simultaneously. Freezes any
+    /// regression where a fixed segment height or font-size token change clips labels at AX5.
+    /// Glass-free component — renders fully at AX5.
+    /// (Task 3.4 — restores the AX5 compensating control lost per decisions.md 2026-06-03.)
+    @Test("four-way-with-icons-ax5 — AX5 Dynamic Type: 4-way icon+label, Transit selected at accessibilityXXXL")
+    @MainActor func fourWayWithIconsAX5() {
+        let options = transportOptions
+        assertDesignSnapshot(
+            canvas {
+                SegmentedSelector(
+                    options: options,
+                    selection: options[1],   // "Transit"
+                    label: \.title,
+                    systemImage: \.systemImage,
+                    accessibilityIDPrefix: "transport.mostly",
+                    onSelect: { _ in }
+                )
+            }
+            .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge),
+            named: "four-way-with-icons-ax5"
+        )
+    }
 }
 
 // MARK: - Canvas helper

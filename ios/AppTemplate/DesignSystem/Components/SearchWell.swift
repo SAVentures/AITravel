@@ -3,6 +3,9 @@
  mockups/screens/onboarding/state-a-screen-01-destination.html.
  Load-bearing: a FILL WELL, never glass and never a card (J-0.1 / J-8.1) — a neutral `fillTertiary` pill
  (J-10.2). The mono `kbdHint` shows only while empty so a typed value gets the full width.
+ A11y: the component owns the MECHANISM (`.isSearchField` trait + an optional id passthrough), the CALLER
+ owns the id string (`accessibilityID`) and the human label (`accessibilityLabel`). `.combine` was dropped
+ so the clear button stays an independent element and its `searchwell.clear` id can resolve.
 */
 import SwiftUI
 
@@ -11,6 +14,11 @@ struct SearchWell: View {
     let placeholder: String
     let kbdHint: String?
     let showsClearButton: Bool
+
+    /* A11y values are caller-supplied: the screen owns the id string and the human label. The component
+       bakes none — it only owns the `.isSearchField` mechanism and the id passthrough. */
+    let accessibilityID: String?
+    let accessibilityLabel: String?
 
     /* Focus owned by the CALLER: the screen drives this `@FocusState` to switch into search-results
        mode and hide the bottom CTA. The well treatment is identical focused or not. */
@@ -24,12 +32,16 @@ struct SearchWell: View {
         placeholder: String,
         kbdHint: String? = "return ↵",
         showsClearButton: Bool = false,
+        accessibilityID: String? = nil,
+        accessibilityLabel: String? = nil,
         focused: FocusState<Bool>.Binding
     ) {
         self._text = text
         self.placeholder = placeholder
         self.kbdHint = kbdHint
         self.showsClearButton = showsClearButton
+        self.accessibilityID = accessibilityID
+        self.accessibilityLabel = accessibilityLabel
         self.focused = focused
     }
 
@@ -50,6 +62,11 @@ struct SearchWell: View {
                 .textInputAutocapitalization(.words)
                 .focused(focused)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                // The field is the search element: caller-owned label (sensible default) + the trait.
+                .accessibilityLabel(Text(accessibilityLabel ?? "Search cities"))
+                .accessibilityAddTraits(.isSearchField)
+                // Identifier passthrough — attached ONLY when the caller supplies one (no `?? ""` foot-gun).
+                .modifier(OptionalAccessibilityID(accessibilityID))
 
             // A clear affordance once there's text to clear; the mono hint shows only while empty.
             if showsClearButton, !text.isEmpty {
@@ -78,10 +95,21 @@ struct SearchWell: View {
         .contentShape(.capsule)
         // Tapping anywhere in the well focuses the field, not just the glyph-sized text rect.
         .onTapGesture { focused.wrappedValue = true }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("Search cities"))
-        .accessibilityAddTraits(.isSearchField)
-        .accessibilityIdentifier("onboarding.search")
+        // No `.combine` here: the field and the clear button stay independent a11y elements so the
+        // clear button's `searchwell.clear` id can resolve. The field owns label + `.isSearchField`.
+    }
+}
+
+/// Attaches an `.accessibilityIdentifier` only when a non-nil id is supplied — never stamps an empty id.
+private struct OptionalAccessibilityID: ViewModifier {
+    let id: String?
+    init(_ id: String?) { self.id = id }
+    func body(content: Content) -> some View {
+        if let id {
+            content.accessibilityIdentifier(id)
+        } else {
+            content
+        }
     }
 }
 
