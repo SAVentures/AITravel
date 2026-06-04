@@ -7,15 +7,18 @@
 // scenario injection and queries exclusively by accessibility identifier — never by displayed text
 // (locale-sensitive).
 //
+// NOTE: the Recent rail (recentRail / recentChip helpers) was REMOVED from DestinationStepView.
+// The `rail.recent.<cityId>` accessibility identifiers no longer exist in the view source.
+// testRecentPillSelectsCity was deleted (it queried a removed affordance).
+//
 // Scenario: UITEST_SCENARIO=onboardingA
 //   • Destination: Lisbon (city-lisbon), pre-selected (savedHere = 23 → returningWithLocalSaves)
-//   • City options (grid + rail): Lisbon · Tokyo (city-tokyo) · Mexico City (city-mexico-city) · Marrakech (city-marrakech)
+//   • City options (grid): Lisbon · Tokyo (city-tokyo) · Mexico City (city-mexico-city) · Marrakech (city-marrakech)
 //   • CTA title: "Continue with Lisbon" initially
 //
 // Identifiers confirmed against live View source (DestinationStepView.swift, SearchWell.swift):
 //   destination.cta              — primary CTA button (OnboardingActionFloor actions: slot, line 83)
 //                                  HIDDEN when store.onboarding?.destination == nil (search focused)
-//   rail.recent.<cityId>         — each Recent rail chip Button (line 275); NORMAL mode only
 //   destination.city.<cityId>    — each grid tile Button (line 326); NORMAL mode only
 //   destination.search           — outer screen-contract id on the SearchWell (line 162);
 //                                  falls back to "onboarding.search" (SearchWell internal, line 103)
@@ -42,10 +45,12 @@ import XCTest
 
 /// XCUITest flow for `DestinationStepView` — the onboarding destination picker (step 01).
 ///
-/// Tests the final behavior: normal-mode pill/grid selection updates the CTA; entering search mode
+/// Tests the final behavior: normal-mode grid selection updates the CTA; entering search mode
 /// clears the selection so the CTA hides; typing filters the result list; tapping a result row
 /// calls select(city:) + advanceOnboardingStep() — the step advances to Trip Shape (destination
 /// screen exits, tripshape.cta appears). Also runs the accessibility audit with a narrow documented exemption.
+/// Note: the Recent rail (recentRail / recentChip) was removed from DestinationStepView —
+/// testRecentPillSelectsCity was deleted because rail.recent.* identifiers no longer exist.
 @MainActor
 final class OnboardingDestinationUITests: XCTestCase {
 
@@ -74,59 +79,6 @@ final class OnboardingDestinationUITests: XCTestCase {
             "destination.cta must exist — onboardingA seeds Lisbon as the pre-selected city"
         )
         return cta
-    }
-
-    // MARK: - testRecentPillSelectsCity
-    //
-    // Verifies that tapping a Recent rail pill (id `rail.recent.<cityId>`) updates the CTA.
-    // Recent rail pills are NORMAL mode — they exist when the search field is NOT focused.
-    // The regression this locks: pills were rendered as static Text instead of Button.
-
-    func testRecentPillSelectsCity() throws {
-        robot.launch(scenario: "onboardingA")
-        let cta = waitForDestinationScreen()
-
-        // ── Initial state: CTA title contains "Lisbon" (the pre-selected city for scenario A) ──
-        let initialLabel = cta.label
-        XCTAssertTrue(
-            initialLabel.localizedCaseInsensitiveContains("Lisbon"),
-            "CTA label must contain 'Lisbon' initially; got '\(initialLabel)'"
-        )
-
-        // Attach a screenshot of the initial state — triage aid for CI, never pixel-diffed (§7.5).
-        let initialShot = XCTAttachment(screenshot: robot.app.screenshot())
-        initialShot.name = "destination-initial-lisbon-selected"
-        initialShot.lifetime = .keepAlways
-        add(initialShot)
-
-        // ── Tap the Tokyo Recent rail pill (NORMAL mode) ──
-        // id: rail.recent.city-tokyo  (SampleData.tokyoCity() → City.id = "city-tokyo")
-        let tokyoPill = robot.app.buttons["rail.recent.city-tokyo"]
-        XCTAssertTrue(
-            tokyoPill.waitForExistence(timeout: 4),
-            "rail.recent.city-tokyo must exist in the Recent rail for scenario A (normal mode)"
-        )
-        XCTAssertTrue(
-            tokyoPill.isHittable,
-            "Tokyo pill must be hittable — the regression was that pills were not interactive"
-        )
-        tokyoPill.tap()
-
-        // ── After tap: CTA title must contain "Tokyo" ──
-        // DestinationStepPresenter.ctaTitle reads draft.destination.name.
-        let tokyoLabelPredicate = NSPredicate(format: "label CONTAINS[cd] 'Tokyo'")
-        let tokyoExpectation = XCTNSPredicateExpectation(predicate: tokyoLabelPredicate, object: cta)
-        let result = XCTWaiter.wait(for: [tokyoExpectation], timeout: 4)
-        XCTAssertEqual(
-            result, .completed,
-            "CTA label must contain 'Tokyo' after tapping the Tokyo pill; got '\(cta.label)'"
-        )
-
-        // Attach after-tap screenshot.
-        let afterTapShot = XCTAttachment(screenshot: robot.app.screenshot())
-        afterTapShot.name = "destination-after-tokyo-pill-tap"
-        afterTapShot.lifetime = .keepAlways
-        add(afterTapShot)
     }
 
     // MARK: - testGridTileSelectsCity
