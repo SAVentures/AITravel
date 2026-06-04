@@ -61,11 +61,6 @@ struct GettingAroundStepView: View {
 
     @ViewBuilder private func hero(_ p: GettingAroundStepPresenter) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            Text(p.heroEyebrow)
-                .font(Typography.caption)
-                .tracking(Typography.trackEyebrowCaption)
-                .textCase(.uppercase)
-                .foregroundStyle(ColorRole.textSecondary)
             Text(p.heroQuestion)
                 .font(Typography.titleLarge)
                 .tracking(Typography.titleLargeTracking)

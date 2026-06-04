@@ -50,11 +50,6 @@ struct WhenStepView: View {
 
     private func hero(_ p: WhenStepPresenter) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text(p.eyebrow)
-                .font(Typography.caption)
-                .tracking(Typography.trackEyebrowCaption)
-                .textCase(.uppercase)
-                .foregroundStyle(ColorRole.textTertiary)
             Text(p.question)
                 .font(Typography.titleLarge)
                 .foregroundStyle(ColorRole.textPrimary)
@@ -70,7 +65,6 @@ struct WhenStepView: View {
 
     @ViewBuilder private func whenControls(_ p: WhenStepPresenter) -> some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
-            monthMenu(p)
 
             SegmentedSelector(
                 options: DatePrecision.allCases,
@@ -80,9 +74,12 @@ struct WhenStepView: View {
                 accessibilityIDPrefix: "when.precision",
                 onSelect: { store.onboarding?.setDatePrecision($0) }
             )
+            
 
             if p.datePrecision == .exactDates {
                 exactDates(p)
+            } else {
+                monthMenu(p)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

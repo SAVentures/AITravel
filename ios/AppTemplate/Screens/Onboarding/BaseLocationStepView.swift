@@ -90,11 +90,6 @@ struct BaseLocationStepView: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Base location")
-                .font(Typography.caption)
-                .tracking(Typography.trackEyebrowCaption)
-                .textCase(.uppercase)
-                .foregroundStyle(ColorRole.textTertiary)
             Text("Where will you base yourself?")
                 .font(Typography.titleLarge)
                 .foregroundStyle(ColorRole.textPrimary)
