@@ -70,6 +70,12 @@ struct ManualAddressPickerSheet: View {
                 }
             }
             .accessibilityIdentifier("addresspicker.map")
+            // VoiceOver can't tap-on-map spatially; describe the map and expose the tap-to-pin behaviour
+            // as a non-spatial action that drops a pin at the current search-region centre.
+            .accessibilityLabel("Map — search a place above or tap a result to drop a pin")
+            .accessibilityAction(named: "Drop pin at map center") {
+                Task { await dropPin(at: searchRegion.center) }
+            }
         }
     }
 
@@ -82,6 +88,8 @@ struct ManualAddressPickerSheet: View {
                 placeholder: "Search hotel or address",
                 kbdHint: nil,
                 showsClearButton: true,
+                accessibilityID: "addresspicker.search",
+                accessibilityLabel: "Search address",
                 focused: $searchFocused
             )
             // Opaque paper backing + rest shadow so the well reads as a floating control over the map,
@@ -94,7 +102,6 @@ struct ManualAddressPickerSheet: View {
                 searchTask?.cancel()
                 Task { await runSearch() }
             }
-            .accessibilityIdentifier("addresspicker.search")
 
             if !results.isEmpty {
                 resultsList

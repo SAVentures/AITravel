@@ -69,14 +69,9 @@ struct BaseLocationStepView: View {
         }
         // Floating back glyph overlaid as chrome (not in scroll content) — the one glass surface (J-0.1).
         .overlay(alignment: .topLeading) {
-            GlassCircleButton(
-                systemImage: "chevron.left",
-                accessibilityLabel: "Back",
-                action: { store.retreatOnboardingStep() }
-            )
-            .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.sm)
-            .accessibilityIdentifier("onboarding.back")
+            GlassCircleButton(.back, action: { store.retreatOnboardingStep() })
+                .padding(.leading, Spacing.screenInset)
+                .padding(.top, Spacing.sm)
         }
         .sheet(isPresented: $showingAddressPicker) {
             ManualAddressPickerSheet(initialRegion: presenter.pickerRegion) { base in
@@ -109,6 +104,7 @@ struct BaseLocationStepView: View {
             label: \.title,
             systemImage: \.systemImage,
             accessibilityIDPrefix: "basemode",
+            accessibilityLabel: "Base location mode",
             onSelect: { option in
                 store.onboarding?.setBaseMode(option.mode)
             }

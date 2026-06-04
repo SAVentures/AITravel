@@ -40,14 +40,9 @@ struct TripShapeStepView: View {
                 .padding(.top, Spacing.xl)
         }
         .overlay(alignment: .topLeading) {
-            GlassCircleButton(
-                systemImage: "chevron.left",
-                accessibilityLabel: "Back",
-                action: { store.retreatOnboardingStep() }
-            )
-            .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.sm)
-            .accessibilityIdentifier("onboarding.back")
+            GlassCircleButton(.back, action: { store.retreatOnboardingStep() })
+                .padding(.leading, Spacing.screenInset)
+                .padding(.top, Spacing.sm)
         }
     }
 
@@ -124,6 +119,7 @@ struct TripShapeStepView: View {
                     label: \.label,
                     systemImage: { _ in nil },
                     accessibilityIDPrefix: "pace",
+                    accessibilityLabel: "Pace",
                     onSelect: { store.onboarding?.setPace($0) }
                 )
             }

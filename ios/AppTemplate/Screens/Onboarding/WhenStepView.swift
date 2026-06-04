@@ -35,14 +35,9 @@ struct WhenStepView: View {
             }
         }
         .overlay(alignment: .topLeading) {
-            GlassCircleButton(
-                systemImage: "chevron.left",
-                accessibilityLabel: "Back",
-                action: { store.retreatOnboardingStep() }
-            )
-            .padding(.leading, Spacing.screenInset)
-            .padding(.top, Spacing.sm)
-            .accessibilityIdentifier("onboarding.back")
+            GlassCircleButton(.back, action: { store.retreatOnboardingStep() })
+                .padding(.leading, Spacing.screenInset)
+                .padding(.top, Spacing.sm)
         }
     }
 
@@ -72,6 +67,7 @@ struct WhenStepView: View {
                 label: \.label,
                 systemImage: { _ in nil },
                 accessibilityIDPrefix: "when.precision",
+                accessibilityLabel: "Date precision",
                 onSelect: { store.onboarding?.setDatePrecision($0) }
             )
             
@@ -98,6 +94,7 @@ struct WhenStepView: View {
                 Image(systemName: "calendar")
                     .font(Typography.footnote)
                     .foregroundStyle(ColorRole.textTertiary)
+                    .accessibilityHidden(true)
                 Text(p.selectedMonthLabel)
                     .font(Typography.name)
                     .foregroundStyle(ColorRole.textPrimary)
@@ -105,12 +102,15 @@ struct WhenStepView: View {
                 Image(systemName: "chevron.up.chevron.down")
                     .font(Typography.caption)
                     .foregroundStyle(ColorRole.textTertiary)
+                    .accessibilityHidden(true)
             }
             .padding(.vertical, Spacing.md)
             .padding(.horizontal, Spacing.lg)
             .background(ColorRole.fillTertiary, in: .capsule)
         }
         .accessibilityIdentifier("when.month")
+        .accessibilityLabel("Trip month")
+        .accessibilityValue(p.selectedMonthLabel)
     }
 
     @ViewBuilder private func exactDates(_ p: WhenStepPresenter) -> some View {
