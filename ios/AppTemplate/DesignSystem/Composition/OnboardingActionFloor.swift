@@ -65,22 +65,6 @@ struct OnboardingActionFloor: View {
     }
 }
 
-// MARK: - Optional-id passthrough
-
-private extension View {
-    /// Attaches `.accessibilityIdentifier` ONLY when `id` is non-nil. A nil id leaves the element
-    /// unstamped (no empty `""` id), so the `.elementDetection` audit never sees a decorative blank-id
-    /// node (Track B Task 1.3). The component owns the mechanism; the caller owns the value.
-    @ViewBuilder
-    func accessibilityIdentifier(ifPresent id: String?) -> some View {
-        if let id {
-            accessibilityIdentifier(id)
-        } else {
-            self
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Primary only") {

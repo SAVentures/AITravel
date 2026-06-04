@@ -88,21 +88,6 @@ struct GlassCircleButton: View {
     }
 }
 
-// MARK: - Conditional accessibility-identifier modifier
-
-private extension View {
-    /// Applies `.accessibilityIdentifier` only when `id` is non-nil — no `?? ""` foot-gun. A `nil` id
-    /// leaves the view untouched so it exposes no empty-id node in the accessibility tree.
-    @ViewBuilder
-    func accessibilityIdentifier(ifPresent id: String?) -> some View {
-        if let id {
-            accessibilityIdentifier(id)
-        } else {
-            self
-        }
-    }
-}
-
 // MARK: - Preview
 
 /// A faux frosted/striped stage (ports the mockup `.glass-stage`) so the glass translucency reads — the
