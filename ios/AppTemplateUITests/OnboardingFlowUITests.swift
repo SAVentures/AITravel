@@ -153,8 +153,12 @@ final class OnboardingFlowUITests: XCTestCase {
             cardA.waitForExistence(timeout: 4),
             "tripshape.a must exist in scenario A (unlocked fixed-days card, always above fold)"
         )
-        XCTAssertTrue(
-            cardA.isHittable,
+        // Wait for isHittable separately — the ×10-slowed destination→tripShape transition can leave
+        // the element in the tree but not yet touchable.
+        let hittablePredicate = NSPredicate(format: "isHittable == true")
+        let hittableExpectation = XCTNSPredicateExpectation(predicate: hittablePredicate, object: cardA)
+        XCTAssertEqual(
+            XCTWaiter().wait(for: [hittableExpectation], timeout: 4), .completed,
             "tripshape.a must be hittable — unlocked cards carry the .isButton trait (SelectAction)"
         )
 
@@ -164,30 +168,44 @@ final class OnboardingFlowUITests: XCTestCase {
         step2BeforeShot.lifetime = .keepAlways
         add(step2BeforeShot)
 
-        // Tap card A — fires accessibilityAction { select(strategy: .fixedDays) } on the draft.
-        // TripShapeCard's SelectAction attaches both .onTapGesture AND .accessibilityAction, so
-        // element.tap() in XCUITest fires via the accessibility tree (see TripShapeCard.swift:238-241
-        // and docs/decisions.md "L4 onTapGesture note"). The @Observable canContinue propagation
-        // may not be synchronous with the tap, so we gate the CTA tap on isEnabled becoming true.
-        cardA.tap()
+        // Tap card A via a coordinate on the LEFT/TITLE region, away from the right-hand diagram column.
+        //
+        // TripShapeCard is an HStack: content column (maxWidth: .infinity, left) + diagram column (fixed
+        // width, right). XCUITest's center tap lands in or near the diagram column, which is
+        // accessibilityHidden and does not participate in the gesture/action dispatch reliably during
+        // the spring animation. Tapping at (dx: 0.22, dy: 0.4) — left ~quarter, upper half — lands
+        // squarely on the eyebrow/title text region inside the .contentShape(.rect) hit area, clear of
+        // the diagram. SelectAction attaches both .onTapGesture AND .accessibilityAction, so the
+        // coordinate tap reliably fires the onTapGesture path (docs/decisions.md "L4 onTapGesture note").
+        //
+        // The @Observable canContinue propagation may not be synchronous with the tap, so we gate the
+        // CTA tap on isEnabled becoming true. A bounded retry (3 attempts) re-taps the same coordinate
+        // and builds a FRESH XCTNSPredicateExpectation each time — XCTest forbids reusing the same
+        // expectation object more than once (NSInternalInconsistencyException: "expectations can only
+        // be waited on once"), which is why the previous single-instance retry path was flaky.
+        let cardACoordinate = cardA.coordinate(withNormalizedOffset: CGVector(dx: 0.22, dy: 0.4))
+        cardACoordinate.tap()
 
-        // Wait for canContinue → primaryEnabled → CTA.isEnabled to propagate.
-        // The CTA is never removed from the tree (it stays with .disabled(!primaryEnabled)), so
-        // waitForExistence is insufficient — we must poll isEnabled. A bounded retry of the card
-        // tap guards against the rare case where the first tap does not register (e.g. spring
-        // animation still settling), as documented in docs/decisions.md for this affordance.
         let enabledPredicate = NSPredicate(format: "isEnabled == true")
-        let ctaEnabledExpectation = XCTNSPredicateExpectation(predicate: enabledPredicate, object: tripshapeCTA)
-        let enabledResult = XCTWaiter.wait(for: [ctaEnabledExpectation], timeout: 3)
-        if enabledResult != .completed {
-            // Retry the card tap once — the accessibility propagation may have lost the first tap
-            // during animation. If still not enabled after the retry wait, the assertion below fails
-            // with a clear message rather than silently advancing with a disabled CTA tap.
-            cardA.tap()
-            XCTWaiter.wait(for: [ctaEnabledExpectation], timeout: 3)
+        var ctaEnabled = false
+        for attempt in 0..<3 {
+            if attempt > 0 {
+                // Re-tap the same left/title coordinate on retry — the accessibility propagation may
+                // have lost the first tap during the spring animation settling.
+                cardACoordinate.tap()
+            }
+            // Build a fresh expectation per iteration — XCTest will reject a reused instance.
+            let freshExpectation = XCTNSPredicateExpectation(predicate: enabledPredicate, object: tripshapeCTA)
+            let result = XCTWaiter().wait(for: [freshExpectation], timeout: 3)
+            if result == .completed {
+                ctaEnabled = true
+                break
+            }
         }
+        // Assert the gate separately so a failure here prints clearly rather than tapping a
+        // disabled CTA and producing a confusing downstream boundary failure.
         XCTAssertTrue(
-            tripshapeCTA.isEnabled,
+            ctaEnabled && tripshapeCTA.isEnabled,
             "tripshape.cta must be enabled after card A selection — canContinue must be true (selectedStrategy != nil)"
         )
         tripshapeCTA.tap()
