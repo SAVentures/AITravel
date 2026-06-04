@@ -232,6 +232,23 @@ per state (§10, `07-testing.md §6`). The component inventory pairs with `mocku
 markup's structure, don't reinvent. Promote a screen subview to a component only when a *second* screen
 needs it (`06-screens.md §1`).
 
+### 8.1 Accessibility — the component owns its a11y (the caller owns the values)
+
+A reusable component owns the **mechanism** of its accessibility (an `accessibilityID` passthrough + its
+own label/value/trait); the **caller** owns the **values** (the id string, the human label).
+`OnboardingActionFloor` is the reference — bakes no id, the caller supplies it. Never bake an id callers
+must vary (the `SearchWell`/`GlassCircleButton` anti-pattern that made every screen hand-attach and every
+test guess); never `?? ""` an optional id (use a conditional `.accessibilityIdentifier(ifPresent:)`). A
+component owning its **single stable** id is fine. The regression gate is `.claude/scripts/a11y-ownership-lint.sh`.
+
+**The a11y-vs-XCUITest tensions** (each cost a fix loop — design for both up front):
+
+| You want | The naïve break | Do this |
+|---|---|---|
+| a group `accessibilityValue` (VoiceOver reads "Date precision, Exact dates") **and** per-segment XCUITest taps | `.accessibilityElement(children: .ignore)` collapses the children → the per-segment ids stop resolving | `.contain` (not `.ignore`/`.combine`) — the container carries the value, children stay independently tappable (`DayStepper` proves it) |
+| `.contain` on content **inside a horizontal `ScrollView`** | `.contain` constrains the track to the viewport width → labels truncate | add `.fixedSize(horizontal: true, vertical: false)` to the scrolling track |
+| a green `performAccessibilityAudit` | `.elementDetection` ("potentially inaccessible text") is a **flaky render-heuristic** — passes one run, fails the next, flags decorative text even after a real label is added; the element is **not** extractable from stdout/xcresult | keep a **narrow** `auditType == .elementDetection && id.isEmpty && label.isEmpty` suppression **with** a named live compensating control (a real label + an AX5 snapshot), per `07-testing.md §7.4` — don't chase the element forever |
+
 ---
 
 ## 9. Composition primitives (the shell)

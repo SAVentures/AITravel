@@ -66,6 +66,17 @@ the **Done-when acceptance criteria** — not the bodies. You write the implemen
 - Appearance defers to `docs/design-docs/` + `foundations.css`; this agent owns the Swift port only.
 - **Don't build.** The coordinator runs the gate after you report. Flag anything you couldn't confirm.
 
+## Known landmines — read `05-design-system.md §8.1` when a component carries accessibility
+
+- **The component owns its a11y mechanism; the caller owns the values.** Expose an `accessibilityID`
+  passthrough — never bake an id callers must vary, never `?? ""` an optional id (use
+  `.accessibilityIdentifier(ifPresent:)`). The lint `.claude/scripts/a11y-ownership-lint.sh` enforces this.
+- **A group `accessibilityValue` must use `.contain`, not `.ignore`** (`.ignore` hides the children → kills
+  XCUITest per-segment taps). Inside a horizontal `ScrollView`, `.contain` truncates the track — add
+  `.fixedSize(horizontal: true, vertical: false)`.
+- **An a11y change must stay appearance-neutral** — confirm the component's render snapshot is
+  byte-identical (don't silently re-record). A visible shift = a real change to review.
+
 ## Report
 
 Status; files written/edited; the tier touched and the entry added (role → primitive mapping, or the

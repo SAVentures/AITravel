@@ -70,6 +70,17 @@ symbols:
 - **Don't run the suite yourself.** Don't invoke `xcodebuild … test` — the coordinator runs it as the
   four-layer gate after you report. Write tests that compile and pass against the live source.
 
+## Known landmines — read `07-testing.md §6.6` before any parameterized or MainActor test
+
+These cost a coordinator fix-loop every time. Get them right up front:
+- `@Test(arguments:)` evaluates its args **nonisolated** — never put a `@MainActor` builder
+  (`SampleData.fooContext()`, `toDomain()`) in the args. Parameterize over a **nonisolated tag** enum and
+  build the value **inside** the `@MainActor` body.
+- A `static` arguments table in a `@MainActor` suite needs `nonisolated static let` (row type `Sendable`).
+- `@Test(arguments: a, b)` is the **Cartesian product** (N×M), not a zip — pass one `[(A,B)]` array.
+- A `@Test` method's param type must be ≥ the method's access — keep the fixture tag **internal**.
+- `==` between two reference-model instances is identity — assert on **fields** (also a §6.6 row's cousin).
+
 ## Report
 
 Status, test files written, what each asserts (by layer), and — for every mutating command touched —

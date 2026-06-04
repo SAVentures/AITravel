@@ -84,6 +84,17 @@ or pin the animation to a settled state.
   gate runs it (recording baselines on first pass) after you report. Write tests that compile and
   produce deterministic frames.
 
+## Known landmines — read `07-testing.md §6.6`
+
+- **Add new methods; never modify an existing one to "fix" a diff.** A baseline that moved means a real
+  visual change — surface it, don't absorb it.
+- **Recording is per-invocation, not per-method:** `SNAPSHOT_TESTING_RECORD=all` on a whole suite
+  re-records **every** baseline and can mask a regression. Flag to the coordinator to record the narrowest
+  target and `git diff --stat -- '*.png'` after — never leave `record:` in code.
+- **AX5 is the compensating control** for the suppressed `.dynamicType` audit (§7.4) — add an `*-ax5`
+  variant (`.environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge)`) for type-dense glass-free
+  components.
+
 ## Report
 
 Status, test files + reference snapshots written, the states covered per component/screen, whether you

@@ -47,6 +47,21 @@ not the bodies. You write the flow against the **real** app:
 - **Don't run the suite yourself.** The coordinator's UI/E2E gate runs the flow on the pinned simulator
   via `xcodebuild … test` after you report; write it to compile and pass against the live hooks.
 
+## Known landmines — read `05-design-system.md §8.1` + `07-testing.md §6.6`
+
+- **Assert value/label, not just existence.** An element whose contract is an `accessibilityValue`/`Label`
+  (progress bar, stepper, segmented group) needs a `.value`/`.label` assertion. A step value may live on
+  `.label` (set there to avoid VoiceOver double-readout) — assert `.label`, not `.value`.
+- **A group value lives on a `.contain` container** (not `.ignore`) — query it by its label, e.g.
+  `app.otherElements.matching(NSPredicate(format: "label == 'Date precision'")).firstMatch`; the per-segment
+  Buttons stay tappable by their own ids.
+- **`.elementDetection` ("potentially inaccessible text") is a flaky render-heuristic** — keep its
+  suppression **narrow** (`auditType == .elementDetection && id.isEmpty && label.isEmpty`) with a named
+  compensating control; never a whole-type/blanket `return true`. The element isn't in stdout/xcresult.
+- **A tap that misses on a non-Button affordance** (`.onTapGesture`/`.accessibilityAction`): use
+  `coordinate(withNormalizedOffset:).tap()` + a **fresh** `XCTNSPredicateExpectation` per retry (an
+  expectation can't be waited on twice).
+
 ## Report
 
 Status, the UITest file written, the scenarios/states covered, the identifiers asserted, the failure/

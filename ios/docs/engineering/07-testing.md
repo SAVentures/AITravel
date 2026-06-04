@@ -275,6 +275,18 @@ objectVersion 77)**. Get them right up front:
 | `extra argument 'snapshotDirectory'` | that parameter doesn't exist in swift-snapshot-testing 1.19 | don't pass it — the dir derives from `#filePath`. Pin the library's actual `assertSnapshot` signature before calling. |
 | `Multiple commands produce …/<State>.png` at build time | synchronized folders bundle the committed baseline PNGs into the test target; same-named PNGs across suites collide when flattened | set **`EXCLUDED_SOURCE_FILE_NAMES = "*.png"`** on the test target (baselines must never be bundle resources). The IDE-written exception set works too; hand-edited `.pbxproj membershipExceptions` *didn't take effect in our case* — prefer the build setting or the IDE. |
 
+### 6.6 Swift Testing, build & simulator gotchas (each bit us — fix once, here)
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `expression is 'async' but not marked 'await'` inside an expanded `@Test(arguments:)` | the `arguments:` expression is evaluated **nonisolated** at registration; a `@MainActor` builder (`SampleData.fooContext()`, `toDomain()`) can't be called there | parameterize over a **nonisolated tag** (a plain enum) and build the MainActor value **inside** the `@MainActor` test body (`tag.context()`) — never in the args position |
+| `main actor-isolated static property 'rows' cannot be accessed…` | the `@Test(arguments: rows)` table is a `static` in a `@MainActor` suite | `nonisolated static let rows` (the row type must be `Sendable`) |
+| a parameterized test runs **N×M** cases, not N | `@Test(arguments: a, b)` is the **Cartesian product**, not a zip | pass a **single `[(A,B)]` tuple array** (or `zip(a,b)`) to pair element-wise |
+| `method must be declared fileprivate because its parameter uses a private type` | a `@Test` method's param type must be ≥ the method's access (internal default) | keep the fixture tag **internal** (no `private`/`fileprivate`) |
+| `Symbol not found … dlopen` when running tests after a signature change | `xcodebuild build` rebuilds the app target but **not** the test bundle | use **`build-for-testing`** (or `test`) after any signature change; `build` alone leaves a stale test bundle |
+| `SNAPSHOT_TESTING_RECORD=all` on a whole suite silently re-records **every** baseline — masking a real regression | recording is per-invocation, not per-method | record the narrowest target; **always** `git diff --stat -- '*.png'` after recording and review every changed PNG |
+| `performAccessibilityAudit` hangs at 0% CPU for thousands of seconds | the simulator's a11y service is **wedged** (common after the machine sleeps) | `xcrun simctl shutdown all` + reboot, then re-run. Multi-thousand-second test durations = environmental, not a code defect |
+
 ---
 
 ## 7. Layer 4 — UI / E2E (XCUITest)
