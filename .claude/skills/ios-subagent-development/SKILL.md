@@ -149,6 +149,29 @@ specific rule that applies, plus:
 - **Trust the build/test gate over a contaminated read.** If an agent's report disagrees with a clean
   build, believe the build.
 
+## Run only the tests the change touches (the XCUITest layer is the slow one)
+
+The functional + snapshot bundle is ~5s; **XCUITest is the tax** — every suite cold-boots the app, so the
+full pyramid is minutes. Don't pay it on every iteration: **select by blast radius**, not by habit.
+
+- **`.claude/scripts/affected-tests.sh [base-ref]`** maps the worktree diff → the exact
+  `-only-testing:<TARGET/CLASS>` selectors and prints them (one per line). A one-screen change → that one
+  `Onboarding<Name>UITests` + the presenter tests; a design-system component → its `*SnapshotTests` + the
+  screens that compose it (it greps usage); a `Models/Store/Networking` change → just the 5s functional
+  bundle. Structural changes it can't bound (`.pbxproj`, `AppStore.swift`, the token codegen,
+  `DesignSnapshot.swift`) **exit 2 → run the full pyramid**.
+  ```
+  cd <worktree>
+  sel=$(.claude/scripts/affected-tests.sh) || sel="-only-testing:AppTemplateTests -only-testing:AppTemplateUITests"
+  xcodebuild … test-without-building $sel
+  ```
+  Run the **full pyramid once pre-commit** regardless — affected-tests is for the inner loop, not the gate.
+- **Parallel testing (`-parallel-testing-enabled YES -parallel-testing-worker-count N`) is NOT a default
+  win here** — measured 266s vs ~240s serial for 4 suites. Each worker clones + cold-boots its own
+  simulator and re-installs the app; that overhead cancels the concurrency for this boot-dominated,
+  few-suite workload (and one long-pole suite caps the floor). Only reach for it when running *many*
+  independent suites at once, and measure before trusting it. Test *selection* beats test *parallelism* here.
+
 ## The gates (run in order before commit; stop and fix on first failure)
 
 1. **foundation-freeze** — at the Phase 0→2 boundary (above): design-reviewer FREEZE-READY, snapshots
