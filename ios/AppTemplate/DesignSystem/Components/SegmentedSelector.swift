@@ -93,6 +93,10 @@ private struct SegmentButtonStyle: ButtonStyle {
             .contentShape(.rect(cornerRadius: Radius.pill))
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(Motion.standard(Motion.tap), value: configuration.isPressed)
+            // Cross-fade (NOT a slide): the ink fill + label color fade out of the old segment and into
+            // the new one on selection change. Per-segment color change → opacity cross-fade, no shared
+            // geometry. Standard ease-out at the base rung — a discrete state change, not continuous (§2/§3).
+            .animation(Motion.standard(Motion.standard), value: isSelected)
     }
 
     private var labelColor: Color {

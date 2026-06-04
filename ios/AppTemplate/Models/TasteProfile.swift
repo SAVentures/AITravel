@@ -32,6 +32,20 @@ nonisolated enum Interest: String, CaseIterable, Codable, Equatable, Hashable, S
         case .art:          return "Art"
         }
     }
+
+    var systemImage: String {
+        switch self {
+        case .food:         return "fork.knife"
+        case .history:      return "building.columns"
+        case .coffee:       return "cup.and.saucer"
+        case .architecture: return "building.2"
+        case .views:        return "binoculars"
+        case .nightlife:    return "moon.stars"
+        case .markets:      return "bag"
+        case .nature:       return "leaf"
+        case .art:          return "paintpalette"
+        }
+    }
 }
 
 // MARK: - Pace
