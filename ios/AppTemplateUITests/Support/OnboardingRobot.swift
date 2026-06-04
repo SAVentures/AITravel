@@ -25,7 +25,8 @@
 //      exemptions without touching the common set.
 //      Reproduced verbatim from OnboardingTripShapeUITests.testAccessibilityAudit (lines 372-378),
 //      OnboardingWhenUITests (lines 328-334), OnboardingGettingAroundUITests (lines 396-402),
-//      OnboardingDestinationUITests (lines 353-358). Track B will refine this suppression set here.
+//      OnboardingDestinationUITests (lines 353-358). Suppression set refined in Track B Task 3.6
+//      — each whole-type suppression now names a live compensating check (§7.4).
 //
 // DIVERGENCES across suites (noted for the coordinator):
 //
@@ -167,15 +168,32 @@ import XCTest
     /// **Common suppression set (verbatim from all six suites):**
     /// - `.dynamicType` — the audit reads `adjustsFontForContentSizeCategory`, which SwiftUI's
     ///   `Font.custom(relativeTo:)` / `Font.system(.style)` don't surface; text DOES scale
-    ///   (Typography.swift binds every role to a Dynamic Type style, zero fixedSize). Durable lock
-    ///   is an AX5 render snapshot (Track B). Re-confirm on any new fixed-size font.
-    /// - `.contrast` — pixel-sampler mis-reads OKLCH inks over glass/scroll. Receded-ink contrast
-    ///   is a design-doc decision, not an XCUITest assertion.
+    ///   (Typography.swift binds every role to a Dynamic Type style, zero fixedSize).
+    ///   Compensating control (NOW LIVE — Track B Task 3.4): AX5 render snapshot baselines for
+    ///   every type-dense glass-free component: `ContextNoteSnapshotTests` (`*-ax5`),
+    ///   `DayStepperSnapshotTests` (`*-ax5`), `SegmentedSelectorSnapshotTests` (`*-ax5`),
+    ///   `GenerationProgressViewSnapshotTests` (`*-ax5`), `OnboardingProgressBarSnapshotTests`
+    ///   (`*-ax5`). These baselines lock Dynamic Type scaling at AX5 for the components that
+    ///   appear on every onboarding screen. Re-confirm on any new fixed-size font introduction.
+    ///   (Screen-level AX5 snapshots remain gapped where glass renders blank offscreen — see
+    ///   `decisions.md` 2026-06-03; the component baselines cover the type-dense surfaces.)
+    /// - `.contrast` — pixel-sampler mis-reads OKLCH inks over glass/scroll (flags the system
+    ///   `.glassProminent` CTA and ink-700-on-white, which definitionally pass at ≈4.8:1).
+    ///   Compensating control: receded-ink contrast ratios are a deliberate design-doc decision
+    ///   (`docs/design-docs/` + `decisions.md` 2026-06-03 audit entry); the committed snapshot
+    ///   baselines lock the rendered ink values so any unintentional token drift breaks L3 before
+    ///   reaching this audit.
     /// - `.textClipped` — FilterChip, SegmentedSelector, DayStepper, and Menu labels grow from
-    ///   minHeight/minWidth (no fixed frame); known FP on custom layout-driven elements.
+    ///   minHeight/minWidth (no fixed frame); the audit flags these as clipped when the intrinsic
+    ///   content size exceeds the measured bounds at the audit's sampling moment (known FP on
+    ///   custom layout-driven elements). Compensating control: the committed snapshot baselines for
+    ///   each of these components (`SegmentedSelectorSnapshotTests`, `DayStepperSnapshotTests`,
+    ///   `HScrollSectionSnapshotTests`) lock the rendered layout — a real clip would break those
+    ///   baselines before shipping.
     /// - `.hitRegion` on `onboarding.progress` — the progress bar is informational, not an
-    ///   interaction target. The identifier `"onboarding.progress"` is confirmed in
-    ///   `OnboardingProgressBar.swift` (line 27).
+    ///   interaction target; its small hit region is intentional. The identifier
+    ///   `"onboarding.progress"` is confirmed in `OnboardingProgressBar.swift` (line 27).
+    ///   Documented in `decisions.md` 2026-06-03 (audit suppression rationale).
     ///
     /// **Screen-specific suppressions** are passed in via `extraSuppressions`, NOT baked into the
     /// common set here.
@@ -199,7 +217,9 @@ import XCTest
     ///   }
     ///   ```
     ///
-    /// Track B will refine the suppression set in this one centralized place.
+    /// Suppression set refined in Track B Task 3.6 — every whole-type suppression now names a
+    /// live compensating check per §7.4. No further widening of the common set without a new
+    /// `decisions.md` entry naming the compensating control.
     func performOnboardingAudit(
         extraSuppressions: @escaping (XCUIAccessibilityAuditIssue) -> Bool = { _ in false }
     ) throws {

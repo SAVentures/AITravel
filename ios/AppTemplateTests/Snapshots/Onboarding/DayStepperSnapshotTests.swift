@@ -98,6 +98,26 @@ struct DayStepperSnapshotTests {
             named: "double-digit"
         )
     }
+
+    // MARK: - typical-ax5
+
+    /// AX5 compensating snapshot (§7.4). Same fixture as `typical` (value 4, mid-range) but
+    /// rendered at accessibilityExtraExtraExtraLarge (AX5) to lock Dynamic Type scaling of the
+    /// tabular numeral face, the "days" unit label, and the ± button glyphs at maximum text
+    /// size. Freezes any regression where a fixed frame or font-size token change silently
+    /// clips or overflows the stepper capsule at the largest accessibility category.
+    /// Glass-free component — renders fully at AX5.
+    /// (Task 3.4 — restores the AX5 compensating control lost per decisions.md 2026-06-03.)
+    @Test("typical-ax5 — AX5 Dynamic Type: value 4 mid-range, numeral + days unit at accessibilityXXXL")
+    @MainActor func typicalAX5() {
+        assertDesignSnapshot(
+            canvas {
+                DayStepper(value: 4, range: 1...14, onChange: { _ in })
+            }
+            .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge),
+            named: "typical-ax5"
+        )
+    }
 }
 
 // MARK: - Canvas helper

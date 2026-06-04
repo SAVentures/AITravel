@@ -37,7 +37,8 @@
 // Identifiers confirmed against ManualAddressPickerSheet.swift:
 //   addresspicker.map         — MapReader Map element (line 72); NOT queryable in XCUITest
 //                               (SwiftUI Map doesn't reliably surface as an element) — NOT asserted
-//   addresspicker.search      — SearchWell (line 97)
+//   addresspicker.search      — SearchWell's inner TextField (line 97); TextField carries .isSearchField
+//                               → resolves as app.searchFields["addresspicker.search"]
 //   addresspicker.cancel      — Cancel toolbar button (line 48)
 //   addresspicker.use         — "Use this location" confirm bar (line 173)
 //   addresspicker.result.<id> — result rows (live MKLocalSearch — NOT asserted in tests)
@@ -375,8 +376,9 @@ final class OnboardingBaseLocationUITests: XCTestCase {
     // MARK: - testGhostButtonOpensAddressPickerSheet
     //
     // Tapping baselocation.ghost opens ManualAddressPickerSheet. Sheet PRESENTATION is proven by
-    // addresspicker.search existing (SearchWell surfaces as a searchField/textField). addresspicker.map
-    // is NOT asserted — a SwiftUI Map does not reliably surface as a queryable XCUITest element.
+    // addresspicker.search existing (SearchWell's TextField carries .isSearchField → resolves as
+    // app.searchFields["addresspicker.search"]). addresspicker.map is NOT asserted — a SwiftUI Map
+    // does not reliably surface as a queryable XCUITest element.
     // CANCEL: tap addresspicker.cancel → addresspicker.search gone (sheet dismissed).
     //
     // IMPORTANT: No query is typed and no addresspicker.result.* rows are asserted — MKLocalSearch
@@ -399,22 +401,16 @@ final class OnboardingBaseLocationUITests: XCTestCase {
         // ── Tap ghost → sheet appears ──
         ghostButton.tap()
 
-        // ── Sheet content: search well and map must appear ──
-        // SearchWell uses .accessibilityElement(children: .combine) + .isSearchField, so XCUITest
-        // surfaces it as a searchField element type. Mirror the pattern from OnboardingDestinationUITests:
-        // try searchFields first, fall back to textFields in case a future SDK surfaces it differently.
-        let searchWellCandidate = robot.app.searchFields["addresspicker.search"]
-        let searchWell: XCUIElement
-        if searchWellCandidate.waitForExistence(timeout: 6) {
-            searchWell = searchWellCandidate
-        } else {
-            let textFieldCandidate = robot.app.textFields["addresspicker.search"]
-            XCTAssertTrue(
-                textFieldCandidate.waitForExistence(timeout: 3),
-                "addresspicker.search must exist as a searchField or textField after tapping baselocation.ghost"
-            )
-            searchWell = textFieldCandidate
-        }
+        // ── Sheet content: search well must appear ──
+        // SearchWell owns the .isSearchField trait on the inner TextField (SearchWell.swift line 67).
+        // No .combine wrapper — the TextField is an independent a11y element. The caller-supplied
+        // accessibilityID ("addresspicker.search") is stamped directly on the TextField via
+        // OptionalAccessibilityID, so the field resolves cleanly as app.searchFields["addresspicker.search"].
+        let searchWell = robot.app.searchFields["addresspicker.search"]
+        XCTAssertTrue(
+            searchWell.waitForExistence(timeout: 6),
+            "addresspicker.search must exist as a searchField after tapping baselocation.ghost"
+        )
 
         // addresspicker.map is NOT queried: a SwiftUI Map does not reliably expose as a queryable
         // element in XCUITest. Sheet presentation is fully proven by addresspicker.search existing

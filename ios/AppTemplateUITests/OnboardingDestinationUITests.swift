@@ -20,8 +20,8 @@
 //   destination.cta              — primary CTA button (OnboardingActionFloor actions: slot, line 83)
 //                                  HIDDEN when store.onboarding?.destination == nil (search focused)
 //   destination.city.<cityId>    — each grid tile Button (line 326); NORMAL mode only
-//   destination.search           — outer screen-contract id on the SearchWell (line 162);
-//                                  falls back to "onboarding.search" (SearchWell internal, line 103)
+//   destination.search           — id on the SearchWell's inner TextField (SearchWell.swift line 69);
+//                                  the TextField carries .isSearchField → resolves as app.searchFields
 //   destination.result.<cityId>  — each result-list row Button (line 216); SEARCH mode only
 //   onboarding.close             — floating GlassCircleButton × (line 131)
 //
@@ -37,8 +37,6 @@
 //
 // Launch/scroll/audit boilerplate is centralized in OnboardingRobot (Support/OnboardingRobot.swift).
 // This suite does NOT set UITEST_FAILURE_RATE (no write command yet; robot's failureRate: nil default).
-// The known-fragile double-stamped searchwell/destination.search id workaround (searchFields→textFields
-// hedge) is preserved exactly as-is — Track B owns the a11y-contract fix for that identifier.
 //
 // See ios/docs/engineering/07-testing.md §7 for the full XCUITest layer contract.
 import XCTest
@@ -165,25 +163,15 @@ final class OnboardingDestinationUITests: XCTestCase {
         add(preSearchShot)
 
         // ── 2. Tap the search field — clears selection, CTA must disappear ──
-        // SearchWell applies `.accessibilityElement(children: .combine)` + `.accessibilityAddTraits(.isSearchField)`
-        // (SearchWell.swift line 100–102), so it collapses to ONE element of type `.searchField` — NOT
-        // `.otherElement`. The screen's `.accessibilityIdentifier("destination.search")` (DestinationStepView.swift
-        // line 169) wins over the component-internal "onboarding.search". So query `app.searchFields`, with a
-        // `textFields` fallback in case a future SDK surfaces the combined field as a plain text field.
-        // NOTE: this searchFields→textFields hedge is a known-fragile workaround for the double-stamped
-        // searchwell/destination.search id — Track B owns the a11y-contract fix. Do NOT change this logic.
-        let searchElement: XCUIElement
-        let searchField = robot.app.searchFields["destination.search"]
-        if searchField.waitForExistence(timeout: 4) {
-            searchElement = searchField
-        } else {
-            let textField = robot.app.textFields["destination.search"]
-            XCTAssertTrue(
-                textField.waitForExistence(timeout: 3),
-                "Search field must exist as a searchField or textField with id 'destination.search'"
-            )
-            searchElement = textField
-        }
+        // SearchWell owns the .isSearchField trait on the inner TextField (SearchWell.swift line 67).
+        // No .combine wrapper on the outer HStack — the TextField is an independent a11y element.
+        // The caller-supplied accessibilityID ("destination.search") is stamped directly on the TextField
+        // via OptionalAccessibilityID, so the field resolves cleanly as app.searchFields["destination.search"].
+        let searchElement = robot.app.searchFields["destination.search"]
+        XCTAssertTrue(
+            searchElement.waitForExistence(timeout: 4),
+            "destination.search must exist as a searchField — TextField carries .isSearchField trait"
+        )
 
         searchElement.tap()
 
@@ -232,17 +220,10 @@ final class OnboardingDestinationUITests: XCTestCase {
         tokyoResult.tap()
 
         // After advancing, the destination search field must be gone — we are no longer on that step.
-        // Query across both element types used earlier (searchFields + textFields) to be exhaustive.
-        // NOTE: both element-type queries are part of the searchwell workaround — preserved for Track B.
-        let searchFieldAfter = robot.app.searchFields["destination.search"]
-        let textFieldAfter = robot.app.textFields["destination.search"]
+        // Single deterministic query by id — resolves as searchFields (TextField + .isSearchField trait).
         XCTAssertTrue(
-            searchFieldAfter.waitForNonExistence(timeout: 5),
-            "destination.search (searchField) must not exist after result-tap advances to Trip Shape"
-        )
-        XCTAssertFalse(
-            textFieldAfter.exists,
-            "destination.search (textField) must not exist after result-tap advances to Trip Shape"
+            robot.app.searchFields["destination.search"].waitForNonExistence(timeout: 5),
+            "destination.search must not exist after result-tap advances to Trip Shape"
         )
 
         // Trip Shape step CTA must now be present — confirms we landed on the next step.
