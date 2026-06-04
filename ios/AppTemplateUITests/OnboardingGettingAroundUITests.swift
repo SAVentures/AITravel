@@ -231,10 +231,16 @@ final class OnboardingGettingAroundUITests: XCTestCase {
         add(preToggleShot)
 
         // ── Toggle rideshare ON — unconditional (C2) ──
-        // Scroll to realize the rideshare chip into the accessibility tree, then assert it exists,
-        // is hittable, tap it, and assert isSelected == true post-tap.
+        // scrollToElement swipes until .exists (realized in the a11y tree). That is necessary but
+        // not sufficient: the chip may exist in the tree but still report isHittable == false if
+        // it is partially below the viewport or obscured by the floating action-floor glass chrome
+        // (OnboardingActionFloor). A second bounded swipe-up loop drives it fully into the clear
+        // viewport above the floor before asserting hittability — the total swipe budget stays ≤ 12.
         let rideshareChip = app.buttons["transport.alsook.rideshare"]
         robot.scrollToElement(rideshareChip)
+        // Scroll further until hittable (clears the floating action-floor chrome).
+        var hittableSwipes = 0
+        while !rideshareChip.isHittable && hittableSwipes < 6 { app.swipeUp(); hittableSwipes += 1 }
         XCTAssertTrue(
             rideshareChip.waitForExistence(timeout: 3),
             "transport.alsook.rideshare must exist after scroll"
@@ -277,9 +283,11 @@ final class OnboardingGettingAroundUITests: XCTestCase {
 
         // ── Toggle cycle ON — unconditional (C2) ──
         // Scroll to realize the cycle chip in case the view shifted after the rideshare taps,
-        // then assert existence, hittability, tap, and post-tap isSelected == true unconditionally.
+        // then scroll further until hittable (same floating-floor clearance logic as rideshare above).
         let cycleChip = app.buttons["transport.alsook.cycle"]
         robot.scrollToElement(cycleChip)
+        var cycleHittableSwipes = 0
+        while !cycleChip.isHittable && cycleHittableSwipes < 6 { app.swipeUp(); cycleHittableSwipes += 1 }
         XCTAssertTrue(
             cycleChip.waitForExistence(timeout: 3),
             "transport.alsook.cycle must exist after scroll"
