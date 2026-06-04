@@ -21,6 +21,9 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
     var scrollable: Bool = false
     let onSelect: (Option) -> Void
 
+    /// Shared-geometry namespace for the single ink "moving-train" pill (see `pill(for:)`).
+    @Namespace private var selectionPill
+
     var body: some View {
         if scrollable {
             ScrollView(.horizontal, showsIndicators: false) { track }
@@ -33,6 +36,7 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
     private var track: some View {
         HStack(spacing: Spacing.xs) {
             ForEach(options) { option in
+                let isSelected = option == selection
                 Button {
                     onSelect(option)
                 } label: {
@@ -41,13 +45,37 @@ struct SegmentedSelector<Option: Identifiable & Hashable>: View {
                         systemImage: systemImage(option)
                     )
                 }
-                .buttonStyle(SegmentButtonStyle(isSelected: option == selection, equalWidth: !scrollable))
+                .buttonStyle(SegmentButtonStyle(isSelected: isSelected, equalWidth: !scrollable))
+                // The selection pill is a SINGLE shared element: only the selected segment hosts it,
+                // tagged with the namespace, so on a selection change SwiftUI interpolates its frame
+                // from the old segment to the new one — the ink pill SLIDES ("moving train"), it does
+                // not fade in place. Unselected segments host no pill (the `fillTertiary` track shows
+                // through). Backgrounding here (not in the ButtonStyle) is required: a ButtonStyle can't
+                // see the namespace.
+                .background(pill(for: isSelected))
                 .accessibilityIdentifier("\(accessibilityIDPrefix).\(option.id)")
-                .accessibilityAddTraits(option == selection ? [.isSelected] : [])
+                .accessibilityAddTraits(isSelected ? [.isSelected] : [])
             }
         }
         .padding(Spacing.xs)
         .background(ColorRole.fillTertiary, in: .rect(cornerRadius: Radius.pill))
+        // Slide the matched-geometry pill on selection change. House curve = critically-damped ease-out
+        // (no overshoot — a timing curve can't bounce, satisfying E-1 / §1). Automatic/time-based move
+        // → the curve, not a spring (§3). Only the indicator's matched frame animates; no layout prop
+        // (§8 / E-2). The tap-commit press scale stays in the ButtonStyle at the `tap` rung.
+        .animation(Motion.standard(Motion.standard), value: selection)
+    }
+
+    /// The single ink pill, rendered only on the selected segment and tagged with the shared namespace
+    /// so it travels between segments. Resting appearance is unchanged: solid `textPrimary` ink (never
+    /// the accent — J-0.4 / J-2.4), `Radius.pill`.
+    @ViewBuilder
+    private func pill(for isSelected: Bool) -> some View {
+        if isSelected {
+            ColorRole.textPrimary
+                .clipShape(.rect(cornerRadius: Radius.pill))
+                .matchedGeometryEffect(id: "selectionPill", in: selectionPill)
+        }
     }
 }
 
@@ -89,24 +117,18 @@ private struct SegmentButtonStyle: ButtonStyle {
             .padding(.vertical, Spacing.sm)
             .padding(.horizontal, Spacing.md)
             .frame(minHeight: minTapTarget)
-            .background(fill, in: .rect(cornerRadius: Radius.pill))
             .contentShape(.rect(cornerRadius: Radius.pill))
+            // Tap feedback only: commit the press scale at the `tap` rung (≤100ms, §6). The SELECTION
+            // pill is NOT drawn here — it's a single matched-geometry element in the parent that slides
+            // (a ButtonStyle can't see the namespace). Label color flips with the selection in the
+            // parent's slide animation.
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(Motion.standard(Motion.tap), value: configuration.isPressed)
-            // Cross-fade (NOT a slide): the ink fill + label color fade out of the old segment and into
-            // the new one on selection change. Per-segment color change → opacity cross-fade, no shared
-            // geometry. Standard ease-out at the base rung — a discrete state change, not continuous (§2/§3).
-            .animation(Motion.standard(Motion.standard), value: isSelected)
     }
 
     private var labelColor: Color {
         if !isEnabled { return ColorRole.textTertiary }
         return isSelected ? ColorRole.textOnAccent : ColorRole.textSecondary
-    }
-
-    // Selected = solid ink (`textPrimary`), never the accent. Unselected is clear so the track shows through.
-    private var fill: Color {
-        isSelected ? ColorRole.textPrimary : .clear
     }
 }
 
