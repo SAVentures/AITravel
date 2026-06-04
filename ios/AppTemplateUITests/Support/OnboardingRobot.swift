@@ -186,10 +186,12 @@ import XCTest
     /// - `.textClipped` — FilterChip, SegmentedSelector, DayStepper, and Menu labels grow from
     ///   minHeight/minWidth (no fixed frame); the audit flags these as clipped when the intrinsic
     ///   content size exceeds the measured bounds at the audit's sampling moment (known FP on
-    ///   custom layout-driven elements). Compensating control: the committed snapshot baselines for
-    ///   each of these components (`SegmentedSelectorSnapshotTests`, `DayStepperSnapshotTests`,
-    ///   `HScrollSectionSnapshotTests`) lock the rendered layout — a real clip would break those
-    ///   baselines before shipping.
+    ///   custom layout-driven elements). Compensating control: committed snapshot baselines for
+    ///   every affected component: `FilterChipSnapshotTests` (`default`, `selected`, `with-icon`,
+    ///   `with-icon-selected`), `SegmentedSelectorSnapshotTests` (`*-ax5`),
+    ///   `DayStepperSnapshotTests` (`*-ax5`), `HScrollSectionSnapshotTests` (`with-meta`,
+    ///   `without-meta`). A real clip would shift the rendered bounds and break these baselines
+    ///   before shipping.
     /// - `.hitRegion` on `onboarding.progress` — the progress bar is informational, not an
     ///   interaction target; its small hit region is intentional. The identifier
     ///   `"onboarding.progress"` is confirmed in `OnboardingProgressBar.swift` (line 27).

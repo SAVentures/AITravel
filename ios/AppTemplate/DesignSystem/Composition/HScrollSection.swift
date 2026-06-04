@@ -62,22 +62,6 @@ struct HScrollSection<Content: View>: View {
     }
 }
 
-// MARK: - Optional-id passthrough
-
-private extension View {
-    /// Attaches `.accessibilityIdentifier` ONLY when `id` is non-nil. A nil id leaves the rail
-    /// unstamped (no empty `""` id), so the `.elementDetection` audit never sees a decorative blank-id
-    /// child node (Track B Task 1.3). The section owns the mechanism; the screen owns the prefix value.
-    @ViewBuilder
-    func accessibilityIdentifier(ifPresent id: String?) -> some View {
-        if let id {
-            accessibilityIdentifier(id)
-        } else {
-            self
-        }
-    }
-}
-
 #Preview("Recent rail") {
     HScrollSection("Recent", meta: "Last 6 months", accessibilityIDPrefix: "rail.recent") {
         ForEach(["Lisbon", "Tokyo", "Mexico City", "Reykjavík"], id: \.self) { city in

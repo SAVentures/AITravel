@@ -122,22 +122,6 @@ struct ActionBar: View {
     }
 }
 
-// MARK: - Optional-id passthrough
-
-private extension View {
-    /// Attaches `.accessibilityIdentifier` ONLY when `id` is non-nil. A nil id leaves the element
-    /// unstamped (no empty `""` id), so the `.elementDetection` audit never sees a decorative blank-id
-    /// node (Track B Task 1.3). The bar owns the mechanism; the screen owns the id value.
-    @ViewBuilder
-    func accessibilityIdentifier(ifPresent id: String?) -> some View {
-        if let id {
-            accessibilityIdentifier(id)
-        } else {
-            self
-        }
-    }
-}
-
 #Preview("Primary only") {
     placeholderStage {
         ActionBar(

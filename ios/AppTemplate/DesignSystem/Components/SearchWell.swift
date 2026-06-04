@@ -66,7 +66,7 @@ struct SearchWell: View {
                 .accessibilityLabel(Text(accessibilityLabel ?? "Search cities"))
                 .accessibilityAddTraits(.isSearchField)
                 // Identifier passthrough — attached ONLY when the caller supplies one (no `?? ""` foot-gun).
-                .modifier(OptionalAccessibilityID(accessibilityID))
+                .accessibilityIdentifier(ifPresent: accessibilityID)
 
             // A clear affordance once there's text to clear; the mono hint shows only while empty.
             if showsClearButton, !text.isEmpty {
@@ -80,7 +80,7 @@ struct SearchWell: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("Clear search"))
-                .accessibilityIdentifier("searchwell.clear")
+                .accessibilityIdentifier("searchwell.clear") // a11y-lint:own-subcontrol
             } else if let kbdHint, text.isEmpty {
                 Text(kbdHint)
                     .font(Typography.caption)
@@ -97,19 +97,6 @@ struct SearchWell: View {
         .onTapGesture { focused.wrappedValue = true }
         // No `.combine` here: the field and the clear button stay independent a11y elements so the
         // clear button's `searchwell.clear` id can resolve. The field owns label + `.isSearchField`.
-    }
-}
-
-/// Attaches an `.accessibilityIdentifier` only when a non-nil id is supplied — never stamps an empty id.
-private struct OptionalAccessibilityID: ViewModifier {
-    let id: String?
-    init(_ id: String?) { self.id = id }
-    func body(content: Content) -> some View {
-        if let id {
-            content.accessibilityIdentifier(id)
-        } else {
-            content
-        }
     }
 }
 
