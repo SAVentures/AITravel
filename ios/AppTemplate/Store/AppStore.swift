@@ -40,6 +40,18 @@ final class AppStore {
     /// drive the synchronous `advanceGeneration()` seam directly and never start this task.
     private var generationTask: Task<Void, Never>?
 
+    // MARK: - Saved feature state
+
+    /// `private(set)` so only the store replaces the graph (hydration / seed); views mutate *through*
+    /// the `addPlace` command and the row model methods, never by reassigning the container.
+    private(set) var savedPlaces: SavedPlacesModel?
+
+    var savedLoadState: LoadState = .idle
+
+    /// Set by an optimistic write command on rollback, cleared on success/retry. Surfaced as a banner
+    /// (06-screens.md §6), never a toast/alert.
+    var writeError: WriteError?
+
     init(api: APIClient = .live) {
         self.api = api
     }
@@ -51,6 +63,12 @@ final class AppStore {
         onboarding = draft
     }
 
+    /// Same-file seam so the `AppStore+Saved.swift` extension can replace the `private(set)` saved
+    /// graph at hydration / seed time while keeping the setter invisible to views.
+    func setSavedPlaces(_ places: SavedPlacesModel?) {
+        savedPlaces = places
+    }
+
     func setGenerationTask(_ task: Task<Void, Never>?) {
         generationTask = task
     }
@@ -58,6 +76,16 @@ final class AppStore {
     func cancelGenerationTask() {
         generationTask?.cancel()
         generationTask = nil
+    }
+
+    // MARK: - Seed seams (synchronous, no network)
+
+    /// Seed the saved graph directly from a DTO (a `SampleData` snapshot) so `#Preview`s, render
+    /// snapshots, and tests render deterministically without `await loadSavedPlaces()` (03-store §4).
+    /// Maps the DTO to the domain graph on the main actor and marks the load `.loaded`.
+    func loadSeed(savedPlaces dto: SavedPlacesDTO) {
+        setSavedPlaces(dto.toDomain())
+        savedLoadState = .loaded
     }
 
     // MARK: - Preview / snapshot seam
@@ -74,6 +102,15 @@ final class AppStore {
         draft.currentStep = step
         store.setOnboarding(draft)
         store.onboardingLoadState = .loaded
+        return store
+    }
+
+    /// A fresh `.mock()`-backed store seeded with a saved-places snapshot so Saved-tab `#Preview`s and
+    /// render snapshots never `await loadSavedPlaces()`. Choose the rendered state by choosing the
+    /// `SampleData` factory that built the DTO (populated / empty).
+    static func preview(savedPlaces dto: SavedPlacesDTO) -> AppStore {
+        let store = AppStore(api: .mock())
+        store.loadSeed(savedPlaces: dto)
         return store
     }
 }
