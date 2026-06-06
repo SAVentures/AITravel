@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 /*
  The single source of truth the whole UI reads. No `.shared` singleton — `init` is non-private so
@@ -12,6 +13,20 @@ import Observation
 @Observable
 final class AppStore {
     let api: APIClient
+
+    // MARK: - Navigation (one path per tab)
+
+    /// The active tab. Saved is the only tab built this milestone (the others are placeholders), so the
+    /// app boots into it. The tab bar binds to this; `push`/`pop` (AppStore+Navigation) operate on the
+    /// matching path below.
+    var selectedTab: AppTab = .saved
+
+    /// One `NavigationPath` per tab — each tab's `NavigationStack` drives presentation from its own
+    /// path; pushes route through the *active* tab's path, never a view-local one (03-store.md §2).
+    var tripPath  = NavigationPath()
+    var mapPath   = NavigationPath()
+    var savedPath = NavigationPath()
+    var youPath   = NavigationPath()
 
     // MARK: - Onboarding feature state
 
