@@ -10,8 +10,13 @@ struct MockSeed: Sendable {
     // nil for the `.empty` scenario → GetOnboardingContextRequest yields a 404.
     var onboardingContext: OnboardingContextDTO?
 
+    // nil for scenarios that don't populate saved places → GetSavedPlacesRequest yields a 404.
+    var savedPlaces: SavedPlacesDTO?
+
     // All fields default so MockSeed() for `.empty` survives features adding fields by extension.
-    init(onboardingContext: OnboardingContextDTO? = nil) {
+    init(onboardingContext: OnboardingContextDTO? = nil,
+         savedPlaces: SavedPlacesDTO? = nil) {
         self.onboardingContext = onboardingContext
+        self.savedPlaces = savedPlaces
     }
 }
