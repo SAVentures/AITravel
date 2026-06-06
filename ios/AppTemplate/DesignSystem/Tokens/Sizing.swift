@@ -72,5 +72,7 @@ enum Sizing {
         static let wayToSaveGlyph = Grid.x(10)
         /// 48 — WayToSaveRow prominent glyph tile (mockup `.method .mi` 46px, snapped to the 4pt grid).
         static let wayToSaveGlyphProminent = Grid.x(12)
+        /// 288 — PlaceDetailView photo-hero height (mockup `.pd-hero`, the over-hero takeover banner).
+        static let placeDetailHero = Grid.x(72)
     }
 }

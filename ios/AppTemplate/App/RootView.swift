@@ -73,9 +73,13 @@ struct RootView: View {
                 comingSoon(tab)
             }
         case .saved:
-            // TODO(Wave 3): swap .saved root → SavedListView + register PlaceDetailRoute
+            // The Saved tab home (Wave 3) + the place-detail destination registered once at the root so
+            // every pushed `PlaceDetailRoute` inherits it (06-screens §5).
             NavigationStack(path: $store.savedPath) {
-                comingSoon(tab)
+                SavedListView()
+                    .navigationDestination(for: PlaceDetailRoute.self) { route in
+                        PlaceDetailView(placeID: route.id)
+                    }
             }
         case .you:
             NavigationStack(path: $store.youPath) {
