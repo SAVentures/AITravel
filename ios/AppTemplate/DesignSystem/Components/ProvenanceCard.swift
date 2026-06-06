@@ -138,7 +138,10 @@ struct ProvenanceCard: View {
 
     private func quoteLine(_ quote: String) -> some View {
         Text(quote)
-            .font(Typography.callout.italic())
+            // J-3.6: the one editorial italic moment — carried by the DISPLAY face (Schibsted), not the UI
+            // family. `name` is the display role nearest the mockup `.prov .quote` (15px display italic; this
+            // role is 14px display). Solid ink, never a gradient (02-color §5 / 08-slop C-3).
+            .font(Typography.name.italic())
             .foregroundStyle(ColorRole.textPrimary)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)

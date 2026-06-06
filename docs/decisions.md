@@ -321,3 +321,25 @@ optional `failureRate` param is the scaffolding seam.
 
 **When the write lands:** wire the env var → app init → `.mock(failure:)`; add the rollback/error-path
 UITest; then remove this note. Cross-reference the A-DEC deferral entry above.
+
+---
+
+## 2026-06-06 — Saved: accent-as-fill roles are EARNED exceptions to J-2.4 (stamp pill, prominent way-to-save)
+
+**Decision.** Three Saved design-system roles use the accent as a low-alpha **fill/ring**, a deliberate
+exception to "the accent is never a fill" (J-2.4 / non-negotiable #4), each chip/row-scale and paired
+with text — never a card fill:
+- `ColorRole.stampFill` (`Primitive.accent50`) + `stampInk` (`accent700`) — the `SourcePlaceRow`
+  timestamp pill (mockup `.src-place .stamp`): a tiny "saved 3 mo ago" capsule.
+- `ColorRole.accentWashFill` (`accent50`) + `accentWashRing` (`accent100`) — the ONE prominent
+  `WayToSaveRow` ("Paste a reel", mockup `.method.primary`): an accent-tinted ground + 1px ring marking
+  the single primary method in the add sheet (one per region, J-6.1).
+
+**Why earned.** Each ports a specific mockup selector, is ≤row-scale (not a card/screen fill), uses the
+~6–13% alpha the mockup specifies, appears at most once per region, and pairs the tint with a text label
+(never color-alone, 02-color §6). They are intent-named semantic roles aliasing existing primitives — no
+`foundations.css`/codegen change. The category tints (`categoryTint`) are the same class, already chip-
+scale and day-mark-hued (not accent), so they don't need this carve-out.
+
+**Scope / supersede when.** Confined to these Saved affordances. Any new accent fill beyond a chip/row
+needs its own entry. If the system later offers an accent-wash material, revisit.
