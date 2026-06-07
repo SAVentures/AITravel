@@ -57,6 +57,20 @@ enum Typography {
     static let caption: Font = Font.system(.caption2, design: .monospaced)
         .weight(weight(Primitive.weightRegular))
 
+    // MARK: - Component type roles — rare, single-component (§1.1/§1.2: "rare → Component")
+
+    /// One-off type roles owned by a single component (the rare `Component` band of §1.2). Each binds a
+    /// Dynamic Type text style (scales to AX5, T-0.1/T-6.1) — never a fixed size.
+    enum Component {
+        /// `ConfirmationRow`'s large mono confirmation code (mockup `.conf-row .v`, `font-mono` 18px =
+        /// `--type-title-size`). No flat mono role sits at the title rung — the mono roles top out at
+        /// `.footnote` — so this is the documented single-component exception. Built the same way as the
+        /// flat mono roles (a text style + `.monospaced`), bound to `.title2` (the 18px Dynamic Type rung,
+        /// matching `Primitive.typeTitleSize`) so the focal code still scales (T-0.1, J-0.3).
+        static let confirmationCode: Font = Font.system(.title2, design: .monospaced)
+            .weight(weight(Primitive.weightRegular))
+    }
+
     // MARK: - Tracking (T-5) — em-relative letter-spacing, call-site-applied where loose
 
     // The registered family names (the EXACT names FontRegistry registers — FontRegistryTests verifies).

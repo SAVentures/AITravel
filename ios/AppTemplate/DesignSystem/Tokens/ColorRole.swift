@@ -176,4 +176,42 @@ enum ColorRole {
     /// accent-100`). The one place a coloured hairline is earned — it marks the recommended path, paired
     /// with the wash + title, not a side-tab accent border (08-slop A-1, J-10.4).
     static let accentWashRing: Color = Primitive.accent100
+
+    // MARK: - Booking-type marks — the wallet booking-type taxonomy cue, never a fill of size (02-color §2, J-2)
+    //
+    // The wallet's booking *type* (lodging / transport / activity / dining / other) tints the icon tile of
+    // a `BookingRow` / booking-detail hero / access-pass band (mockup `.bk-ico.*` / `.bd-ico.*` /
+    // `.acc-ico` in wallet-shell.css). A distinct taxonomy from `category*` (the saved-place taxonomy) and
+    // `source*` (provenance), but the SAME earned-tint class: each aliases an existing `day*` hue (NO new
+    // primitive) and the tile background is a ≤ icon-tile low-alpha wash (~12–13% of the mark), not a card
+    // fill — restraint kept by the opacity (J-2/J-0.4). Marks pair with an SF Symbol, never colour alone.
+
+    static let bookingLodging: Color = Primitive.day1   // amber  (mockup `.bk-ico.lodging`)
+    static let bookingTransport: Color = Primitive.day3 // slate blue (mockup `.bk-ico.transport`)
+    static let bookingActivity: Color = Primitive.day4  // muted violet (mockup `.bk-ico.activity`)
+    static let bookingDining: Color = Primitive.day2    // sage (mockup `.bk-ico.dining`)
+    static let bookingOther: Color = Primitive.ink600   // neutral ink (mockup `.bk-ico.other`)
+
+    /// The booking type's mark colour — the glyph ink on a booking icon tile / hero / pass band.
+    static func bookingMark(_ type: BookingType) -> Color {
+        switch type {
+        case .lodging:   return bookingLodging
+        case .transport: return bookingTransport
+        case .activity:  return bookingActivity
+        case .dining:    return bookingDining
+        case .other:     return bookingOther
+        }
+    }
+
+    /// The low-alpha tile background behind a booking glyph (mockup `.bk-ico.*` ~12–13% of the mark;
+    /// `.other` reuses `fillTertiary`, the neutral wash). Sized for an icon tile, never a card fill (J-2).
+    static func bookingTint(_ type: BookingType) -> Color {
+        switch type {
+        case .lodging:   return bookingLodging.opacity(0.12)
+        case .transport: return bookingTransport.opacity(0.13)
+        case .activity:  return bookingActivity.opacity(0.12)
+        case .dining:    return bookingDining.opacity(0.13)
+        case .other:     return Primitive.fillTertiary
+        }
+    }
 }
