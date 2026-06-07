@@ -77,4 +77,27 @@ extension SampleData {
             placedLabel: "Placed on Day 4 · Sat, Aug 29"
         )
     }
+
+    // MARK: - DTO builders (Task 2.4)
+
+    static func walletDTO() -> TripWalletDTO {
+        TripWalletDTO(id: "wallet-lisbon", tripCityName: "Lisbon", dayCount: 4, bookings: [
+            BookingDTO(id: "booking-casa-bairro", title: "Casa do Bairro", type: .lodging, status: .past, dayIndex: 1, startTime: "Checked out", subtitleParts: ["Alfama", "2 nights"], confirmation: "CDB-2207", detail: nil, accessPass: nil),
+            BookingDTO(id: "booking-timeout", title: "Time Out Market", type: .dining, status: .past, dayIndex: 1, startTime: "13:00", subtitleParts: ["Cais do Sodré", "lunch"], confirmation: nil, detail: nil, accessPass: nil),
+            BookingDTO(id: "booking-castelo", title: "Castelo de São Jorge", type: .activity, status: .now, dayIndex: 2, startTime: "10:00", subtitleParts: ["timed entry", "2 adults"], confirmation: "CSJ-4419", detail: nil, accessPass: nil),
+            BookingDTO(id: "booking-ferry", title: "Ferry to Cacilhas", type: .transport, status: .today, dayIndex: 2, startTime: "16:30", subtitleParts: ["Cais do Sodré", "10 min"], confirmation: nil, detail: nil, accessPass: nil),
+            BookingDTO(id: "booking-jeronimos", title: "Jerónimos Monastery", type: .activity, status: .upcoming, dayIndex: 3, startTime: "09:30", subtitleParts: ["Belém", "timed entry"], confirmation: "JM-8830", detail: nil, accessPass: nil),
+            BookingDTO(id: "booking-belcanto", title: "Belcanto", type: .dining, status: .upcoming, dayIndex: 3, startTime: "20:00", subtitleParts: ["Chiado", "tasting menu"], confirmation: "BEL-5521", detail: nil, accessPass: nil),
+            BookingDTO(id: "booking-tap201", title: "Lisbon → New York", type: .transport, status: .upcoming, dayIndex: 4, startTime: "Departs 13:40", subtitleParts: ["TAP Air · TP 201", "seat 14A"], confirmation: "7XQK2M", detail: tap201DetailInfo(), accessPass: tap201AccessPass()),
+            BookingDTO(id: "booking-lumiares", title: "The Lumiares", type: .lodging, status: .upcoming, dayIndex: 4, startTime: "Check-in 15:00", subtitleParts: ["Bairro Alto", "1 night"], confirmation: "LUM-3390", detail: nil, accessPass: nil),
+            BookingDTO(id: "booking-fado-orphan", title: "Fado at Tasca do Chico", type: .activity, status: .upcoming, dayIndex: nil, startTime: "21:00", subtitleParts: ["Bairro Alto", "show"], confirmation: "TDC-8841", detail: nil, accessPass: nil),
+        ])
+    }
+
+    static func emptyWalletDTO() -> TripWalletDTO {
+        TripWalletDTO(id: "wallet-lisbon", tripCityName: "Lisbon", dayCount: 4, bookings: [])
+    }
+
+    @MainActor static func wallet() -> TripWalletModel { walletDTO().toDomain() }
+    @MainActor static func emptyWallet() -> TripWalletModel { emptyWalletDTO().toDomain() }
 }

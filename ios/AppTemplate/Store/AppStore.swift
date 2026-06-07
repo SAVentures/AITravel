@@ -48,6 +48,14 @@ final class AppStore {
 
     var savedLoadState: LoadState = .idle
 
+    // MARK: - Wallet feature state
+
+    /// `private(set)` so only the store replaces the graph (hydration / seed); views mutate *through*
+    /// the `placeOrphan` command and the row model methods, never by reassigning the container.
+    private(set) var wallet: TripWalletModel?
+
+    var walletLoadState: LoadState = .idle
+
     /// Set by an optimistic write command on rollback, cleared on success/retry. Surfaced as a banner
     /// (06-screens.md §6), never a toast/alert.
     var writeError: WriteError?
@@ -69,6 +77,12 @@ final class AppStore {
         savedPlaces = places
     }
 
+    /// Same-file seam so the `AppStore+Wallet.swift` extension can replace the `private(set)` wallet
+    /// graph at hydration / seed time while keeping the setter invisible to views.
+    func setWallet(_ wallet: TripWalletModel?) {
+        self.wallet = wallet
+    }
+
     func setGenerationTask(_ task: Task<Void, Never>?) {
         generationTask = task
     }
@@ -86,6 +100,14 @@ final class AppStore {
     func loadSeed(savedPlaces dto: SavedPlacesDTO) {
         setSavedPlaces(dto.toDomain())
         savedLoadState = .loaded
+    }
+
+    /// Seed the wallet graph directly from a DTO (a `SampleData` snapshot) so `#Preview`s, render
+    /// snapshots, and tests render deterministically without `await loadWallet()` (03-store §4).
+    /// Maps the DTO to the domain graph on the main actor and marks the load `.loaded`.
+    func loadSeed(wallet dto: TripWalletDTO) {
+        setWallet(dto.toDomain())
+        walletLoadState = .loaded
     }
 
     // MARK: - Preview / snapshot seam
@@ -111,6 +133,15 @@ final class AppStore {
     static func preview(savedPlaces dto: SavedPlacesDTO) -> AppStore {
         let store = AppStore(api: .mock())
         store.loadSeed(savedPlaces: dto)
+        return store
+    }
+
+    /// A fresh `.mock()`-backed store seeded with a wallet snapshot so wallet-tab `#Preview`s and
+    /// render snapshots never `await loadWallet()`. Choose the rendered state by choosing the
+    /// `SampleData` factory that built the DTO (populated / empty).
+    static func preview(wallet dto: TripWalletDTO) -> AppStore {
+        let store = AppStore(api: .mock())
+        store.loadSeed(wallet: dto)
         return store
     }
 }

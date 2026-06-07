@@ -13,10 +13,15 @@ struct MockSeed: Sendable {
     // nil for scenarios that don't populate saved places → GetSavedPlacesRequest yields a 404.
     var savedPlaces: SavedPlacesDTO?
 
+    // nil for scenarios that don't populate the wallet → GetTripWalletRequest yields a 404.
+    var wallet: TripWalletDTO?
+
     // All fields default so MockSeed() for `.empty` survives features adding fields by extension.
     init(onboardingContext: OnboardingContextDTO? = nil,
-         savedPlaces: SavedPlacesDTO? = nil) {
+         savedPlaces: SavedPlacesDTO? = nil,
+         wallet: TripWalletDTO? = nil) {
         self.onboardingContext = onboardingContext
         self.savedPlaces = savedPlaces
+        self.wallet = wallet
     }
 }
