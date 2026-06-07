@@ -31,6 +31,14 @@ enum SampleData {
             // Same populated seed as savedStandard; the error path is exercised via
             // APIClient.mock(scenario: .savedError, failureRate: 1.0) — not a distinct seed.
             MockSeed(savedPlaces: savedPlacesDTO())
+        case .walletStandard:
+            MockSeed(wallet: walletDTO())
+        case .walletEmpty:
+            MockSeed(wallet: emptyWalletDTO())
+        case .walletError:
+            // Same populated seed as walletStandard; the error path is exercised via
+            // APIClient.mock(scenario: .walletError, failureRate: 1.0) — not a distinct seed.
+            MockSeed(wallet: walletDTO())
         }
     }
 }

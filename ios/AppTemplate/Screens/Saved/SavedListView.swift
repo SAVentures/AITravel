@@ -425,12 +425,7 @@ struct SavedListView: View {
 
     // MARK: - Write-error banner (read off the store — never a toast/alert, 06 §6)
 
-    private var writeErrorMessage: String? {
-        switch store.writeError {
-        case .addPlace: return "We couldn't save that place. Check your connection and try again."
-        case .none:     return nil
-        }
-    }
+    private var writeErrorMessage: String? { store.writeError?.bannerMessage }
 
     private func errorBanner(_ message: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: Spacing.sm) {

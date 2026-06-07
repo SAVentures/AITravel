@@ -33,6 +33,39 @@ enum ColorRole {
     /// Nested surfaces (use sparingly; don't reach past `surfaceGrouped` to fake depth).
     static let surfaceElevated: Color = Primitive.paper0
 
+    /// A FLAT wallet booking-row cell — the recessive grey ground a `BookingRow`/`ConfirmationRow` sits on,
+    /// no shadow (mockup `.bk` / `.conf-row` `background: var(--paper-100)`). Distinct from `surfacePage`
+    /// (the same paper-100 *page* ground) by ROLE: this names the cell, not the page (J-8.1, §10.1).
+    static let surfaceBookingRow: Color = Primitive.paper100
+
+    /// A PAST booking-row cell — the dimmed register ground (mockup `.bk.past` `background: var(--paper-50)`).
+    /// The barely-grey alt surface carries the "past" register so the row's ink can stay legible (J-2.3).
+    static let surfaceBookingRowPast: Color = Primitive.paper50
+
+    // MARK: - Immersive takeover — the dark day-of boarding-pass ground (02-color §2; wallet OD-8)
+    //
+    // The day-of access card (`AccessCardView`) is a DARK takeover (mockup `.acc-screen` `background:
+    // var(--ink-900)`): a focused scanning context where the white card + raised brightness read against
+    // dark ink. This is the one inverse ground in the light-mode app — a deliberate, scoped role (the
+    // semantic tier makes a future dark-mode a token swap, 02-color §7). Its on-ground text is the
+    // inverse of the page hierarchy below: a faint white label/hint, never the ink `text*` roles.
+
+    /// The dark immersive takeover ground (mockup `.acc-screen` background — `ink-900`). The one inverse
+    /// surface; scoped to the day-of access takeover, never a card or page fill.
+    static let surfaceImmersive: Color = Primitive.ink900
+
+    /// A muted label/hint drawn ON the dark immersive ground (mockup `.acc-top .lab` / `.acc-hint` —
+    /// `oklch(1 0 0 / ~0.55)`). The inverse of `textTertiary`; only valid over `surfaceImmersive`.
+    static let textOnImmersive: Color = Primitive.onAccent.opacity(0.6)
+
+    /// The faint translucent circle behind the close glyph on the dark ground (mockup `.acc-top .x`
+    /// `background: oklch(1 0 0 / 0.12)`). NOT glass — a plain styled fill that avoids the offscreen-blank
+    /// gap a real glass material leaves in a snapshot (wallet OD-8 / 06-screens §2.4).
+    static let fillOnImmersive: Color = Primitive.onAccent.opacity(0.12)
+
+    /// The close glyph ink on the dark ground (mockup `.acc-top .x` `color: oklch(1 0 0 / 0.85)`).
+    static let glyphOnImmersive: Color = Primitive.onAccent.opacity(0.85)
+
     // MARK: - Fill — translucent overlays sized by shape (02-color §2)
 
     /// Medium shapes — a switch ground.
@@ -176,4 +209,42 @@ enum ColorRole {
     /// accent-100`). The one place a coloured hairline is earned — it marks the recommended path, paired
     /// with the wash + title, not a side-tab accent border (08-slop A-1, J-10.4).
     static let accentWashRing: Color = Primitive.accent100
+
+    // MARK: - Booking-type marks — the wallet booking-type taxonomy cue, never a fill of size (02-color §2, J-2)
+    //
+    // The wallet's booking *type* (lodging / transport / activity / dining / other) tints the icon tile of
+    // a `BookingRow` / booking-detail hero / access-pass band (mockup `.bk-ico.*` / `.bd-ico.*` /
+    // `.acc-ico` in wallet-shell.css). A distinct taxonomy from `category*` (the saved-place taxonomy) and
+    // `source*` (provenance), but the SAME earned-tint class: each aliases an existing `day*` hue (NO new
+    // primitive) and the tile background is a ≤ icon-tile low-alpha wash (~12–13% of the mark), not a card
+    // fill — restraint kept by the opacity (J-2/J-0.4). Marks pair with an SF Symbol, never colour alone.
+
+    static let bookingLodging: Color = Primitive.day1   // amber  (mockup `.bk-ico.lodging`)
+    static let bookingTransport: Color = Primitive.day3 // slate blue (mockup `.bk-ico.transport`)
+    static let bookingActivity: Color = Primitive.day4  // muted violet (mockup `.bk-ico.activity`)
+    static let bookingDining: Color = Primitive.day2    // sage (mockup `.bk-ico.dining`)
+    static let bookingOther: Color = Primitive.ink600   // neutral ink (mockup `.bk-ico.other`)
+
+    /// The booking type's mark colour — the glyph ink on a booking icon tile / hero / pass band.
+    static func bookingMark(_ type: BookingType) -> Color {
+        switch type {
+        case .lodging:   return bookingLodging
+        case .transport: return bookingTransport
+        case .activity:  return bookingActivity
+        case .dining:    return bookingDining
+        case .other:     return bookingOther
+        }
+    }
+
+    /// The low-alpha tile background behind a booking glyph (mockup `.bk-ico.*` ~12–13% of the mark;
+    /// `.other` reuses `fillTertiary`, the neutral wash). Sized for an icon tile, never a card fill (J-2).
+    static func bookingTint(_ type: BookingType) -> Color {
+        switch type {
+        case .lodging:   return bookingLodging.opacity(0.12)
+        case .transport: return bookingTransport.opacity(0.13)
+        case .activity:  return bookingActivity.opacity(0.12)
+        case .dining:    return bookingDining.opacity(0.13)
+        case .other:     return Primitive.fillTertiary
+        }
+    }
 }

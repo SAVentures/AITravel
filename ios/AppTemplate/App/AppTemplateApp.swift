@@ -5,10 +5,12 @@ import SwiftUI
  The store is seeded from the launch-env scenario so UI tests can pin which scenario branch the
  MockProvider serves:
 
-   UITEST_SCENARIO     → MockScenario (onboardingA/B/C; savedStandard/savedEmpty/savedError)
+   UITEST_SCENARIO     → MockScenario (onboardingA/B/C; savedStandard/savedEmpty/savedError;
+                         walletStandard/walletEmpty/walletError)
    UITEST_FAILURE_RATE → when "1.0", injects APIError.status(503) on WRITE requests only
-                         (for saved scenarios the store is pre-seeded from the DTO so the GET
-                          never fires; only AddPlaceRequest reaches the failing provider)
+                         (for saved/wallet scenarios the store is pre-seeded from the DTO so the
+                          GET never fires; only AddPlaceRequest / PlaceOrphanRequest reaches the
+                          failing provider)
    UITEST_NOW          → ISO-8601 string; consumed by presenters to pin time-conditional state
 
  Saved-scenario launches: the savedStandard/savedEmpty/savedError seeds carry no onboarding
@@ -20,6 +22,13 @@ import SwiftUI
  (`if store.savedPlaces == nil`) is false and loadSavedPlaces() never fires. This means
  UITEST_FAILURE_RATE=1.0 only affects subsequent WRITE requests (AddPlaceRequest), enabling the
  write-error/rollback path to be tested without the GET also failing.
+
+ Wallet-scenario launches: for walletStandard/walletEmpty/walletError, the store is seeded from
+ the DTO at launch time (store.loadSeed(wallet:)) so WalletView's `.task` guard
+ (`if store.wallet == nil`) is false and loadWallet() never fires. UITEST_FAILURE_RATE=1.0
+ therefore only affects PlaceOrphanRequest (the write), enabling the rollback path without the
+ read also failing. The app boots to the Saved tab (selectedTab default); the wallet test taps
+ tab.trip then trip.openWallet to reach WalletView.
 */
 @main
 struct AppTemplateApp: App {
@@ -50,6 +59,13 @@ struct AppTemplateApp: App {
     ///   - This isolates `UITEST_FAILURE_RATE=1.0` to WRITE requests (AddPlaceRequest), so the
     ///     write-error/rollback flow is exercisable without the read path also failing.
     ///
+    /// For a wallet scenario (`walletStandard`/`walletEmpty`/`walletError`):
+    ///   - Builds the store with `APIClient.mock(scenario:failure:)`.
+    ///   - Pre-seeds `store.wallet` via `loadSeed(wallet:)` so WalletView's `.task` guard
+    ///     (`if store.wallet == nil`) is false at render time — GetWalletRequest never fires.
+    ///   - This isolates `UITEST_FAILURE_RATE=1.0` to WRITE requests (PlaceOrphanRequest), so
+    ///     the write-error/rollback flow is exercisable without the read path also failing.
+    ///
     /// For an onboarding scenario, behavior is unchanged from the prior pattern (no pre-seed).
     ///
     /// Not marked `@MainActor` explicitly — `AppTemplateApp` is `@MainActor` by default under
@@ -71,6 +87,13 @@ struct AppTemplateApp: App {
             store.loadSeed(savedPlaces: SampleData.savedPlacesDTO())
         case .savedEmpty:
             store.loadSeed(savedPlaces: SampleData.emptySavedPlacesDTO())
+        // Pre-seed the wallet graph for wallet scenarios — mirrors the saved pre-seed pattern.
+        // GetWalletRequest never fires (store.wallet is non-nil at view render time), so
+        // UITEST_FAILURE_RATE=1.0 only reaches PlaceOrphanRequest (the write).
+        case .walletStandard, .walletError:
+            store.loadSeed(wallet: SampleData.walletDTO())
+        case .walletEmpty:
+            store.loadSeed(wallet: SampleData.emptyWalletDTO())
         default:
             break
         }
@@ -80,12 +103,15 @@ struct AppTemplateApp: App {
 
     private static func scenario(for raw: String) -> MockScenario {
         switch raw {
-        case "onboardingB":    return .onboardingB
-        case "onboardingC":    return .onboardingC
-        case "savedStandard":  return .savedStandard
-        case "savedEmpty":     return .savedEmpty
-        case "savedError":     return .savedError
-        default:               return .onboardingA
+        case "onboardingB":      return .onboardingB
+        case "onboardingC":      return .onboardingC
+        case "savedStandard":    return .savedStandard
+        case "savedEmpty":       return .savedEmpty
+        case "savedError":       return .savedError
+        case "walletStandard":   return .walletStandard
+        case "walletEmpty":      return .walletEmpty
+        case "walletError":      return .walletError
+        default:                 return .onboardingA
         }
     }
 }

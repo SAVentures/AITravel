@@ -74,5 +74,23 @@ enum Sizing {
         static let wayToSaveGlyphProminent = Grid.x(12)
         /// 288 — PlaceDetailView photo-hero height (mockup `.pd-hero`, the over-hero takeover banner).
         static let placeDetailHero = Grid.x(72)
+        /// 44 — BookingRow type-tinted icon tile (mockup `.bk-ico`, on-grid 44).
+        static let bookingRowIcon = Grid.x(11)
+        /// 52 — BookingDetailView hero icon tile (mockup `.bd-ico` 54px, snapped to the 4pt grid).
+        static let bookingDetailIcon = Grid.x(13)
+        /// 44 — AccessPassCard band icon tile (mockup `.acc-ico` 42px, snapped to the 4pt grid).
+        static let accessIconTile = Grid.x(11)
+        /// 208 — AccessPassCard QR code side (mockup `.acc-qr .code` 210px, snapped to the 4pt grid).
+        static let accessQRSide = Grid.x(52)
+        /// 36 — AccessCardView close-× faint circle (mockup `.acc-top .x` 34px, snapped to the 4pt grid).
+        static let accessCloseTile = Grid.x(9)
+        /// 40 — OrphanPromptCard row icon tile (mockup `.orphan .row .bk-ico`, on-grid 40).
+        static let orphanRowIcon = Grid.x(10)
+        /// 96 — wallet-empty hero glyph box (mockup `.empty .glyph`, on-grid 96).
+        static let walletEmptyGlyph = Grid.x(24)
+        /// 32 — wallet-empty hero glyph accent badge (mockup `.empty .glyph .badge` 34px, snapped to grid).
+        static let walletEmptyBadge = Grid.x(8)
+        /// 32 — ConfirmationRow copy button (mockup `.conf-row .cp` 30px, snapped to the 4pt grid).
+        static let confCopyButton = Grid.x(8)
     }
 }

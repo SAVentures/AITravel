@@ -79,12 +79,5 @@ struct AddPlacePresenter {
     /// The write-error banner copy, present only when the optimistic `addPlace` rolled back
     /// (`store.writeError == .addPlace`). `nil` ⇒ no banner. The view pairs it with a glyph (never color
     /// alone — 02-color §6) and stamps `writeError.banner`.
-    var writeErrorMessage: String? {
-        switch store.writeError {
-        case .addPlace:
-            "Couldn't save that place. Check your connection and try again."
-        case nil:
-            nil
-        }
-    }
+    var writeErrorMessage: String? { store.writeError?.bannerMessage }
 }

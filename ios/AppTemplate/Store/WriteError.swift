@@ -9,4 +9,18 @@ import Foundation
 enum WriteError: Equatable, Sendable {
     /// The optimistic `addPlace` write failed and the inserted row was rolled back.
     case addPlace
+
+    /// The optimistic `placeOrphan` write failed and the booking's `dayIndex` was restored.
+    case placeOrphan
+
+    /// User-facing banner copy for this write failure (06-screens §6 — a banner, never a toast/alert,
+    /// paired with a glyph, never colour alone — 02-color §6).
+    var bannerMessage: String {
+        switch self {
+        case .addPlace:
+            "Couldn't save that place. Check your connection and try again."
+        case .placeOrphan:
+            "Couldn't add that to your wallet. Check your connection and try again."
+        }
+    }
 }
