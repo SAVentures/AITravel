@@ -28,6 +28,11 @@ struct DetailList: View {
     /// The key/value rows (mockup `.det-row`), in order. Reuses the existing `DetailRow` leaf.
     let rows: [DetailRow]
 
+    /// The caller-owned a11y id (e.g. `detaillist.flight`). The component bakes none — it owns the
+    /// MECHANISM (`.accessibilityIdentifier(ifPresent:)`) and attaches the id only when present; the
+    /// CALLER (BookingDetailView) owns the VALUE, passing one or leaving nil (05 §8.1).
+    var accessibilityID: String? = nil
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             // The mono-caps section head — a heading for VoiceOver navigation.
@@ -53,7 +58,8 @@ struct DetailList: View {
             .background(ColorRole.surfaceGrouped)
             .clipShape(.rect(cornerRadius: Radius.card))
         }
-        .accessibilityIdentifier("detaillist")
+        // Identifier passthrough — attached ONLY when the caller supplies one (no baked id, no `?? ""`).
+        .accessibilityIdentifier(ifPresent: accessibilityID)
     }
 
     // MARK: A row — secondary key (leading) · emphasized value (trailing) (mockup `.det-row`)

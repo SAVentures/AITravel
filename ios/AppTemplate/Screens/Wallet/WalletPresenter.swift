@@ -291,7 +291,8 @@ struct WalletPresenter {
             + (wallet?.tripCityName.isEmpty == false ? "in \(wallet!.tripCityName)." : "in your trip.")
     }
 
-    /// The three capture methods (mockup `.ways`), the "Forward a confirmation" reel-equivalent prominent.
+    /// The three capture methods (mockup `.ways`) — all uniform `paper-100` rows, no prominent/accent
+    /// `.way.primary` on the empty state (the `WalletEmptyGlyph` badge is the screen's one accent).
     var wayToSave: [WayToSaveRowModel] {
         [
             WayToSaveRowModel(
@@ -299,7 +300,7 @@ struct WalletPresenter {
                 title: "Forward a confirmation",
                 subtitle: "Paste text, a link, or an email",
                 systemImage: "envelope",
-                prominent: true
+                prominent: false
             ),
             WayToSaveRowModel(
                 id: "scan",

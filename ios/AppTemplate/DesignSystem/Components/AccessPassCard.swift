@@ -1,6 +1,6 @@
 // AccessPassCard.swift — the day-of access (boarding-pass) card (05-design-system.md §8; 05-components §3).
 // Ports the access-card mockup `.acc-card`: a `paper-0` content card lifted by the one `hero` shadow,
-// holding a type-tinted `.acc-band` (icon tile + kind/title/subtitle, hairline below), an `.acc-qr` (a
+// holding a type-tinted `.acc-band` (icon tile + title/subtitle, hairline below), an `.acc-qr` (a
 // REAL deterministic QR + a mono confirmation `.cap`, selectable), and an `.acc-meta` 3-cell hairline grid
 // (Gate / Seat / Zone). The card is presented centred on a dark immersive takeover by `AccessCardView`,
 // but the card itself is CONTENT — so it is a solid surface, NEVER glass (J-0.1 / J-8, 05-components §3.3).
@@ -17,7 +17,8 @@ import SwiftUI
 
 /// The local value-type fixture this card renders from (mapped from a domain `AccessPass`).
 struct AccessPassModel: Sendable {
-    /// The mono-caps kind eyebrow, e.g. "Boarding pass" (mockup `.acc-top .lab`, carried on the band).
+    /// The mono-caps kind eyebrow, e.g. "Boarding pass" (mockup `.acc-top .lab` — rendered by the
+    /// screen's top bar, NOT inside the card band; the card surfaces it only in its combined a11y label).
     let kindLabel: String
     /// The pass title — the display name, e.g. "LIS → JFK · TP 201" (mockup `.acc-band .nm`).
     let title: String
@@ -70,17 +71,12 @@ struct AccessPassCard: View {
         .accessibilityIdentifier(ifPresent: accessibilityID)
     }
 
-    // MARK: Band — type-tinted icon tile + kind/title/subtitle (mockup `.acc-band`)
+    // MARK: Band — type-tinted icon tile + title/subtitle (mockup `.acc-band`)
 
     private var band: some View {
         HStack(spacing: Spacing.md) {
             iconTileView
             VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(model.kindLabel)
-                    .font(Typography.caption)
-                    .tracking(Typography.trackEyebrowCaption)
-                    .textCase(.uppercase)
-                    .foregroundStyle(ColorRole.textTertiary)
                 Text(model.title)
                     .font(Typography.name)
                     .foregroundStyle(ColorRole.textPrimary)

@@ -7,7 +7,7 @@
  Chrome: a sheet, NOT glass at rest (glass is floating-chrome-only — 06 §6 / J-0.1). It draws its own
  grabber + header (title + close ×). Phase A shows three `WayToSaveRow`s (the prominent "Forward a
  confirmation" + standard "Scan"/"From a photo") and the `.fwd-addr` forward-to-email copy row. Phase B
- shows an `AIVoice` eyebrow, a review card of AI-extracted fields, the "Add to wallet" CTA, and an
+ shows an inline AI provenance line (mockup `.rev-ai`), a review card of AI-extracted fields, the "Add to wallet" CTA, and an
  "Edit details" ghost.
 
  The ONE write (OD-4): the phase-B "Add to wallet" CTA runs `store.placeOrphan(...)` — the wallet slice's
@@ -240,7 +240,7 @@ struct AddToWalletSheet: View {
     // MARK: - Phase B — AI review (mockup add-review.html)
 
     @ViewBuilder private func reviewPhase(_ p: AddToWalletPresenter) -> some View {
-        AIVoice(eyebrow: p.reviewEyebrow, line: p.reviewVoiceLine)
+        aiLine(p)
 
         reviewCard(p)
 
@@ -251,6 +251,25 @@ struct AddToWalletSheet: View {
         }
 
         editGhost(p)
+    }
+
+    /// The AI provenance line (mockup `.rev-ai`): a SINGLE inline row — an accent dot + a mono-caps label of
+    /// what the assistant did ("READ FROM YOUR SCREENSHOT"). NOT `AIVoice` — that component's eyebrow + italic
+    /// display sentence is a two-line block whose anatomy doesn't match `.rev-ai`'s one inline line.
+    private func aiLine(_ p: AddToWalletPresenter) -> some View {
+        HStack(spacing: Spacing.sm) {
+            Circle()
+                .fill(ColorRole.stateNow)
+                .frame(width: aiDot, height: aiDot)
+                .accessibilityHidden(true)
+            Text(p.reviewVoiceLine)
+                .font(Typography.caption)
+                .tracking(Typography.trackEyebrowCaption)
+                .textCase(.uppercase)
+                .foregroundStyle(ColorRole.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 
     /// The review card — the AI-extracted fields stacked with the standard rhythm (mockup `.rev-card`).
@@ -409,8 +428,14 @@ struct AddToWalletSheet: View {
     */
     private func confirmAdd() async {
         guard !isAdding else { return }
+        // MILESTONE SHORTCUT (OD-4): placing the SEEDED orphan demonstrates the optimistic+rollback write —
+        // the same write the wallet's OrphanPrompt fires. The target booking + day are DERIVED in the
+        // presenter (mirroring `WalletPresenter`), not hardcoded; guard so a missing orphan is a no-op that
+        // keeps the sheet open rather than firing a write against a stale literal id.
+        let p = AddToWalletPresenter(store: store, isAdding: isAdding)
+        guard let id = p.orphanBookingID else { return }
         isAdding = true
-        await store.placeOrphan(bookingID: "booking-fado-orphan", onDay: 2)
+        await store.placeOrphan(bookingID: id, onDay: p.suggestedDay)
         isAdding = false
         if store.writeError == nil {
             dismiss()
@@ -424,6 +449,7 @@ struct AddToWalletSheet: View {
     @ScaledMetric(relativeTo: .body) private var closeTarget: CGFloat = 30
     @ScaledMetric(relativeTo: .body) private var copyTarget: CGFloat = 40
     @ScaledMetric(relativeTo: .body) private var typeChipTile: CGFloat = 30
+    @ScaledMetric(relativeTo: .caption2) private var aiDot: CGFloat = Sizing.dot
 }
 
 // MARK: - Previews (06 §8) — seeded via AppStore.preview(wallet:), no `.shared`

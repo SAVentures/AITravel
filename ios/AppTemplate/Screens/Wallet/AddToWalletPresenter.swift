@@ -71,10 +71,8 @@ struct AddToWalletPresenter {
     /// The review-phase title (mockup `.sheet-title`).
     var reviewTitle: String { "Check the details" }
 
-    /// The `AIVoice` eyebrow on the review card (mockup `.rev-ai .mk` dot is the eyebrow mark).
-    var reviewEyebrow: String { "AI" }
-
-    /// The `AIVoice` line — what the assistant did (mockup `.rev-ai` copy).
+    /// The inline AI provenance line (mockup `.rev-ai`) — what the assistant did, rendered mono-caps next to
+    /// an accent dot. (No separate eyebrow: `.rev-ai` is a single inline line, not `AIVoice`'s two-line block.)
     var reviewVoiceLine: String { "Read from your screenshot" }
 
     // MARK: - Review fields (mockup `.rev-card .rev-field`, add-review.html)
@@ -119,6 +117,28 @@ struct AddToWalletPresenter {
 
     /// The review-phase ghost label (mockup `.sheet-ghost`).
     var editTitle: String { "Edit details" }
+
+    // MARK: - The ONE write target (OD-4) — derived, mirroring `WalletPresenter`
+
+    private var allBookings: [BookingModel] { store.wallet?.bookings ?? [] }
+
+    /// The booking the confirm write places: the first unplaced orphan (`dayIndex == nil`), mirroring
+    /// `WalletPresenter.orphanBookingID`. `nil` ⇒ nothing to place (the confirm no-ops, the sheet stays).
+    /// MILESTONE SHORTCUT (OD-4): a true "extract a brand-new booking" flow is a separate story; placing the
+    /// seeded orphan (the "Fado" the review card mirrors) keeps the optimistic+rollback machinery live.
+    var orphanBookingID: BookingModel.ID? {
+        allBookings.first(where: { $0.dayIndex == nil })?.id
+    }
+
+    /// The day the confirm write files the orphan onto (mockup: day 2). A sensible default mirroring the
+    /// wallet's "Pin to Day 2" prompt — the first today/now day, else the first placed day, else day 2.
+    var suggestedDay: Int {
+        let placed = allBookings.filter { $0.dayIndex != nil }
+        if let today = placed.first(where: { $0.status == .now || $0.status == .today })?.dayIndex {
+            return today
+        }
+        return placed.compactMap(\.dayIndex).min() ?? 2
+    }
 
     // MARK: - Write state (read off the store — banner, never toast/alert, 06 §6)
 

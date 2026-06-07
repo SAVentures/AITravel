@@ -372,3 +372,55 @@ toggles saved state through it and this notice is removed.
 Both screens are fully covered by the other three layers: L1 (`PlaceDetailPresenterTests`, `AddPlacePresenterTests`), L4 (`SavedFlowUITests`), and their already-locked component snapshots (`ProvenanceCard`, `PlaceInfoGrid`, `MapSnippet`, `WayToSaveRow`). The `SavedListScreenSnapshotTests` suite (5 states, `.root` scaffold) renders correctly and is kept.
 
 **Supersede when.** `assertDesignSnapshot` is rewritten to the `drawHierarchy(afterScreenUpdates:)` / key-window path where glass and sheet presentation render correctly; then restore the `PlaceDetailScreenSnapshotTests` and `AddPlaceSheetSnapshotTests` suites.
+
+---
+
+## 2026-06-07 — Wallet OD-7: booking detail/access grids REUSE `PlaceInfoGrid` (no `BookingInfoGrid`)
+
+**Decision.** The booking-detail 3-cell info grid (Depart/Arrive/Seat) and the access-pass meta grid
+(Gate/Seat/Zone) reuse the existing Saved `PlaceInfoGrid` component, fed `[PlaceFacts]` cells — no new
+`BookingInfoGrid` was built (plan Task 1.6 skipped). `PlaceFacts` (`{key, value, sub?}`) is structurally
+identical to the wallet `.info-cell`/`.acc-meta` anatomy, so the reuse is exact, not a force-fit. Keeps
+the component surface minimal and the 3-cell hairline grid locked by one snapshot.
+
+---
+
+## 2026-06-07 — Wallet OD-8: no-destination affordances are WIRED STUBS (Share, Scan, From-a-photo, Edit, brightness)
+
+**Decision.** Wallet affordances whose full flow is out of this milestone are wired to real, testable
+sinks rather than empty closures or invented screens (the Saved D-3/D-5 pattern):
+- `BookingDetailView` **Share** → an in-content `@State` notice (`bookingdetail.shareNotice`); no share sheet built.
+- `AddToWalletSheet` **Scan** / **From a photo** → a `pendingMethod` `@State` read by an inline "coming soon" hint; **Edit details** → an `@State` edit-hint. The deeper capture/extraction flows are separate stories.
+- `AccessCardView` **brightness raise** is REAL (not a stub): `UIScreen.brightness = 1.0` on appear, restored on disappear (OD-8 chose the real effect).
+
+Every affordance hits a sink (06-screens §4.1); the stubs honestly signal the missing flow. Supersede each as its real flow lands.
+
+---
+
+## 2026-06-07 — In-content secondary control is the INTERIM for `ScreenScaffold`'s missing trailing slot
+
+**Decision.** `ScreenScaffold` exposes no trailing top-bar control slot, and a screen may not hand-wire
+`.toolbar` (06-screens §2.6). So a screen's single secondary top control is rendered as an **in-content,
+trailing-aligned affordance** until the scaffold gains a slot. This is the established, already-merged
+pattern from `SavedListView` (the "+" add, `savedlist.add`); Wallet follows it for `WalletView`'s "+"
+(`wallet.add`) and `BookingDetailView`'s **Share** (`bookingdetail.share`). The control keeps its id +
+real sink; only its placement is the interim.
+
+**Why not escalate `BookingDetailView` to `.custom`** (the fidelity-reviewer's alternative): `.custom` +
+the over-hero glass header renders blank in the offscreen snapshot host (the 2026-06-06 gap), losing the
+screen's L3 lock, and it would diverge from the merged SavedList precedent for the same situation. The
+booking-detail hero is a normal content hero (not a full-bleed photo), so `.detail` is the right chrome;
+only the Share control's placement is affected, and the in-content interim keeps the screen snapshot-able.
+
+**Supersede when.** A `swift-design-system` change adds a trailing-secondary-control slot to
+`ScreenScaffold`; then SavedList "+", Wallet "+", and BookingDetail Share all migrate to it.
+
+---
+
+## 2026-06-07 — Wallet: orphan-prompt eyebrow ink is `textSecondary` (not the mockup's accent-700)
+
+**Decision.** `OrphanPromptCard`'s mono-caps eyebrow (`.lab`) uses `ColorRole.textSecondary`, not the
+mockup's `accent-700`. The card already spends its earned accent on the wash ground + the `.mk` dot + the
+Pin primary; an accent-700 eyebrow ink would push the card to a fourth accent touch and read as
+accent-as-room rather than accent-as-presence (J-2.4 / J-6.4). Keeping the eyebrow neutral concentrates
+the accent into the dot + action. A deliberate, restrained departure from the mockup's literal ink.

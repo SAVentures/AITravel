@@ -36,16 +36,18 @@ extension AppStore {
      (Tier 1) — this holds no raw `dayIndex`/index-replace assignment, mirroring `addPlace` calling
      `insertPending`/`reconcile`/`rollback`:
 
-       1. capture the booking's current `dayIndex` (the previous value) so rollback can revert exactly;
+       1. snapshot the booking's full pre-write state (`toDTO()`) so rollback can revert EVERY mutated
+          field — `place(...)` changes both `dayIndex` and `status`, so a day-only revert is insufficient;
        2. `place(bookingID:onDay:)` optimistically (only that row invalidates — the booking is observable);
        3. fire `PlaceOrphanRequest`; on success `restore(...)` the booking from the resolved server row
           (`dto`) so the graph carries the reconciled state, and clear `writeError`;
-       4. on failure `restoreDay(...)` the booking's day back to the captured previous value and set
+       4. on failure `restore(from: snapshot)` the booking to its full captured pre-write state and set
           `writeError = .placeOrphan` so the screen surfaces the banner.
     */
     func placeOrphan(bookingID: BookingModel.ID, onDay dayIndex: Int) async {
-        // 1. Remember the prior day so rollback can revert this exact booking (nil = was an orphan).
-        let previousDayIndex = wallet?.booking(id: bookingID)?.dayIndex
+        // 1. Snapshot the full pre-write state so rollback restores every field this exact booking mutates.
+        guard let booking = wallet?.booking(id: bookingID) else { return }
+        let snapshot = booking.toDTO()
 
         // 2. Optimistic placement (the model method; only the affected row re-renders).
         wallet?.place(bookingID: bookingID, onDay: dayIndex)
@@ -53,11 +55,11 @@ extension AppStore {
         do {
             // 3. Fire the write, reconcile the live reference from the resolved DTO.
             let dto = try await api.send(PlaceOrphanRequest(id: bookingID, dayIndex: dayIndex))
-            wallet?.booking(id: bookingID)?.restore(from: dto)
+            booking.restore(from: dto)
             writeError = nil
         } catch {
-            // 4. Rollback: revert the day and surface the failure.
-            wallet?.restoreDay(bookingID: bookingID, to: previousDayIndex)
+            // 4. Full rollback: restore dayIndex + status + every mutated field, and surface the failure.
+            booking.restore(from: snapshot)
             writeError = .placeOrphan
         }
     }

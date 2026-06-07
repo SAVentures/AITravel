@@ -66,22 +66,16 @@ final class TripWalletModel: Identifiable {
 
     /// Assigns `dayIndex` on the matched booking (and marks it `.upcoming` if it was previously
     /// orphaned/nil). The store calls this as the optimistic step before firing `PlaceOrphanRequest`.
+    ///
+    /// Captures the orphan state BEFORE mutating, then applies the placement. An orphan being placed
+    /// must not remain visually un-placed, so it transitions to `.upcoming`.
     func place(bookingID: BookingModel.ID, onDay dayIndex: Int) {
         guard let booking = booking(id: bookingID) else { return }
+        let wasOrphan = booking.dayIndex == nil
         booking.dayIndex = dayIndex
-        if booking.status == .upcoming || booking.dayIndex == nil {
-            // Ensure the booking has a placed status; the seeded status is the source of truth
-            // but an orphan being placed should not remain visually un-placed.
+        if wasOrphan {
             booking.status = .upcoming
         }
-    }
-
-    /// Reverts `dayIndex` on the matched booking to `previousDayIndex` — the rollback seam.
-    /// `AppStore.placeOrphan` calls this when `PlaceOrphanRequest` fails, passing the captured
-    /// previous value (nil = orphan, Int = already placed).
-    func restoreDay(bookingID: BookingModel.ID, to previousDayIndex: Int?) {
-        guard let booking = booking(id: bookingID) else { return }
-        booking.dayIndex = previousDayIndex
     }
 }
 

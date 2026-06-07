@@ -209,18 +209,28 @@ struct WalletView: View {
     // MARK: - Empty state (mockup wallet-empty `.empty`)
 
     private func emptyState(_ p: WalletPresenter) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.xl) {
-            VStack(alignment: .leading, spacing: Spacing.md) {
+        // Mockup `.empty`: the hero block (glyph · title · body) is horizontally AND vertically centered
+        // in the viewport (`align-items/justify-content: center; height: 100%`); the three ways stay
+        // full-width rows below. Spacers above/below the hero do the vertical centering within the scaffold.
+        VStack(spacing: Spacing.xl) {
+            Spacer(minLength: Spacing.xl)
+
+            VStack(spacing: Spacing.md) {
                 WalletEmptyGlyph()
                 Text(p.emptyTitle)
                     .font(Typography.titleLarge)
                     .foregroundStyle(ColorRole.textPrimary)
+                    .multilineTextAlignment(.center)
                 Text(p.emptyBody)
                     .font(Typography.body)
                     .foregroundStyle(ColorRole.textSecondary)
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity)
             .accessibilityElement(children: .combine)
+
+            Spacer(minLength: Spacing.xl)
 
             VStack(spacing: Spacing.md) {
                 ForEach(p.wayToSave) { way in
@@ -232,7 +242,7 @@ struct WalletView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("wallet.emptyState")
     }
