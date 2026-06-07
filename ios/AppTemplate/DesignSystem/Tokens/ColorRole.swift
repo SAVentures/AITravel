@@ -66,10 +66,114 @@ enum ColorRole {
     /// Dimming scrim behind modal/overlay content.
     static let scrim: Color = Primitive.scrim
 
+    /// A low-alpha ink wash for photo legibility UNDER floating chrome (a full-bleed hero's foot, where an
+    /// over-hero back/title must read). Distinct from `scrim` — that is the heavy MODAL dim (~0.22); this
+    /// is a faint photo-legibility tint at ~the mockup's `.pd-hero .scrim` opacity (saved-shell.css). Used
+    /// only as the dark stop of a clear→ink legibility gradient, never as a fill of size (J-0.4/J-2).
+    static let heroScrim: Color = Primitive.ink900.opacity(0.12)
+
     // MARK: - Day marks — categorical state cues, never fills of size (02-color §2, J-2)
 
     static let dayMark1: Color = Primitive.day1
     static let dayMark2: Color = Primitive.day2
     static let dayMark3: Color = Primitive.day3
     static let dayMark4: Color = Primitive.day4
+
+    // MARK: - Category marks — the saved-place taxonomy cue, never a fill of size (02-color §2, J-2)
+    //
+    // Each category aliases an existing day-mark hue (mockup `.cat-dot.*` / `.cat-*` text in
+    // saved-shell.css); Shop is a deliberate neutral (no fifth hue to invent — the mockup uses ink).
+    // Like `dayMark*` these are MARKS, paired with a glyph/label, not surfaces. The one named exception
+    // is `categoryTint` below: a ≤ chip-scale low-alpha label tint (the mockup's `.cat-*` background),
+    // NOT a card fill — restraint kept by the opacity, not by omission.
+
+    static let categoryEat: Color = Primitive.day2   // sage
+    static let categoryDrink: Color = Primitive.day1 // amber
+    static let categoryStay: Color = Primitive.day3  // slate blue
+    static let categoryDo: Color = Primitive.day4    // muted violet
+    static let categoryShop: Color = Primitive.ink600 // neutral ink (mockup `.cat-shop` label)
+
+    /// The category's mark color — for the leading dot / label ink on a `CategoryChip` or kicker.
+    static func categoryMark(_ category: PlaceCategory) -> Color {
+        switch category {
+        case .eat:   return categoryEat
+        case .drink: return categoryDrink
+        case .stay:  return categoryStay
+        case .do:    return categoryDo
+        case .shop:  return categoryShop
+        }
+    }
+
+    /// The low-alpha background behind a ≤ chip-scale category label (mockup `.cat-*` ~13% of the mark;
+    /// Shop reuses `fillTertiary`, the neutral well wash). Sized for a chip, never a card fill (J-2).
+    static func categoryTint(_ category: PlaceCategory) -> Color {
+        switch category {
+        case .eat:   return categoryEat.opacity(0.13)
+        case .drink: return categoryDrink.opacity(0.13)
+        case .stay:  return categoryStay.opacity(0.13)
+        case .do:    return categoryDo.opacity(0.12)
+        case .shop:  return Primitive.fillTertiary
+        }
+    }
+
+    // MARK: - Source marks — the provenance cue (reel / screenshot / search), never a fill of size
+    //
+    // The SourceCard's icon tile is tinted by where a place came from (mockup `.srccard-ico.reel/.shot/
+    // .search` in saved-shell.css): a reel reuses the violet day-mark, a screenshot the slate, and search
+    // a neutral ink — paired with an SF Symbol, never colour alone (02-color §6). Like `dayMark*`/
+    // `category*` these are MARKS; the tile background is the one named low-alpha exception below (a
+    // 52pt tile, not a card fill — restraint kept by the opacity, not by omission).
+
+    static let sourceReel: Color = Primitive.day4   // muted violet
+    static let sourceScreenshot: Color = Primitive.day3 // slate blue
+    static let sourceSearch: Color = Primitive.ink600 // neutral ink (mockup `.srccard-ico.search`)
+
+    /// The source's mark colour — the glyph ink on a source-icon tile / provenance stamp.
+    static func sourceMark(_ kind: SourceKind) -> Color {
+        switch kind {
+        case .reel:       return sourceReel
+        case .screenshot: return sourceScreenshot
+        case .search:     return sourceSearch
+        }
+    }
+
+    /// The low-alpha tile background behind a source glyph (mockup `.srccard-ico.*` ~12–13% of the mark;
+    /// search reuses `fillTertiary`, the neutral wash). Sized for a 52pt tile, never a card fill (J-2).
+    static func sourceTint(_ kind: SourceKind) -> Color {
+        switch kind {
+        case .reel:       return sourceReel.opacity(0.12)
+        case .screenshot: return sourceScreenshot.opacity(0.13)
+        case .search:     return Primitive.fillTertiary
+        }
+    }
+
+    // MARK: - Saved-at stamp — the timestamp pill on a source-grouped place row (accent-paired)
+    //
+    // The mockup `.src-place .stamp` is a small mono timestamp pill: `accent-700` ink on an `accent-50`
+    // wash. This is the one accent-tinted *fill* in the saved vocabulary — earned because it is a tiny
+    // chip-scale pill (not chrome, not a card; J-0.4 / J-2.4) and the accent pairs with the label text.
+
+    /// The timestamp-stamp pill ink (mockup `.src-place .stamp` colour — `accent-700`).
+    static let stampInk: Color = Primitive.accent700
+
+    /// The timestamp-stamp pill wash (mockup `.src-place .stamp` background — `accent-50`).
+    static let stampFill: Color = Primitive.accent50
+
+    // MARK: - Accent wash — the one prominent CONTENT row tint (the add-sheet's first method)
+    //
+    // The mockup `.method.primary` (add-place.html) lifts the first "Paste a reel" method onto a faint
+    // accent wash + a 1px accent ring — the way to mark the recommended path without spending the
+    // budgeted accent CTA on a list row. Earned, not reflexive: it is the SINGLE prominent row on the
+    // sheet (J-6.1), the accent reads as emphasis not chrome (J-0.4/J-2.4), and the tint is a low-L wash
+    // (`accent-50`), never a saturated fill. The glyph tile inside it still uses `actionPrimary` +
+    // `textOnAccent` (the budgeted accent surface) — paired with the title, never colour alone.
+
+    /// The faint accent wash behind a single prominent content row (mockup `.method.primary` background —
+    /// `accent-50`). A wash, not a saturated fill; reserved for the one recommended row (J-0.4/J-6.1).
+    static let accentWashFill: Color = Primitive.accent50
+
+    /// The 1px accent ring on that prominent row (mockup `.method.primary` `box-shadow: 0 0 0 1px
+    /// accent-100`). The one place a coloured hairline is earned — it marks the recommended path, paired
+    /// with the wash + title, not a side-tab accent border (08-slop A-1, J-10.4).
+    static let accentWashRing: Color = Primitive.accent100
 }

@@ -23,6 +23,14 @@ enum SampleData {
             MockSeed(onboardingContext: onboardingBContext())
         case .onboardingC:
             MockSeed(onboardingContext: onboardingCContext())
+        case .savedStandard:
+            MockSeed(savedPlaces: savedPlacesDTO())
+        case .savedEmpty:
+            MockSeed(savedPlaces: emptySavedPlacesDTO())
+        case .savedError:
+            // Same populated seed as savedStandard; the error path is exercised via
+            // APIClient.mock(scenario: .savedError, failureRate: 1.0) — not a distinct seed.
+            MockSeed(savedPlaces: savedPlacesDTO())
         }
     }
 }

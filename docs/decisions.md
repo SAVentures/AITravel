@@ -321,3 +321,54 @@ optional `failureRate` param is the scaffolding seam.
 
 **When the write lands:** wire the env var → app init → `.mock(failure:)`; add the rollback/error-path
 UITest; then remove this note. Cross-reference the A-DEC deferral entry above.
+
+---
+
+## 2026-06-06 — Saved: accent-as-fill roles are EARNED exceptions to J-2.4 (stamp pill, prominent way-to-save)
+
+**Decision.** Three Saved design-system roles use the accent as a low-alpha **fill/ring**, a deliberate
+exception to "the accent is never a fill" (J-2.4 / non-negotiable #4), each chip/row-scale and paired
+with text — never a card fill:
+- `ColorRole.stampFill` (`Primitive.accent50`) + `stampInk` (`accent700`) — the `SourcePlaceRow`
+  timestamp pill (mockup `.src-place .stamp`): a tiny "saved 3 mo ago" capsule.
+- `ColorRole.accentWashFill` (`accent50`) + `accentWashRing` (`accent100`) — the ONE prominent
+  `WayToSaveRow` ("Paste a reel", mockup `.method.primary`): an accent-tinted ground + 1px ring marking
+  the single primary method in the add sheet (one per region, J-6.1).
+
+**Why earned.** Each ports a specific mockup selector, is ≤row-scale (not a card/screen fill), uses the
+~6–13% alpha the mockup specifies, appears at most once per region, and pairs the tint with a text label
+(never color-alone, 02-color §6). They are intent-named semantic roles aliasing existing primitives — no
+`foundations.css`/codegen change. The category tints (`categoryTint`) are the same class, already chip-
+scale and day-mark-hued (not accent), so they don't need this carve-out.
+
+**Scope / supersede when.** Confined to these Saved affordances. Any new accent fill beyond a chip/row
+needs its own entry. If the system later offers an accent-wash material, revisit.
+
+---
+
+## 2026-06-06 — Saved place detail: the over-hero bookmark is a WIRED STUB (no unsave story this milestone)
+
+**Decision.** `PlaceDetailView`'s over-hero floating bookmark glyph (`GlassCircleButton`,
+id `placedetail.bookmark`) is a **wired stub**: tapping it raises an in-content notice
+(`placedetail.bookmarkNotice`, a `@State`-driven banner) rather than mutating the graph. The place reached
+on this screen is already saved, and there is **no remove-from-Saved (unsave) flow this milestone**, so
+there is no real sink for the bookmark yet.
+
+**Why a stub, not an empty closure or an omission.** The mockup (`mockups/screens/saved/place-detail.html`
+`.screen-topbar.--over-hero .ic[aria-label="Saved"]`) shows the bookmark, so omitting it is fidelity drift;
+an empty closure is a dead affordance (06-screens §4.1 defect). A wired notice keeps every affordance hitting
+a real sink while honestly signalling the missing flow — the same pattern as the D-5 "Add to a trip" stub on
+this screen. Errors/notices are in-content, never a toast/alert (06-screens §6).
+
+**Supersede when.** A remove-from-Saved store command (optimistic + rollback) lands; the bookmark then
+toggles saved state through it and this notice is removed.
+
+---
+
+## 2026-06-06 — Saved L3: PlaceDetail + AddPlaceSheet screen snapshots deferred (offscreen blank — framework gap)
+
+**Decision.** Screen-level L3 render snapshots for `PlaceDetailView` and `AddPlaceSheet` are **deferred**. Both produced blank frames in the offscreen `UIHostingController` host: `PlaceDetailView` uses `ScreenScaffold(.custom)` + an `.ignoresSafeArea` full-bleed hero (the iOS-26 glass `safeAreaInset` path mis-sizes offscreen); `AddPlaceSheet` content renders blank without a real sheet presentation context. Committing blank baselines is false confidence — the same ruling as the 2026-06-03 onboarding-gate decision.
+
+Both screens are fully covered by the other three layers: L1 (`PlaceDetailPresenterTests`, `AddPlacePresenterTests`), L4 (`SavedFlowUITests`), and their already-locked component snapshots (`ProvenanceCard`, `PlaceInfoGrid`, `MapSnippet`, `WayToSaveRow`). The `SavedListScreenSnapshotTests` suite (5 states, `.root` scaffold) renders correctly and is kept.
+
+**Supersede when.** `assertDesignSnapshot` is rewritten to the `drawHierarchy(afterScreenUpdates:)` / key-window path where glass and sheet presentation render correctly; then restore the `PlaceDetailScreenSnapshotTests` and `AddPlaceSheetSnapshotTests` suites.

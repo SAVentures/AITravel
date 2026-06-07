@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 /*
  The single source of truth the whole UI reads. No `.shared` singleton — `init` is non-private so
@@ -13,6 +14,20 @@ import Observation
 final class AppStore {
     let api: APIClient
 
+    // MARK: - Navigation (one path per tab)
+
+    /// The active tab. Saved is the only tab built this milestone (the others are placeholders), so the
+    /// app boots into it. The tab bar binds to this; `push`/`pop` (AppStore+Navigation) operate on the
+    /// matching path below.
+    var selectedTab: AppTab = .saved
+
+    /// One `NavigationPath` per tab — each tab's `NavigationStack` drives presentation from its own
+    /// path; pushes route through the *active* tab's path, never a view-local one (03-store.md §2).
+    var tripPath  = NavigationPath()
+    var mapPath   = NavigationPath()
+    var savedPath = NavigationPath()
+    var youPath   = NavigationPath()
+
     // MARK: - Onboarding feature state
 
     /// `private(set)` so only the store replaces the graph (hydration / dismiss-to-root); views
@@ -25,6 +40,18 @@ final class AppStore {
     /// drive the synchronous `advanceGeneration()` seam directly and never start this task.
     private var generationTask: Task<Void, Never>?
 
+    // MARK: - Saved feature state
+
+    /// `private(set)` so only the store replaces the graph (hydration / seed); views mutate *through*
+    /// the `addPlace` command and the row model methods, never by reassigning the container.
+    private(set) var savedPlaces: SavedPlacesModel?
+
+    var savedLoadState: LoadState = .idle
+
+    /// Set by an optimistic write command on rollback, cleared on success/retry. Surfaced as a banner
+    /// (06-screens.md §6), never a toast/alert.
+    var writeError: WriteError?
+
     init(api: APIClient = .live) {
         self.api = api
     }
@@ -36,6 +63,12 @@ final class AppStore {
         onboarding = draft
     }
 
+    /// Same-file seam so the `AppStore+Saved.swift` extension can replace the `private(set)` saved
+    /// graph at hydration / seed time while keeping the setter invisible to views.
+    func setSavedPlaces(_ places: SavedPlacesModel?) {
+        savedPlaces = places
+    }
+
     func setGenerationTask(_ task: Task<Void, Never>?) {
         generationTask = task
     }
@@ -43,6 +76,16 @@ final class AppStore {
     func cancelGenerationTask() {
         generationTask?.cancel()
         generationTask = nil
+    }
+
+    // MARK: - Seed seams (synchronous, no network)
+
+    /// Seed the saved graph directly from a DTO (a `SampleData` snapshot) so `#Preview`s, render
+    /// snapshots, and tests render deterministically without `await loadSavedPlaces()` (03-store §4).
+    /// Maps the DTO to the domain graph on the main actor and marks the load `.loaded`.
+    func loadSeed(savedPlaces dto: SavedPlacesDTO) {
+        setSavedPlaces(dto.toDomain())
+        savedLoadState = .loaded
     }
 
     // MARK: - Preview / snapshot seam
@@ -59,6 +102,15 @@ final class AppStore {
         draft.currentStep = step
         store.setOnboarding(draft)
         store.onboardingLoadState = .loaded
+        return store
+    }
+
+    /// A fresh `.mock()`-backed store seeded with a saved-places snapshot so Saved-tab `#Preview`s and
+    /// render snapshots never `await loadSavedPlaces()`. Choose the rendered state by choosing the
+    /// `SampleData` factory that built the DTO (populated / empty).
+    static func preview(savedPlaces dto: SavedPlacesDTO) -> AppStore {
+        let store = AppStore(api: .mock())
+        store.loadSeed(savedPlaces: dto)
         return store
     }
 }

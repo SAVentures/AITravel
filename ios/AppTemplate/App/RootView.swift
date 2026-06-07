@@ -1,10 +1,16 @@
 import SwiftUI
 
 /*
- The app root. Hosts a placeholder production root behind the onboarding takeover: on launch it kicks
- onboarding hydration, then presents OnboardingFlowView as a .fullScreenCover driven by the presence of
- store.onboarding. When the flow clears the draft (completion or cancel), the cover dismisses to the
- placeholder. The real tab IA replaces the placeholder later.
+ The app root. Hosts the production tab IA — an iOS-26 floating-glass `TabView` over `AppTab`, one tab
+ per case, each driving its own per-tab `NavigationStack` off the matching store path
+ (`tripPath`/`mapPath`/`savedPath`/`youPath`). The app boots into `.saved` (the only built tab this
+ milestone). Onboarding is a takeover layered above the tabs: a `.fullScreenCover` driven by the presence
+ of `store.onboarding`; when the flow clears the draft (completion or cancel), the cover dismisses back to
+ the tabs.
+
+ Glass lives on the tab bar chrome only (the system material) — never on content (J-0.1). The Trip / Map
+ / You tabs are placeholders this milestone (decision D-2); the Saved tab is a placeholder *temporarily*
+ (Wave 3 swaps its root to `SavedListView` + registers `PlaceDetailRoute`).
 */
 struct RootView: View {
     @Environment(AppStore.self) private var store
@@ -12,63 +18,90 @@ struct RootView: View {
     @State private var didAutoLoad = false
 
     var body: some View {
-        placeholderRoot
-            // The live app starts onboarding from the button (not auto-launch): auto-hydrating on appear
-            // re-fired when the cover dismissed on completion/cancel, bouncing the user back to step 1.
-            // UI tests still need the launch-env start-step path, so auto-load only under test, exactly once.
-            .overlay(alignment: .bottom) { startButton }
-            .task {
-                guard !didAutoLoad else { return }
-                didAutoLoad = true
-                if isUITestLaunch, store.onboarding == nil {
-                    await store.loadOnboarding()
+        @Bindable var store = store
+
+        TabView(selection: $store.selectedTab) {
+            ForEach(AppTab.allCases, id: \.self) { tab in
+                Tab(tab.title, systemImage: tab.systemImage, value: tab) {
+                    stack(for: tab)
                 }
+                .accessibilityIdentifier(tab.accessibilityID)
             }
-            // `of:` is evaluated during body, so SwiftUI registers store.onboarding as a body dependency
-            // and re-renders the cover when the button (or the test path) sets it.
-            .onChange(of: store.onboarding != nil, initial: true) { _, present in
-                showsOnboarding = present
+        }
+        // iOS-26 floating glass tab bar: minimizes (not hides) as content scrolls down.
+        .tabBarMinimizeBehavior(.onScrollDown)
+        // The live app starts onboarding from a CTA inside the tabs (not auto-launch): auto-hydrating on
+        // appear would re-fire when the cover dismissed on completion/cancel, bouncing the user back to
+        // step 1. UI tests still need the launch-env start-step path, so auto-load only under test, once.
+        .task {
+            guard !didAutoLoad else { return }
+            didAutoLoad = true
+            if isUITestLaunch, store.onboarding == nil {
+                await store.loadOnboarding()
             }
-            .fullScreenCover(isPresented: $showsOnboarding) {
-                OnboardingFlowView()
+        }
+        // `of:` is evaluated during body, so SwiftUI registers store.onboarding as a body dependency and
+        // re-renders the cover when the trigger (or the test path) sets it.
+        .onChange(of: store.onboarding != nil, initial: true) { _, present in
+            showsOnboarding = present
+        }
+        .fullScreenCover(isPresented: $showsOnboarding) {
+            OnboardingFlowView()
+        }
+        // SwiftUI drives showsOnboarding false on an interactive/swipe dismiss; mirror it back to the
+        // store so the source of truth stays in sync (the flow's own × / completion also clear it).
+        .onChange(of: showsOnboarding) { _, shows in
+            if !shows && store.onboarding != nil {
+                store.cancelOnboarding()
             }
-            // SwiftUI drives showsOnboarding false on an interactive/swipe dismiss; mirror it back to the
-            // store so the source of truth stays in sync (the flow's own × / completion also clear it).
-            .onChange(of: showsOnboarding) { _, shows in
-                if !shows && store.onboarding != nil {
-                    store.cancelOnboarding()
-                }
-            }
+        }
     }
 
-    // UI tests inject a launch scenario / start step; the live app does not, so it lands on the root.
+    // Each tab hosts its own NavigationStack bound to the matching store path, so pushes route through the
+    // active tab's path (never a view-local one) and the tab bar persists across pushes (06-screens §2.2).
+    @ViewBuilder
+    private func stack(for tab: AppTab) -> some View {
+        @Bindable var store = store
+
+        switch tab {
+        case .trip:
+            NavigationStack(path: $store.tripPath) {
+                comingSoon(tab)
+            }
+        case .map:
+            NavigationStack(path: $store.mapPath) {
+                comingSoon(tab)
+            }
+        case .saved:
+            // The Saved tab home (Wave 3) + the place-detail destination registered once at the root so
+            // every pushed `PlaceDetailRoute` inherits it (06-screens §5).
+            NavigationStack(path: $store.savedPath) {
+                SavedListView()
+                    .navigationDestination(for: PlaceDetailRoute.self) { route in
+                        PlaceDetailView(placeID: route.id)
+                    }
+            }
+        case .you:
+            NavigationStack(path: $store.youPath) {
+                comingSoon(tab)
+            }
+        }
+    }
+
+    // Placeholder root for a not-yet-built tab. Content surface — never glass (J-0.1).
+    private func comingSoon(_ tab: AppTab) -> some View {
+        ContentUnavailableView(
+            tab.title,
+            systemImage: tab.systemImage,
+            description: Text("Coming soon")
+        )
+        .accessibilityIdentifier("tab.\(tab.rawValue).comingSoon")
+    }
+
+    // UI tests inject a launch scenario / start step; the live app does not, so it lands on the tabs.
     private var isUITestLaunch: Bool {
         let env = ProcessInfo.processInfo.environment
         return env["UITEST_START_STEP"] != nil || env["UITEST_SCENARIO"] != nil
-    }
-
-    private var placeholderRoot: some View {
-        ContentUnavailableView(
-            "AppTemplate",
-            systemImage: "books.vertical",
-            description: Text("Scaffold ready — screens arrive through the pipeline.")
-        )
-    }
-
-    // Floating glass CTA — the one accent on the root, used to start the onboarding takeover.
-    private var startButton: some View {
-        Button {
-            Task { await store.loadOnboarding() }
-        } label: {
-            Label("Plan a trip", systemImage: "sparkles")
-        }
-        .buttonStyle(.glassProminent)
-        .tint(ColorRole.actionPrimary)
-        .controlSize(.large)
-        .buttonBorderShape(.capsule)
-        .disabled(store.onboardingLoadState == .loading)
-        .padding(.bottom, Spacing.xl)
-        .accessibilityIdentifier("root.startOnboarding")
     }
 }
 
