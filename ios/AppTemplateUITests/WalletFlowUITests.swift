@@ -130,10 +130,16 @@ final class WalletFlowUITests: XCTestCase {
     /// Returns `true` once `wallet.add` (or the wallet emptyState sentinel) is visible to signal
     /// the wallet is on screen, so callers can drive the appropriate sentinel.
     private func navigateToWallet(in app: XCUIApplication) {
-        let tripTab = app.buttons["tab.trip"]
+        // System tab-bar buttons live under app.tabBars, not the flat app.buttons collection.
+        // Try the dot-namespaced accessibility id first (Tab.accessibilityIdentifier("tab.trip"));
+        // fall back to the visible label "Trip" (AppTab.trip.title) — the sanctioned locator for
+        // system tab chrome (07-testing §7.3: system chrome is addressable by visible label).
+        let tripTabById   = app.tabBars.buttons["tab.trip"]
+        let tripTab       = tripTabById.exists ? tripTabById : app.tabBars.buttons["Trip"]
         XCTAssertTrue(
             tripTab.waitForExistence(timeout: 6),
-            "tab.trip must exist — AppTab.accessibilityID (AppTab.swift line 43)"
+            "Trip tab must exist in app.tabBars — tried id 'tab.trip' (AppTab.accessibilityID) " +
+            "then label 'Trip' (AppTab.trip.title); system tab-bar buttons are not in app.buttons"
         )
         tripTab.tap()
 
@@ -155,6 +161,25 @@ final class WalletFlowUITests: XCTestCase {
         while !element.exists && swipes < maxSwipes {
             app.swipeUp()
             swipes += 1
+        }
+    }
+
+    /// Swipes up until `element` is on-screen and hittable, up to `maxSwipes` times.
+    ///
+    /// Use this (not `scrollToElement`) when the element is known to exist in the a11y tree but
+    /// may sit below the fold — `.exists` returns `true` for off-screen elements, but `.isHittable`
+    /// only returns `true` once the element is within the visible viewport. Booking rows in the
+    /// walletStandard list (Day 2 / Day 4) are pushed below the fold by the orphan prompt card
+    /// and earlier-day groups, so a plain existence-scroll is insufficient.
+    private func scrollToHittable(
+        _ element: XCUIElement,
+        in app: XCUIApplication,
+        maxSwipes: Int = 6
+    ) {
+        var n = 0
+        while !element.isHittable && n < maxSwipes {
+            app.swipeUp()
+            n += 1
         }
     }
 
@@ -184,21 +209,24 @@ final class WalletFlowUITests: XCTestCase {
 
         // The "booking-castelo" row — Day 2, status .now, near the top of the by-day list.
         // bookingrow.<id> set by WalletView.bookingRowButton (.accessibilityIdentifier line 206).
+        // The orphan prompt card + Day 1 group push this row below the fold; scroll to hittable
+        // (not just to existence — off-screen elements are in the a11y tree but not hittable).
         let casteloRow = app.buttons["bookingrow.booking-castelo"]
-        scrollToElement(casteloRow, in: app)
         XCTAssertTrue(
             casteloRow.waitForExistence(timeout: 5),
             "bookingrow.booking-castelo must exist in the walletStandard list (Day 2, .now activity)"
         )
+        scrollToHittable(casteloRow, in: app)
         XCTAssertTrue(casteloRow.isHittable, "bookingrow.booking-castelo must be hittable")
 
-        // Scroll to find the tap201 row (Day 4 — may need scrolling).
+        // Scroll to find the tap201 row (Day 4 — further below the fold than castelo).
+        // Same pattern: wait for existence, then scroll until hittable before tapping.
         let tap201Row = app.buttons["bookingrow.booking-tap201"]
-        scrollToElement(tap201Row, in: app)
         XCTAssertTrue(
             tap201Row.waitForExistence(timeout: 5),
             "bookingrow.booking-tap201 must exist (Day 4, has access pass)"
         )
+        scrollToHittable(tap201Row, in: app)
         XCTAssertTrue(tap201Row.isHittable, "bookingrow.booking-tap201 must be hittable")
         tap201Row.tap()
 
