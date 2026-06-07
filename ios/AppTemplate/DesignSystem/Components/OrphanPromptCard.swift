@@ -5,8 +5,9 @@
 // `accent-50` fill, not a translucent material, and it sits flat on the page.
 //
 // Anatomy (`.orphan`): a mono-caps `.lab` with an accent `.mk` dot · a `.row` (a booking-type-tinted
-// icon tile + name + meta) · an italic display `.line` (the product's AI voice — same italic-display
-// idiom as `AIVoice`, with inline-bold emphasis via Markdown so "21:00 show"/"Day 2" read as the
+// icon tile + name + meta) · an italic DISPLAY `.line` (the product's AI voice — the `Typography.name`
+// display-italic idiom of the Saved `ProvenanceCard` quote, J-3.6, with inline-bold emphasis via Markdown
+// so "21:00 show"/"Day 2" read as the
 // mockup's `<b>` spans) · an `.acts` floor (Pin primary / Not now ghost). The accent is concentrated in
 // the wash + the `.mk` dot + the Pin button; the label text stays `textSecondary` so the accent is a
 // presence, not the room (J-2.4). Left-aligned (J-7.1), binary inks (J-2.2), tokens only (J-0.2).
@@ -170,11 +171,13 @@ struct OrphanPromptCard: View {
     // MARK: Suggestion — the italic display AI voice line (mockup `.orphan .line`)
 
     private var suggestion: some View {
-        // Display face, italic — the one editorial moment (J-3.6), the same idiom as `AIVoice`. Solid
-        // ink, never gradient text (02-color §5). Markdown renders the **bold** spans (mockup `.line b`:
-        // `font-style: normal; font-weight: 600; color: ink-900`) so the key facts stand out inline.
+        // Display face, italic — the one editorial moment (J-3.6), the DISPLAY-face idiom of the Saved
+        // `ProvenanceCard` quote (`Typography.name.italic()`): the mockup `.orphan .line` is `font-display`
+        // (Schibsted), not the UI family, so the role is `name` (display) — `callout` would be Hanken (the
+        // UI family), contradicting the line's editorial intent. Solid ink, never gradient text (02-color
+        // §5). Markdown renders the **bold** spans (mockup `.line b`: `font-weight: 600; color: ink-900`).
         Text(.init(model.suggestionLine))
-            .font(Typography.callout.italic())
+            .font(Typography.name.italic())
             .foregroundStyle(ColorRole.textPrimary)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .leading)

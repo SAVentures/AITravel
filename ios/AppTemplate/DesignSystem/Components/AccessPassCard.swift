@@ -58,8 +58,10 @@ struct AccessPassCard: View {
             PlaceInfoGrid(cells: model.metaCells)
         }
         // Solid content card on `paper-0` (mockup `.acc-card { background: var(--paper-0) }`) with the one
-        // reserved `hero` lift. One elevation, no border (08-slop A-4). NEVER glass (J-0.1, §3.3).
-        .background(ColorRole.surfacePage, in: .rect(cornerRadius: Radius.card))
+        // reserved `hero` lift. `surfaceGrouped` is the paper-0 white role (the page-grey `surfacePage` would
+        // be wrong here — and the QR's clear ground then shows this white through). One elevation, no border
+        // (08-slop A-4). NEVER glass (J-0.1, §3.3).
+        .background(ColorRole.surfaceGrouped, in: .rect(cornerRadius: Radius.card))
         .clipShape(.rect(cornerRadius: Radius.card))
         .shadowHero()
         // One VoiceOver stop for the pass identity; the QR is decorative, the confirmation stays selectable.

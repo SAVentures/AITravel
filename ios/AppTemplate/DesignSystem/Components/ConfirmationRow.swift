@@ -1,12 +1,13 @@
 // ConfirmationRow.swift — the booking-detail confirmation row (`.conf-row` in mockups/screens/wallet/
 // wallet-shell.css; 05-design-system.md §8 / §8.1). A CONTENT row, never glass (J-0.1): a flat
-// `surfaceGrouped` cell at `Radius.card` (the mockup `.conf-row` has NO shadow and NO border — a grouped
-// cell sitting in the detail flow, not a lifted card, so it is NOT `.cardSurface()` which adds the rest
-// shadow), with a mono-caps key ("CONFIRMATION"), the large mono code, and a trailing NEUTRAL copy button.
+// `surfaceBookingRow` (paper-100) cell at `Radius.card` (the mockup `.conf-row` has NO shadow and NO border
+// — a grouped cell sitting in the detail flow, not a lifted card, so it is NOT `.cardSurface()` which adds
+// the rest shadow), with a mono-caps key ("CONFIRMATION"), the large mono code, and a trailing NEUTRAL copy
+// button on the white `surfaceGrouped` well.
 //
 // The code is `.textSelection(.enabled)` — the mockup `.v { user-select: all }` so a long-press selects
-// the whole code. The copy button is a NEUTRAL affordance: a `fillTertiary` circle with a `textSecondary`
-// `doc.on.clipboard` glyph — deliberately NOT the accent (the 2026-06-06 Saved accent-budget fix:
+// the whole code. The copy button is a NEUTRAL affordance: a `surfaceGrouped` (paper-0) white-well circle
+// with a `textSecondary` `doc.on.clipboard` glyph — deliberately NOT the accent (the Saved accent-budget fix:
 // a copy/utility glyph is not emphasis, so it never spends the budgeted accent; J-0.4 / J-2.4). The
 // button is a real sink — it calls `onCopy`; the actual `UIPasteboard` write happens at the SCREEN, never
 // in a design-system component (05 §8 keeps side effects out of components).
@@ -54,9 +55,11 @@ struct ConfirmationRow: View {
             copyButton
         }
         .padding(Spacing.lg)
-        // Flat grouped cell — `surfaceGrouped` fill at `Radius.card`, NO shadow, NO border (mockup
-        // `.conf-row`; a surface is a soft shadow OR a 1px edge, never both — here it is neither: J-8.4).
-        .background(ColorRole.surfaceGrouped, in: .rect(cornerRadius: Radius.card))
+        // Flat grouped cell — the recessive `surfaceBookingRow` (paper-100) ground at `Radius.card`, NO
+        // shadow, NO border (mockup `.conf-row { background: var(--paper-100) }`; a surface is a soft shadow
+        // OR a 1px edge, never both — here it is neither: J-8.4). The inner copy button lifts on the white
+        // `surfaceGrouped` well below, the mockup's row/well contrast.
+        .background(ColorRole.surfaceBookingRow, in: .rect(cornerRadius: Radius.card))
         // One VoiceOver stop carrying the key + code, exposed as a copy button; the glyph is hidden below.
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Confirmation, \(code)")
@@ -91,7 +94,9 @@ struct ConfirmationRow: View {
                 .font(Typography.subhead)
                 .foregroundStyle(ColorRole.textSecondary) // NEUTRAL glyph — NOT accent (J-0.4 / J-2.4)
                 .frame(width: copyButtonSize, height: copyButtonSize)
-                .background(ColorRole.fillTertiary, in: .circle) // neutral fill against the grouped row
+                // The white well — `surfaceGrouped` (paper-0) lifting off the paper-100 row ground
+                // (mockup `.conf-row .cp { background: var(--surface-grouped) }`).
+                .background(ColorRole.surfaceGrouped, in: .circle)
                 .contentShape(.circle)
         }
         .buttonStyle(.plain)

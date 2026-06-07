@@ -8,10 +8,11 @@
 // The icon tile side is `@ScaledMetric` so the row grows with Dynamic Type (mirrors `PlaceRow.wellSize`;
 // J-0.3). Tokens only (J-0.2).
 //
-// The `.past` register dims (mockup `.bk.past`): the name drops to `textTertiary` (the explicit "past-state"
-// label role) and the icon tile drops to ~0.55 opacity, the mockup's exact past-icon dim. (The mockup's
-// past *ground* is `paper-50`; there is no semantic surface role for it yet — see the BookingRow report's
-// token gap. The dim still reads clearly via the name + icon treatment.)
+// The row is a FLAT cell, NOT a lifted card (mockup `.bk` has no shadow): it sits on the recessive
+// `surfaceBookingRow` (paper-100) ground, so it is NOT `.cardSurface()` (which adds the rest shadow). The
+// `.past` register (mockup `.bk.past`) drops the ground to `surfaceBookingRowPast` (paper-50) and dims the
+// icon tile to ~0.55 (the mockup's exact past-icon dim). The past *name* stays `textPrimary` — the paper-50
+// ground carries the "past" register, keeping the title legible (textTertiary = ink400 fails AA; J-2.3).
 //
 // A11y (05 §8.1): the component owns the MECHANISM — ONE combined VoiceOver stop carrying title + meta +
 // status + confirmation, with the icon tile and the `StatusPill` hidden — and an `accessibilityID`
@@ -96,7 +97,15 @@ struct BookingRow: View {
             bodyColumn
             endColumn
         }
-        .cardSurface()
+        .padding(Spacing.lg)
+        // FLAT grouped cell — no shadow (mockup `.bk` is a flat cell, NOT a lifted card, so it is NOT
+        // `.cardSurface()`): the recessive `surfaceBookingRow` (paper-100) ground, dropping to the dimmed
+        // `surfaceBookingRowPast` (paper-50) in the past register (mockup `.bk.past`). The past *ground*
+        // carries the dim, letting the name ink stay legible (J-2.3 — see `bodyColumn`).
+        .background(
+            model.isPast ? ColorRole.surfaceBookingRowPast : ColorRole.surfaceBookingRow,
+            in: .rect(cornerRadius: Radius.card)
+        )
         // One VoiceOver stop carrying the whole row (05 §8.1); the icon tile + the pill are hidden below.
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabel)
@@ -123,9 +132,12 @@ struct BookingRow: View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(model.title)
                 .font(Typography.name)
-                // The past register drops the name to the explicit "past-state" label role (mockup
-                // `.bk.past .nm`); otherwise the primary ink.
-                .foregroundStyle(model.isPast ? ColorRole.textTertiary : ColorRole.textPrimary)
+                // The name stays `textPrimary` in BOTH registers — the past dim is carried by the paper-50
+                // GROUND (`surfaceBookingRowPast`) + the 0.55 icon dim, not by lightening the name. Dropping
+                // it to `textTertiary` (= `textSecondary` = ink400) would be too light for a row title and
+                // fail WCAG AA at body size (J-2.3); the mockup's `.bk.past .nm` is a deliberate exception
+                // we resolve in favour of legibility, the ground doing the "past" work instead.
+                .foregroundStyle(ColorRole.textPrimary)
                 .lineLimit(1)
 
             metaLine

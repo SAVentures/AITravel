@@ -33,6 +33,15 @@ enum ColorRole {
     /// Nested surfaces (use sparingly; don't reach past `surfaceGrouped` to fake depth).
     static let surfaceElevated: Color = Primitive.paper0
 
+    /// A FLAT wallet booking-row cell — the recessive grey ground a `BookingRow`/`ConfirmationRow` sits on,
+    /// no shadow (mockup `.bk` / `.conf-row` `background: var(--paper-100)`). Distinct from `surfacePage`
+    /// (the same paper-100 *page* ground) by ROLE: this names the cell, not the page (J-8.1, §10.1).
+    static let surfaceBookingRow: Color = Primitive.paper100
+
+    /// A PAST booking-row cell — the dimmed register ground (mockup `.bk.past` `background: var(--paper-50)`).
+    /// The barely-grey alt surface carries the "past" register so the row's ink can stay legible (J-2.3).
+    static let surfaceBookingRowPast: Color = Primitive.paper50
+
     // MARK: - Fill — translucent overlays sized by shape (02-color §2)
 
     /// Medium shapes — a switch ground.
