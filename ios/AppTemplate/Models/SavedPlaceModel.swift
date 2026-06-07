@@ -45,6 +45,32 @@ final class SavedPlacesModel: Identifiable {
     func place(id: SavedPlaceModel.ID) -> SavedPlaceModel? {
         places.first { $0.id == id }
     }
+
+    // MARK: Mutations (pure, in-place — 03-store §3 Tier 1)
+
+    /*
+     These are the optimistic-write seam for `AppStore.addPlace` (03-store §3). The store command
+     orchestrates (build optimistic model → network → reconcile/rollback); each per-entity mutation
+     lives here as a method on the reference model. All mutate `self.places` in place — because
+     `SavedPlacesModel` is `@Observable`, only the list invalidates and re-renders.
+    */
+
+    /// Inserts the optimistic pending row at the top of the list (index 0).
+    func insertPending(_ place: SavedPlaceModel) {
+        places.insert(place, at: 0)
+    }
+
+    /// Replaces the pending row (matched by id) with the resolved server row, preserving its position.
+    /// `SavedPlaceModel.id` is a `let`, so the element is swapped rather than mutated in place.
+    func reconcile(pendingID: SavedPlaceModel.ID, with resolved: SavedPlaceModel) {
+        guard let index = places.firstIndex(where: { $0.id == pendingID }) else { return }
+        places[index] = resolved
+    }
+
+    /// Removes the pending row by id — the rollback for a failed optimistic insert.
+    func rollback(pendingID: SavedPlaceModel.ID) {
+        places.removeAll { $0.id == pendingID }
+    }
 }
 
 // MARK: - SavedPlaceModel

@@ -1,9 +1,11 @@
 /*
  The Saved tab home — the keystone screen of the Saved slice. Layout + wiring only; all per-state
  derivation lives in SavedListPresenter (06-screens §3). Composes ScreenScaffold(.root) (large title,
- collapses on scroll, tab bar persists), with the top-right "+" add affordance (one secondary control,
- 06 §2.3) opening AddPlaceSheet via an ephemeral `@State` sheet flag. NO bottom ActionBar — the list
- mockups have none.
+ collapses on scroll, tab bar persists). The "+" add affordance (one secondary control, 06 §2.3) opens
+ AddPlaceSheet via an ephemeral `@State` sheet flag. INTERIM (06 §2.6): ScreenScaffold exposes no
+ trailing-secondary-control slot, and a screen must never hand-wire a raw `.toolbar`, so the "+" is
+ rendered in-content (`addAffordanceRow`) until the scaffold gains that slot. NO bottom ActionBar — the
+ list mockups have none.
 
  Ports one structure across four states (the fidelity targets):
    mockups/screens/saved/saved-empty.html      — no places → three WayToSaveRows.
@@ -21,7 +23,8 @@
    - PlaceRow tap              → store.push(PlaceDetailRoute(id:)).
    - SourceCard head tap       → toggles the `expanded` Set<String> @State.
    - SourcePlaceRow tap        → store.push(PlaceDetailRoute(id:)).
-   - "+" add                   → `showsAddSheet` @State (presents AddPlaceSheet).
+   - "+" add (addAffordanceRow)→ `showsAddSheet` @State (presents AddPlaceSheet). In-content interim
+                                 placement (06 §2.6) — no slot on ScreenScaffold yet, no raw `.toolbar`.
    - WayToSaveRow taps (empty) → reel opens the add-sheet (D-4: the one built path); screenshot/search
                                  open the same sheet (their deeper capture flows are separate stories —
                                  wired, never an invented screen).
@@ -55,16 +58,29 @@ struct SavedListView: View {
 
     // MARK: Ephemeral UI state only (06 §3) — never domain state
 
-    @State private var query = ""
+    @State private var query: String
     @FocusState private var searchFocused: Bool
-    @State private var mode: SavedListMode = .byCategory
+    @State private var mode: SavedListMode
     @State private var cityFilter: String?
     @State private var categoryFilter: PlaceCategory?
     /// Expanded source cards (their ids). Caller-owned disclosure, exactly like SegmentedSelector's
     /// selection (the SourceCard component owns no expansion state).
-    @State private var expandedSources: Set<String> = []
+    @State private var expandedSources: Set<String>
     /// The add-place sheet flag — the "+" affordance and the empty-state ways present it.
     @State private var showsAddSheet = false
+
+    /// Seeds the screen's *ephemeral UI state* so each `#Preview` (and a future deep link into a given
+    /// mode/search) renders a distinct state. All parameters default to the production launch state
+    /// (by-category, empty query, nothing expanded), so the live call site stays `SavedListView()`.
+    init(
+        mode: SavedListMode = .byCategory,
+        query: String = "",
+        expandedSources: Set<String> = []
+    ) {
+        _mode = State(initialValue: mode)
+        _query = State(initialValue: query)
+        _expandedSources = State(initialValue: expandedSources)
+    }
 
     var body: some View {
         let p = SavedListPresenter(
@@ -83,35 +99,27 @@ struct SavedListView: View {
 
                 if p.isEmpty {
                     emptyState(p)
+                } else if p.isSearching {
+                    // saved-search.html: SearchWell → AIVoice "matching by vibe" → results. No hero/controls.
+                    // INTERIM (06 §2.6): ScreenScaffold exposes no top-right secondary-control slot, so the
+                    // "+" add affordance is rendered in-content rather than hand-wiring a raw `.toolbar`.
+                    addAffordanceRow
+                    searchWell(p)
+                    searchResults(p)
                 } else {
+                    addAffordanceRow
                     hero(p)
                     searchWell(p)
-                    if p.isSearching {
-                        searchResults(p)
+                    controls(p)
+                    if mode == .byCategory {
+                        categoryPills(p)
+                        categoryContent(p)
                     } else {
-                        controls(p)
-                        if mode == .byCategory {
-                            categoryPills(p)
-                            categoryContent(p)
-                        } else {
-                            sourceContent(p)
-                        }
+                        sourceContent(p)
                     }
                 }
             }
             .padding(.top, Spacing.md)
-        }
-        // The "+" add affordance — one secondary control top-right (06 §2.3); never a primary CTA there.
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showsAddSheet = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-                .accessibilityLabel("Add a place")
-                .accessibilityIdentifier("savedlist.add")
-            }
         }
         // Loads the tab's data over the network (the seam confirmed in AppStore+Saved). Idempotent:
         // re-hydrating only when the graph is still absent, so returning to the tab doesn't refetch.
@@ -124,6 +132,32 @@ struct SavedListView: View {
             AddPlaceSheet()
                 .presentationDetents([.medium, .large])
         }
+    }
+
+    // MARK: - Add affordance (saved-*.html topbar "+")
+
+    /// The "+" add affordance — the mockup's top-right control. INTERIM placement (06 §2.6):
+    /// `ScreenScaffold` exposes no trailing-secondary-control slot, and a screen must never hand-wire a
+    /// raw `.toolbar`. Until the scaffold gains that slot (a swift-design-system change), this keeps the
+    /// affordance reachable in every non-empty state, with its `savedlist.add` id and `showsAddSheet` sink
+    /// intact. (In the empty state the WayToSaveRows already open the same sheet.)
+    private var addAffordanceRow: some View {
+        HStack(spacing: 0) {
+            Spacer(minLength: 0)
+            Button {
+                showsAddSheet = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(Typography.name)
+                    .foregroundStyle(ColorRole.textPrimary)
+                    .frame(width: addHitTarget, height: addHitTarget)
+                    .background(ColorRole.fillTertiary, in: .circle)
+                    .contentShape(.circle)
+            }
+            .accessibilityLabel("Add a place")
+            .accessibilityIdentifier("savedlist.add")
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     // MARK: - Hero (saved-populated / saved-by-source `.sav-hero`)
@@ -385,6 +419,7 @@ struct SavedListView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("savedlist.emptyState")
     }
 
@@ -418,27 +453,32 @@ struct SavedListView: View {
     // MARK: - Scaled metrics (Dynamic-Type-safe; the group-header dot scales with its caption)
 
     @ScaledMetric(relativeTo: .caption) private var dotSize: CGFloat = Sizing.dot
+
+    /// The "+" add control's tap target — the minimum 44pt target, scaled with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var addHitTarget: CGFloat = Sizing.minTapTarget
 }
 
 // MARK: - Previews (06 §8) — one per state, seeded via AppStore.preview(savedPlaces:), no `.shared`
 
 #Preview("Saved — by category") {
     NavigationStack {
-        SavedListView()
+        SavedListView(mode: .byCategory)
     }
     .environment(AppStore.preview(savedPlaces: SampleData.savedPlacesDTO()))
 }
 
 #Preview("Saved — by source") {
     NavigationStack {
-        SavedListView()
+        // Pre-expand the first source clip so the expanded SourceCard (its SourcePlaceRows) shows.
+        // The key matches SavedListPresenter.sourceKey for SampleData's first place.
+        SavedListView(mode: .bySource, expandedSources: ["reel:saltinmycoffee:Lisbon in 48 hours"])
     }
     .environment(AppStore.preview(savedPlaces: SampleData.savedPlacesDTO()))
 }
 
 #Preview("Saved — search active") {
     NavigationStack {
-        SavedListView()
+        SavedListView(query: "rooftop")
     }
     .environment(AppStore.preview(savedPlaces: SampleData.savedPlacesDTO()))
 }

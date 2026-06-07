@@ -66,6 +66,12 @@ enum ColorRole {
     /// Dimming scrim behind modal/overlay content.
     static let scrim: Color = Primitive.scrim
 
+    /// A low-alpha ink wash for photo legibility UNDER floating chrome (a full-bleed hero's foot, where an
+    /// over-hero back/title must read). Distinct from `scrim` — that is the heavy MODAL dim (~0.22); this
+    /// is a faint photo-legibility tint at ~the mockup's `.pd-hero .scrim` opacity (saved-shell.css). Used
+    /// only as the dark stop of a clear→ink legibility gradient, never as a fill of size (J-0.4/J-2).
+    static let heroScrim: Color = Primitive.ink900.opacity(0.12)
+
     // MARK: - Day marks — categorical state cues, never fills of size (02-color §2, J-2)
 
     static let dayMark1: Color = Primitive.day1

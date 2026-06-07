@@ -38,6 +38,12 @@ extension SampleData {
         return Calendar(identifier: .gregorian).date(from: components)!
     }
 
+    // MARK: - Stubbed fixtures (no inline literals in views — 07 §3)
+
+    /// The detected clipboard URL the Add-place sheet surfaces this milestone (a real pasteboard read is
+    /// a separate concern — D-4 wires only the reel/clipboard write). Matches add-place.html `.fwd-addr .v`.
+    nonisolated static let stubbedClipboardURL = "tiktok.com/@saltinmycoffee/video/736…"
+
     // MARK: - DTO builders (plain — callable from seed(for:))
 
     /// Wire snapshot: 24-place populated set (Eat×7, Drink×4, Stay×5, Do×6, Shop×2).

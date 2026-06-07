@@ -343,3 +343,32 @@ scale and day-mark-hued (not accent), so they don't need this carve-out.
 
 **Scope / supersede when.** Confined to these Saved affordances. Any new accent fill beyond a chip/row
 needs its own entry. If the system later offers an accent-wash material, revisit.
+
+---
+
+## 2026-06-06 — Saved place detail: the over-hero bookmark is a WIRED STUB (no unsave story this milestone)
+
+**Decision.** `PlaceDetailView`'s over-hero floating bookmark glyph (`GlassCircleButton`,
+id `placedetail.bookmark`) is a **wired stub**: tapping it raises an in-content notice
+(`placedetail.bookmarkNotice`, a `@State`-driven banner) rather than mutating the graph. The place reached
+on this screen is already saved, and there is **no remove-from-Saved (unsave) flow this milestone**, so
+there is no real sink for the bookmark yet.
+
+**Why a stub, not an empty closure or an omission.** The mockup (`mockups/screens/saved/place-detail.html`
+`.screen-topbar.--over-hero .ic[aria-label="Saved"]`) shows the bookmark, so omitting it is fidelity drift;
+an empty closure is a dead affordance (06-screens §4.1 defect). A wired notice keeps every affordance hitting
+a real sink while honestly signalling the missing flow — the same pattern as the D-5 "Add to a trip" stub on
+this screen. Errors/notices are in-content, never a toast/alert (06-screens §6).
+
+**Supersede when.** A remove-from-Saved store command (optimistic + rollback) lands; the bookmark then
+toggles saved state through it and this notice is removed.
+
+---
+
+## 2026-06-06 — Saved L3: PlaceDetail + AddPlaceSheet screen snapshots deferred (offscreen blank — framework gap)
+
+**Decision.** Screen-level L3 render snapshots for `PlaceDetailView` and `AddPlaceSheet` are **deferred**. Both produced blank frames in the offscreen `UIHostingController` host: `PlaceDetailView` uses `ScreenScaffold(.custom)` + an `.ignoresSafeArea` full-bleed hero (the iOS-26 glass `safeAreaInset` path mis-sizes offscreen); `AddPlaceSheet` content renders blank without a real sheet presentation context. Committing blank baselines is false confidence — the same ruling as the 2026-06-03 onboarding-gate decision.
+
+Both screens are fully covered by the other three layers: L1 (`PlaceDetailPresenterTests`, `AddPlacePresenterTests`), L4 (`SavedFlowUITests`), and their already-locked component snapshots (`ProvenanceCard`, `PlaceInfoGrid`, `MapSnippet`, `WayToSaveRow`). The `SavedListScreenSnapshotTests` suite (5 states, `.root` scaffold) renders correctly and is kept.
+
+**Supersede when.** `assertDesignSnapshot` is rewritten to the `drawHierarchy(afterScreenUpdates:)` / key-window path where glass and sheet presentation render correctly; then restore the `PlaceDetailScreenSnapshotTests` and `AddPlaceSheetSnapshotTests` suites.

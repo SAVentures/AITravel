@@ -31,13 +31,15 @@ extension AppStore {
 
     /*
      Add a place from a pasted reel/clipboard URL — the one real networked write for the Saved slice
-     (D-4). Optimistic-then-reconcile, with rollback on failure (03-store §3):
+     (D-4). Optimistic-then-reconcile, with rollback on failure (03-store §3). The command ORCHESTRATES;
+     each per-entity mutation is a method on `SavedPlacesModel` (Tier 1) — this holds no raw
+     `insert`/`removeAll`/index-replace, mirroring `borrow` calling `book.toggleBorrowed()`:
 
-       1. build a pending optimistic `SavedPlaceModel` and insert it into `savedPlaces.places` in place
-          (only the list invalidates — the row is observable);
-       2. fire `AddPlaceRequest`; on success replace the optimistic row in place with the resolved
-          server row (`dto.toDomain()`) so the graph carries the server id, and clear `writeError`;
-       3. on failure remove the optimistically-inserted row (snapshot = its id) and set
+       1. build a pending optimistic `SavedPlaceModel` and `insertPending(...)` it (only the list
+          invalidates — the row is observable);
+       2. fire `AddPlaceRequest`; on success `reconcile(...)` the pending row with the resolved server
+          row (`dto.toDomain()`) so the graph carries the server id, and clear `writeError`;
+       3. on failure `rollback(...)` the optimistically-inserted row (by its id) and set
           `writeError = .addPlace` so the screen surfaces the banner.
 
      Guard: with no graph there is nothing to insert into, so this is a no-op (the add flow is only
@@ -56,19 +58,16 @@ extension AppStore {
             source: .reel(handle: "", clipTitle: nil),
             savedAtNote: "Resolving from reel"
         )
-        savedPlaces.places.insert(optimistic, at: 0)
+        savedPlaces.insertPending(optimistic)
 
         do {
-            // 2. Fire the write, reconcile from the resolved DTO.
+            // 2. Fire the write, reconcile from the resolved DTO (server id, immutable on the model).
             let dto = try await api.send(AddPlaceRequest(body_: body))
-            if let index = savedPlaces.places.firstIndex(where: { $0.id == optimisticID }) {
-                // Replace in place — the resolved row carries the server id (immutable on the model).
-                savedPlaces.places[index] = dto.toDomain()
-            }
+            savedPlaces.reconcile(pendingID: optimisticID, with: dto.toDomain())
             writeError = nil
         } catch {
             // 3. Rollback: drop the optimistic row and surface the failure.
-            savedPlaces.places.removeAll { $0.id == optimisticID }
+            savedPlaces.rollback(pendingID: optimisticID)
             writeError = .addPlace
         }
     }

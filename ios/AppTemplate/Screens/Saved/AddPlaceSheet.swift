@@ -31,7 +31,7 @@ struct AddPlaceSheet: View {
     /// The URL detected on the clipboard. Stubbed/ephemeral this milestone (the reel/clipboard write is
     /// what D-4 builds; a real pasteboard read is a separate concern) — seeded to the mockup's URL so the
     /// affordance + the write path are exercisable in previews / UI tests.
-    @State private var detectedURL: String? = "tiktok.com/@saltinmycoffee/video/736…"
+    @State private var detectedURL: String? = SampleData.stubbedClipboardURL
 
     /// True while `store.addPlace` is in flight — drives the progress affordance and disables re-taps so
     /// the 800ms mock latency is surfaced (a single continuous loading state, 04 §7 / J-9).
@@ -54,7 +54,13 @@ struct AddPlaceSheet: View {
                         .foregroundStyle(ColorRole.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    if let message = p.writeErrorMessage {
+                    // Direct read of store.writeError in body registers it as a SwiftUI
+                    // @Observable dependency — the presenter also reads it, but through a
+                    // struct intermediary that may not reliably trigger the observation
+                    // tracking context on all SwiftUI runtime versions. This unambiguous
+                    // direct read guarantees the sheet re-renders when writeError is set
+                    // after a failed write (07-testing §6.6).
+                    if store.writeError != nil, let message = p.writeErrorMessage {
                         errorBanner(message)
                     }
 
@@ -190,7 +196,7 @@ struct AddPlaceSheet: View {
                     .textCase(.uppercase)
                     .foregroundStyle(ColorRole.textTertiary)
                 Text(p.clipboardURL)
-                    .font(Typography.callout)
+                    .font(Typography.footnote) // mono — a detected address reads as measurement (T-1.2 / `.fwd-addr .v`)
                     .foregroundStyle(ColorRole.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -200,26 +206,28 @@ struct AddPlaceSheet: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(ColorRole.surfaceGrouped, in: .rect(cornerRadius: Radius.card))
-        .overlay(
-            RoundedRectangle(cornerRadius: Radius.card)
-                .strokeBorder(ColorRole.separator, lineWidth: Stroke.separator)
-        )
+        // A quiet input well, same family as SearchWell — not a bordered card (mockup `.fwd-addr`).
+        .background(ColorRole.fillTertiary, in: .rect(cornerRadius: Radius.row))
     }
 
+    /// A quiet NEUTRAL well button (mockup `.cp`) — not the accent. The accent budget (J-2.4, ≤ twice) is
+    /// spent on the one earned emphasis: the prominent reel row. This second entry to the same write reads
+    /// recessive: a grouped-surface well + a secondary glyph, with a neutral-tinted spinner in flight.
     private var pasteButton: some View {
         Button { Task { await addFromClipboard() } } label: {
             Group {
                 if isAdding {
-                    ProgressView().progressViewStyle(.circular)
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(ColorRole.textSecondary)
                 } else {
                     Image(systemName: "doc.on.clipboard")
                         .font(Typography.body.weight(.medium))
                 }
             }
-            .foregroundStyle(ColorRole.textOnAccent)
+            .foregroundStyle(ColorRole.textSecondary)
             .frame(width: pasteTarget, height: pasteTarget)
-            .background(ColorRole.actionPrimary, in: .circle)
+            .background(ColorRole.surfaceGrouped, in: .circle)
             .contentShape(.circle)
         }
         .buttonStyle(.plain)
