@@ -82,6 +82,8 @@ enum Sizing {
         static let accessIconTile = Grid.x(11)
         /// 208 — AccessPassCard QR code side (mockup `.acc-qr .code` 210px, snapped to the 4pt grid).
         static let accessQRSide = Grid.x(52)
+        /// 36 — AccessCardView close-× faint circle (mockup `.acc-top .x` 34px, snapped to the 4pt grid).
+        static let accessCloseTile = Grid.x(9)
         /// 40 — OrphanPromptCard row icon tile (mockup `.orphan .row .bk-ico`, on-grid 40).
         static let orphanRowIcon = Grid.x(10)
         /// 96 — wallet-empty hero glyph box (mockup `.empty .glyph`, on-grid 96).

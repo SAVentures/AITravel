@@ -42,6 +42,30 @@ enum ColorRole {
     /// The barely-grey alt surface carries the "past" register so the row's ink can stay legible (J-2.3).
     static let surfaceBookingRowPast: Color = Primitive.paper50
 
+    // MARK: - Immersive takeover — the dark day-of boarding-pass ground (02-color §2; wallet OD-8)
+    //
+    // The day-of access card (`AccessCardView`) is a DARK takeover (mockup `.acc-screen` `background:
+    // var(--ink-900)`): a focused scanning context where the white card + raised brightness read against
+    // dark ink. This is the one inverse ground in the light-mode app — a deliberate, scoped role (the
+    // semantic tier makes a future dark-mode a token swap, 02-color §7). Its on-ground text is the
+    // inverse of the page hierarchy below: a faint white label/hint, never the ink `text*` roles.
+
+    /// The dark immersive takeover ground (mockup `.acc-screen` background — `ink-900`). The one inverse
+    /// surface; scoped to the day-of access takeover, never a card or page fill.
+    static let surfaceImmersive: Color = Primitive.ink900
+
+    /// A muted label/hint drawn ON the dark immersive ground (mockup `.acc-top .lab` / `.acc-hint` —
+    /// `oklch(1 0 0 / ~0.55)`). The inverse of `textTertiary`; only valid over `surfaceImmersive`.
+    static let textOnImmersive: Color = Primitive.onAccent.opacity(0.6)
+
+    /// The faint translucent circle behind the close glyph on the dark ground (mockup `.acc-top .x`
+    /// `background: oklch(1 0 0 / 0.12)`). NOT glass — a plain styled fill that avoids the offscreen-blank
+    /// gap a real glass material leaves in a snapshot (wallet OD-8 / 06-screens §2.4).
+    static let fillOnImmersive: Color = Primitive.onAccent.opacity(0.12)
+
+    /// The close glyph ink on the dark ground (mockup `.acc-top .x` `color: oklch(1 0 0 / 0.85)`).
+    static let glyphOnImmersive: Color = Primitive.onAccent.opacity(0.85)
+
     // MARK: - Fill — translucent overlays sized by shape (02-color §2)
 
     /// Medium shapes — a switch ground.

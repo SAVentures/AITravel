@@ -65,8 +65,17 @@ struct RootView: View {
 
         switch tab {
         case .trip:
+            // The Trip tab home (placeholder this milestone) + the wallet destinations registered once at
+            // the root so every pushed WalletRoute / BookingDetailRoute inherits them (06-screens §5). The
+            // wallet is a `.detail` pushed inside the Trip stack (mockup back reads "‹ Trip"), not a tab.
             NavigationStack(path: $store.tripPath) {
-                comingSoon(tab)
+                tripHome(tab)
+                    .navigationDestination(for: WalletRoute.self) { _ in
+                        WalletView()
+                    }
+                    .navigationDestination(for: BookingDetailRoute.self) { route in
+                        BookingDetailView(bookingID: route.id)
+                    }
             }
         case .map:
             NavigationStack(path: $store.mapPath) {
@@ -86,6 +95,29 @@ struct RootView: View {
                 comingSoon(tab)
             }
         }
+    }
+
+    // The Trip tab home this milestone (OD-1): the coming-soon placeholder is kept (no fabricated Trip
+    // home), augmented with the single wired entry that makes the Travel wallet reachable + L4-testable.
+    // Tapping it pushes WalletRoute onto the active (Trip) tab's path via the store nav seam — mirroring
+    // how the Saved tab pushes PlaceDetailRoute. Content surface — never glass (J-0.1).
+    private func tripHome(_ tab: AppTab) -> some View {
+        comingSoon(tab)
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    store.push(WalletRoute())
+                } label: {
+                    Label("Travel wallet", systemImage: "wallet.pass")
+                        .font(Typography.body)
+                        .foregroundStyle(ColorRole.actionPrimary)
+                        .padding(.vertical, Spacing.md)
+                        .padding(.horizontal, Spacing.xl)
+                        .frame(maxWidth: .infinity)
+                }
+                .accessibilityIdentifier("trip.openWallet")
+                .padding(.horizontal, Spacing.xl)
+                .padding(.bottom, Spacing.xl)
+            }
     }
 
     // Placeholder root for a not-yet-built tab. Content surface — never glass (J-0.1).
