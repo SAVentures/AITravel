@@ -57,6 +57,7 @@ struct WalletView: View {
 
         ScreenScaffold(
             .root(title: "Travel wallet"),
+            background: ColorRole.surfaceGrouped,
             scrollDisabled: p.isEmpty,
             trailingAction: {
                 GlassCircleButton(

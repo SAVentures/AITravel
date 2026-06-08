@@ -92,6 +92,7 @@ struct SavedListView: View {
 
         ScreenScaffold(
             .root(title: "Saved"),
+            background: ColorRole.surfaceGrouped,
             scrollDisabled: p.isEmpty,
             trailingAction: {
                 GlassCircleButton(

@@ -52,7 +52,7 @@ struct BookingDetailView: View {
     var body: some View {
         let presenter = BookingDetailPresenter(store: store, bookingID: bookingID)
 
-        ScreenScaffold(.detail(title: presenter.kindTitle), actions: {
+        ScreenScaffold(.detail(title: presenter.kindTitle), background: ColorRole.surfaceGrouped, actions: {
             // The one primary CTA, pinned in the reachable thumb zone (06 §2.4) — shown only when this
             // booking carries an access pass (the presenter drives the gate). Presents the AccessCardView
             // takeover; never folded into this screen (06 §4.1).

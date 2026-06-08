@@ -102,6 +102,8 @@ struct RootView: View {
         )
         .accessibilityIdentifier("tab.\(tab.rawValue).comingSoon")
         .scrollDisabled(true)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(ColorRole.surfaceGrouped)
     }
 
     // UI tests inject a launch scenario / start step; the live app does not, so it lands on the tabs.
