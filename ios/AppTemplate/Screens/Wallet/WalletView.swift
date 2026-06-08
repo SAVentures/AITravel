@@ -3,9 +3,9 @@
  orphan-placement prompt, and offers the add-to-wallet flow. Layout + wiring only; all per-state
  derivation lives in WalletPresenter (06-screens §3).
 
- Chrome: ScreenScaffold(.detail(title: "Travel wallet")) — pushed inside the Trip tab stack, so the
- inline title + automatic back ("‹ Trip") show and the tab bar persists (mockup `.screen-topbar`). The
- "+" add is the one secondary top control; INTERIM (06 §2.6: ScreenScaffold exposes no trailing-control
+ Chrome: ScreenScaffold(.root(title: "Travel wallet")) — the Wallet tab root, so the large title
+ collapses on scroll, the tab bar persists, and there is NO back button (it is a top-level tab, not
+ pushed). The "+" add is the one secondary top control; INTERIM (06 §2.6: ScreenScaffold exposes no trailing-control
  slot, and a screen must never hand-wire a raw `.toolbar`), it is rendered in-content as an
  `addAffordanceRow` (id `wallet.add`), exactly like SavedListView.addAffordanceRow. NO bottom ActionBar —
  the wallet list mockups have none.
@@ -56,7 +56,7 @@ struct WalletView: View {
     var body: some View {
         let p = WalletPresenter(store: store, filter: filter)
 
-        ScreenScaffold(.detail(title: "Travel wallet")) {
+        ScreenScaffold(.root(title: "Travel wallet")) {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 if let message = writeErrorMessage {
                     errorBanner(message)

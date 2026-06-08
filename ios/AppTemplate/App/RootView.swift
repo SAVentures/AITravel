@@ -3,14 +3,13 @@ import SwiftUI
 /*
  The app root. Hosts the production tab IA — an iOS-26 floating-glass `TabView` over `AppTab`, one tab
  per case, each driving its own per-tab `NavigationStack` off the matching store path
- (`tripPath`/`mapPath`/`savedPath`/`youPath`). The app boots into `.saved` (the only built tab this
- milestone). Onboarding is a takeover layered above the tabs: a `.fullScreenCover` driven by the presence
- of `store.onboarding`; when the flow clears the draft (completion or cancel), the cover dismisses back to
- the tabs.
+ (`savedPath`/`walletPath`/`homePath`/`youPath`). Onboarding is a takeover layered above the tabs: a
+ `.fullScreenCover` driven by the presence of `store.onboarding`; when the flow clears the draft
+ (completion or cancel), the cover dismisses back to the tabs.
 
- Glass lives on the tab bar chrome only (the system material) — never on content (J-0.1). The Trip / Map
- / You tabs are placeholders this milestone (decision D-2); the Saved tab is a placeholder *temporarily*
- (Wave 3 swaps its root to `SavedListView` + registers `PlaceDetailRoute`).
+ Glass lives on the tab bar chrome only (the system material) — never on content (J-0.1). The Saved and
+ Wallet tabs are real (`SavedListView` / `WalletView` roots, registering `PlaceDetailRoute` /
+ `BookingDetailRoute`); Home and You are placeholders this milestone (decision D-2).
 */
 struct RootView: View {
     @Environment(AppStore.self) private var store
@@ -64,60 +63,34 @@ struct RootView: View {
         @Bindable var store = store
 
         switch tab {
-        case .trip:
-            // The Trip tab home (placeholder this milestone) + the wallet destinations registered once at
-            // the root so every pushed WalletRoute / BookingDetailRoute inherits them (06-screens §5). The
-            // wallet is a `.detail` pushed inside the Trip stack (mockup back reads "‹ Trip"), not a tab.
-            NavigationStack(path: $store.tripPath) {
-                tripHome(tab)
-                    .navigationDestination(for: WalletRoute.self) { _ in
-                        WalletView()
-                    }
-                    .navigationDestination(for: BookingDetailRoute.self) { route in
-                        BookingDetailView(bookingID: route.id)
-                    }
-            }
-        case .map:
-            NavigationStack(path: $store.mapPath) {
-                comingSoon(tab)
-            }
         case .saved:
-            // The Saved tab home (Wave 3) + the place-detail destination registered once at the root so
-            // every pushed `PlaceDetailRoute` inherits it (06-screens §5).
+            // The Saved tab home + the place-detail destination registered once at the root so every
+            // pushed `PlaceDetailRoute` inherits it (06-screens §5).
             NavigationStack(path: $store.savedPath) {
                 SavedListView()
                     .navigationDestination(for: PlaceDetailRoute.self) { route in
                         PlaceDetailView(placeID: route.id)
                     }
             }
+        case .wallet:
+            // The Wallet tab root (now a real top-level tab, not pushed inside Trip) + the booking-detail
+            // destination registered once at the root so every pushed `BookingDetailRoute` inherits it
+            // (06-screens §5).
+            NavigationStack(path: $store.walletPath) {
+                WalletView()
+                    .navigationDestination(for: BookingDetailRoute.self) { route in
+                        BookingDetailView(bookingID: route.id)
+                    }
+            }
+        case .home:
+            NavigationStack(path: $store.homePath) {
+                comingSoon(tab)
+            }
         case .you:
             NavigationStack(path: $store.youPath) {
                 comingSoon(tab)
             }
         }
-    }
-
-    // The Trip tab home this milestone (OD-1): the coming-soon placeholder is kept (no fabricated Trip
-    // home), augmented with the single wired entry that makes the Travel wallet reachable + L4-testable.
-    // Tapping it pushes WalletRoute onto the active (Trip) tab's path via the store nav seam — mirroring
-    // how the Saved tab pushes PlaceDetailRoute. Content surface — never glass (J-0.1).
-    private func tripHome(_ tab: AppTab) -> some View {
-        comingSoon(tab)
-            .safeAreaInset(edge: .bottom) {
-                Button {
-                    store.push(WalletRoute())
-                } label: {
-                    Label("Travel wallet", systemImage: "wallet.pass")
-                        .font(Typography.body)
-                        .foregroundStyle(ColorRole.actionPrimary)
-                        .padding(.vertical, Spacing.md)
-                        .padding(.horizontal, Spacing.xl)
-                        .frame(maxWidth: .infinity)
-                }
-                .accessibilityIdentifier("trip.openWallet")
-                .padding(.horizontal, Spacing.xl)
-                .padding(.bottom, Spacing.xl)
-            }
     }
 
     // Placeholder root for a not-yet-built tab. Content surface — never glass (J-0.1).

@@ -18,14 +18,12 @@
 // is false — GetWalletRequest never fires. UITEST_FAILURE_RATE=1.0 therefore only affects
 // PlaceOrphanRequest (the write), enabling the rollback path without also failing the read.
 //
-// Reachability (OD-1): the app boots to .saved (AppStore.selectedTab default). The test taps
-// `tab.trip` to switch tabs, then taps `trip.openWallet` (the interim Trip-placeholder entry in
-// RootView.tripHome, line 117) to push WalletRoute, landing on WalletView.
+// Reachability: the app boots to .saved (AppStore.selectedTab default). The test taps `tab.wallet`
+// to switch to the Wallet top-level tab; WalletView is the tab's root so it renders immediately.
 //
 // Accessibility identifiers confirmed against live View source:
 //
-//   tab.trip                  AppTab.accessibilityID (AppTab.swift line 43)
-//   trip.openWallet           RootView.tripHome (RootView.swift line 117)
+//   tab.wallet                AppTab.accessibilityID (AppTab.wallet)
 //   wallet.add                WalletView.addAffordanceRow (WalletView.swift line 113)
 //   wallet.emptyState         WalletView.emptyState (WalletView.swift line 247)
 //   walletfilter.byday        WalletView.filterChips — WalletFilter.byDay.rawValue.lowercased() (line 139)
@@ -121,34 +119,17 @@ final class WalletFlowUITests: XCTestCase {
 
     // MARK: - Navigation helpers
 
-    /// Taps the Trip tab and then the interim "Travel wallet" entry to push WalletView.
+    /// Selects the Wallet top-level tab, landing directly on WalletView.
     ///
     /// The app boots to the Saved tab (`AppStore.selectedTab` defaults to `.saved`). This helper
-    /// switches to the Trip tab via `tab.trip`, then taps the interim wired entry `trip.openWallet`
-    /// (RootView.tripHome — the single affordance that pushes `WalletRoute` this milestone, OD-1).
-    ///
-    /// Returns `true` once `wallet.add` (or the wallet emptyState sentinel) is visible to signal
-    /// the wallet is on screen, so callers can drive the appropriate sentinel.
+    /// taps the Wallet tab (`tab.wallet`) in the system tab bar; WalletView is the tab's root so
+    /// it is visible immediately after the tap — no further push is required.
     private func navigateToWallet(in app: XCUIApplication) {
-        // System tab-bar buttons live under app.tabBars, not the flat app.buttons collection.
-        // Try the dot-namespaced accessibility id first (Tab.accessibilityIdentifier("tab.trip"));
-        // fall back to the visible label "Trip" (AppTab.trip.title) — the sanctioned locator for
-        // system tab chrome (07-testing §7.3: system chrome is addressable by visible label).
-        let tripTabById   = app.tabBars.buttons["tab.trip"]
-        let tripTab       = tripTabById.exists ? tripTabById : app.tabBars.buttons["Trip"]
-        XCTAssertTrue(
-            tripTab.waitForExistence(timeout: 6),
-            "Trip tab must exist in app.tabBars — tried id 'tab.trip' (AppTab.accessibilityID) " +
-            "then label 'Trip' (AppTab.trip.title); system tab-bar buttons are not in app.buttons"
-        )
-        tripTab.tap()
-
-        let openWallet = app.buttons["trip.openWallet"]
-        XCTAssertTrue(
-            openWallet.waitForExistence(timeout: 5),
-            "trip.openWallet must appear on the Trip placeholder after switching to the Trip tab"
-        )
-        openWallet.tap()
+        let walletTab = app.tabBars.buttons["tab.wallet"].exists
+            ? app.tabBars.buttons["tab.wallet"]
+            : app.tabBars.buttons["Wallet"]
+        XCTAssertTrue(walletTab.waitForExistence(timeout: 6), "tab.wallet must exist (Wallet is a top-level tab)")
+        walletTab.tap()
     }
 
     /// Swipes up until `element` is in the realized accessibility tree, up to `maxSwipes` times.

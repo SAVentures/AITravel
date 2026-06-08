@@ -23,10 +23,10 @@ final class AppStore {
 
     /// One `NavigationPath` per tab — each tab's `NavigationStack` drives presentation from its own
     /// path; pushes route through the *active* tab's path, never a view-local one (03-store.md §2).
-    var tripPath  = NavigationPath()
-    var mapPath   = NavigationPath()
-    var savedPath = NavigationPath()
-    var youPath   = NavigationPath()
+    var savedPath  = NavigationPath()
+    var walletPath = NavigationPath()
+    var homePath   = NavigationPath()
+    var youPath    = NavigationPath()
 
     // MARK: - Onboarding feature state
 
