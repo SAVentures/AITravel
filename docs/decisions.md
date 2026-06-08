@@ -444,3 +444,30 @@ screen snapshots re-recorded for the `.root` chrome.
 
 **Note.** `Home` has no screen yet (placeholder) — a real home/trip dashboard is a future feature; when
 it lands it becomes the Home tab's root.
+
+---
+
+## 2026-06-07 — ScreenScaffold trailing-action slot + empty states are scrollDisabled — SUPERSEDES the in-content-secondary-control interim
+
+**Decision.** Two related fixes for "tabs scroll/bounce with no content" + "the + should float top-right":
+
+1. **`ScreenScaffold` gains a `trailingAction:` slot** — a `@ViewBuilder` (defaulted `EmptyView`, so all
+   existing call sites are unchanged) rendered as FLOATING chrome via `.overlay(alignment: .topTrailing)`
+   (J-0.1: floating, not on content). This is the long-deferred trailing-secondary-control slot. **It
+   SUPERSEDES the "in-content secondary control is the INTERIM" decision**: `SavedListView`'s "+"
+   (`savedlist.add`) and `WalletView`'s "+" (`wallet.add`) are now floating top-right `GlassCircleButton`s
+   passed via `trailingAction:`, not in-content `addAffordanceRow`s (those helpers are deleted). The "+"
+   is now **persistent in all states** (empty + populated) — a top-right add affordance is always-available
+   chrome; the L4 empty-state tests now assert it EXISTS (the old "must NOT exist in empty" was an artifact
+   of the in-content row only rendering when populated).
+
+2. **Empty states use `scrollDisabled: presenter.isEmpty`** so they route through `ScreenScaffold`'s static
+   (no-ScrollView) branch — a screen with content that fits cannot scroll/bounce. `.scrollBounceBehavior(.basedOnSize)`
+   alone was insufficient (it doesn't help when content fills height via `.frame(maxHeight: .infinity)`, as
+   the Wallet empty-state centering does). `comingSoon` placeholders (Home/You) use `.scrollDisabled(true)`
+   on their `ContentUnavailableView` (internally scrollable). Populated screens keep the ScrollView +
+   `.basedOnSize` (scroll only when content overflows). The empty-state title got
+   `.fixedSize(horizontal: false, vertical: true)` so it wraps (not truncates) in the static layout.
+
+Saved/Wallet screen snapshots re-recorded for the floating-"+"/static-empty layout. Supersede when a
+future home dashboard or a different chrome model changes the trailing-action pattern.

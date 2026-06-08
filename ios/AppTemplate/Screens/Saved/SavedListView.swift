@@ -1,11 +1,10 @@
 /*
  The Saved tab home — the keystone screen of the Saved slice. Layout + wiring only; all per-state
  derivation lives in SavedListPresenter (06-screens §3). Composes ScreenScaffold(.root) (large title,
- collapses on scroll, tab bar persists). The "+" add affordance (one secondary control, 06 §2.3) opens
- AddPlaceSheet via an ephemeral `@State` sheet flag. INTERIM (06 §2.6): ScreenScaffold exposes no
- trailing-secondary-control slot, and a screen must never hand-wire a raw `.toolbar`, so the "+" is
- rendered in-content (`addAffordanceRow`) until the scaffold gains that slot. NO bottom ActionBar — the
- list mockups have none.
+ collapses on scroll, tab bar persists). The "+" add affordance (one secondary control, 06 §2.3) is a
+ floating GlassCircleButton in the scaffold's `trailingAction:` slot (top-trailing chrome, never scroll
+ content — J-0.1) and opens AddPlaceSheet via an ephemeral `@State` sheet flag. NO bottom ActionBar —
+ the list mockups have none.
 
  Ports one structure across four states (the fidelity targets):
    mockups/screens/saved/saved-empty.html      — no places → three WayToSaveRows.
@@ -23,8 +22,8 @@
    - PlaceRow tap              → store.push(PlaceDetailRoute(id:)).
    - SourceCard head tap       → toggles the `expanded` Set<String> @State.
    - SourcePlaceRow tap        → store.push(PlaceDetailRoute(id:)).
-   - "+" add (addAffordanceRow)→ `showsAddSheet` @State (presents AddPlaceSheet). In-content interim
-                                 placement (06 §2.6) — no slot on ScreenScaffold yet, no raw `.toolbar`.
+   - "+" add (trailingAction)  → `showsAddSheet` @State (presents AddPlaceSheet). A floating
+                                 GlassCircleButton in the scaffold's top-trailing slot (id savedlist.add).
    - WayToSaveRow taps (empty) → reel opens the add-sheet (D-4: the one built path); screenshot/search
                                  open the same sheet (their deeper capture flows are separate stories —
                                  wired, never an invented screen).
@@ -91,7 +90,19 @@ struct SavedListView: View {
             categoryFilter: categoryFilter
         )
 
-        ScreenScaffold(.root(title: "Saved")) {
+        ScreenScaffold(
+            .root(title: "Saved"),
+            scrollDisabled: p.isEmpty,
+            trailingAction: {
+                GlassCircleButton(
+                    systemImage: "plus",
+                    accessibilityLabel: "Add a place",
+                    accessibilityID: "savedlist.add"
+                ) {
+                    showsAddSheet = true
+                }
+            }
+        ) {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 if let message = writeErrorMessage {
                     errorBanner(message)
@@ -101,13 +112,9 @@ struct SavedListView: View {
                     emptyState(p)
                 } else if p.isSearching {
                     // saved-search.html: SearchWell → AIVoice "matching by vibe" → results. No hero/controls.
-                    // INTERIM (06 §2.6): ScreenScaffold exposes no top-right secondary-control slot, so the
-                    // "+" add affordance is rendered in-content rather than hand-wiring a raw `.toolbar`.
-                    addAffordanceRow
                     searchWell(p)
                     searchResults(p)
                 } else {
-                    addAffordanceRow
                     hero(p)
                     searchWell(p)
                     controls(p)
@@ -132,32 +139,6 @@ struct SavedListView: View {
             AddPlaceSheet()
                 .presentationDetents([.medium, .large])
         }
-    }
-
-    // MARK: - Add affordance (saved-*.html topbar "+")
-
-    /// The "+" add affordance — the mockup's top-right control. INTERIM placement (06 §2.6):
-    /// `ScreenScaffold` exposes no trailing-secondary-control slot, and a screen must never hand-wire a
-    /// raw `.toolbar`. Until the scaffold gains that slot (a swift-design-system change), this keeps the
-    /// affordance reachable in every non-empty state, with its `savedlist.add` id and `showsAddSheet` sink
-    /// intact. (In the empty state the WayToSaveRows already open the same sheet.)
-    private var addAffordanceRow: some View {
-        HStack(spacing: 0) {
-            Spacer(minLength: 0)
-            Button {
-                showsAddSheet = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(Typography.name)
-                    .foregroundStyle(ColorRole.textPrimary)
-                    .frame(width: addHitTarget, height: addHitTarget)
-                    .background(ColorRole.fillTertiary, in: .circle)
-                    .contentShape(.circle)
-            }
-            .accessibilityLabel("Add a place")
-            .accessibilityIdentifier("savedlist.add")
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     // MARK: - Hero (saved-populated / saved-by-source `.sav-hero`)
@@ -400,6 +381,7 @@ struct SavedListView: View {
                 Text(p.emptyTitle)
                     .font(Typography.titleLarge)
                     .foregroundStyle(ColorRole.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(p.emptyBody)
                     .font(Typography.body)
                     .foregroundStyle(ColorRole.textSecondary)
@@ -448,9 +430,6 @@ struct SavedListView: View {
     // MARK: - Scaled metrics (Dynamic-Type-safe; the group-header dot scales with its caption)
 
     @ScaledMetric(relativeTo: .caption) private var dotSize: CGFloat = Sizing.dot
-
-    /// The "+" add control's tap target — the minimum 44pt target, scaled with Dynamic Type.
-    @ScaledMetric(relativeTo: .body) private var addHitTarget: CGFloat = Sizing.minTapTarget
 }
 
 // MARK: - Previews (06 §8) — one per state, seeded via AppStore.preview(savedPlaces:), no `.shared`

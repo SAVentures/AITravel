@@ -396,17 +396,19 @@ final class WalletFlowUITests: XCTestCase {
         navigateToWallet(in: app)
 
         // wallet.emptyState — the .accessibilityElement(children: .contain) container on the empty
-        // layout (WalletView.swift line 246-247). Must appear; wallet.add must NOT (non-empty only).
+        // layout (WalletView.swift line 246-247). Must appear.
         let emptyState = app.otherElements["wallet.emptyState"]
         XCTAssertTrue(
             emptyState.waitForExistence(timeout: 8),
             "wallet.emptyState must appear when walletEmpty is seeded (0 bookings)"
         )
 
+        // wallet.add must be present — it is now a persistent floating GlassCircleButton in
+        // ScreenScaffold's trailing-action overlay, visible in ALL states including empty.
         let addButton = app.buttons["wallet.add"]
         XCTAssertTrue(
-            addButton.waitForNonExistence(timeout: 3),
-            "wallet.add must NOT exist in the empty state (addAffordanceRow only renders when !p.isEmpty)"
+            addButton.waitForExistence(timeout: 3),
+            "wallet.add must exist in the empty state (persistent floating '+' is always present)"
         )
 
         let emptyShot = XCTAttachment(screenshot: app.screenshot())

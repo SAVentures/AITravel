@@ -14,11 +14,12 @@ import SwiftUI
 /// The composition primitive every screen composes. `Actions` defaults to `EmptyView` so the scaffold is
 /// complete and previewable before the `ActionBar` primitive exists. No glass on the body — glass is
 /// reserved for the bars and the floating `actions` slot (J-0.1).
-struct ScreenScaffold<Content: View, Actions: View>: View {
+struct ScreenScaffold<Content: View, Actions: View, TrailingAction: View>: View {
     private let chrome: ScreenChrome
     private let background: Color
     private let content: Content
     private let actions: Actions
+    private let trailingAction: TrailingAction
 
     private let scrollDisabled: Bool
 
@@ -26,12 +27,14 @@ struct ScreenScaffold<Content: View, Actions: View>: View {
         _ chrome: ScreenChrome,
         background: Color = ColorRole.surfacePage,
         scrollDisabled: Bool = false,
+        @ViewBuilder trailingAction: () -> TrailingAction = { EmptyView() },
         @ViewBuilder actions: () -> Actions = { EmptyView() },
         @ViewBuilder content: () -> Content
     ) {
         self.chrome = chrome
         self.background = background
         self.scrollDisabled = scrollDisabled
+        self.trailingAction = trailingAction()
         self.actions = actions()
         self.content = content()
     }
@@ -42,6 +45,16 @@ struct ScreenScaffold<Content: View, Actions: View>: View {
             .modifier(ScreenChromeModifier(chrome: chrome))
             // The bar owns its own thumb-zone padding, so no extra spacing token is introduced here.
             .safeAreaInset(edge: .bottom) { actions }
+            // Optional trailing-secondary control, floated as chrome over the content at the top-trailing
+            // inside the safe area — never in scroll content (J-0.1). The caller passes the actual control
+            // (a `GlassCircleButton`, which owns its own glass + id); the scaffold only positions it. Top
+            // padding mirrors the onboarding screens' floating glyph so it sits in the nav/top zone, not
+            // under the status bar.
+            .overlay(alignment: .topTrailing) {
+                trailingAction
+                    .padding(.trailing, Spacing.screenInset)
+                    .padding(.top, Spacing.sm)
+            }
     }
 
     @ViewBuilder private var container: some View {
