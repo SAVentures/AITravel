@@ -45,7 +45,7 @@ struct PlaceDetailView: View {
     var body: some View {
         let presenter = PlaceDetailPresenter(store: store, placeID: placeID)
 
-        ScreenScaffold(.custom, actions: {
+        ScreenScaffold(.custom, background: ColorRole.surfaceGrouped, actions: {
             // The one primary CTA, pinned in the reachable thumb zone (06-screens §2.4). D-5: the Trip
             // feature is a separate story — this raises an info banner, it does not push a Trip screen.
             ActionBar(

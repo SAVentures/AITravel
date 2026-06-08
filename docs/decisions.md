@@ -471,3 +471,20 @@ it lands it becomes the Home tab's root.
 
 Saved/Wallet screen snapshots re-recorded for the floating-"+"/static-empty layout. Supersede when a
 future home dashboard or a different chrome model changes the trailing-action pattern.
+
+---
+
+## 2026-06-07 — Non-onboarding screens use a WHITE background (`surfaceGrouped`), matching onboarding
+
+**Decision.** Per user direction ("white bg on each screen … follow onboarding"), the content screens
+pass `background: ColorRole.surfaceGrouped` (white, paper-0) to `ScreenScaffold` — exactly as every
+onboarding `*StepView` already does (`ScreenScaffold(.immersive, background: ColorRole.surfaceGrouped, …)`).
+Changed: `SavedListView` (`.root`), `WalletView` (`.root`), `BookingDetailView` (`.detail`),
+`PlaceDetailView` (`.custom`), and the `comingSoon` Home/You placeholder (full-screen `surfaceGrouped`).
+Previously these omitted `background:`, defaulting to `ColorRole.surfacePage` (the subtle grey ground).
+
+**Scope.** Per-screen `background:` only — NOT a token change (`surfacePage` stays paper-100) and NOT a
+card reskin. Cards keep `.cardSurface()` (white + rest shadow), the same treatment onboarding already uses
+on its white ground — the soft shadow lifts the white cards off the white page. **Sheets stay
+`surfacePage` (grey)** — onboarding sheets are grey too; the directive was about screens. `AccessCardView`
+stays the dark immersive surface. Saved/Wallet screen snapshots re-recorded for the white ground.
