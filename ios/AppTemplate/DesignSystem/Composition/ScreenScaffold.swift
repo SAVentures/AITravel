@@ -59,6 +59,9 @@ struct ScreenScaffold<Content: View, Actions: View>: View {
             .contentMargins(.horizontal, Spacing.screenInset, for: .scrollContent)
             .scrollEdgeEffectStyle(.soft, for: .all)
             .scrollContentBackground(.hidden)
+            // Only scroll/bounce when content overflows the viewport; content that fits lays out
+            // statically (no rubber-band on screens with nothing below the fold). 04-motion restraint.
+            .scrollBounceBehavior(.basedOnSize)
         }
     }
 }
