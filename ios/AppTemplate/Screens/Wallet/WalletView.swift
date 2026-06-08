@@ -5,10 +5,9 @@
 
  Chrome: ScreenScaffold(.root(title: "Travel wallet")) — the Wallet tab root, so the large title
  collapses on scroll, the tab bar persists, and there is NO back button (it is a top-level tab, not
- pushed). The "+" add is the one secondary top control; INTERIM (06 §2.6: ScreenScaffold exposes no trailing-control
- slot, and a screen must never hand-wire a raw `.toolbar`), it is rendered in-content as an
- `addAffordanceRow` (id `wallet.add`), exactly like SavedListView.addAffordanceRow. NO bottom ActionBar —
- the wallet list mockups have none.
+ pushed). The "+" add is the one secondary top control, passed to the scaffold's `trailingAction:` slot
+ as a floating top-trailing `GlassCircleButton` (id `wallet.add`) — floated as chrome, never in scroll
+ content (06 §2.6, J-0.1). NO bottom ActionBar — the wallet list mockups have none.
 
  Ports one structure across two states (the fidelity targets):
    mockups/screens/wallet/wallet-populated.html — heroContext + filter chips + the orphan prompt + per-day
@@ -16,7 +15,7 @@
    mockups/screens/wallet/wallet-empty.html      — no bookings → the WalletEmptyGlyph + three WayToSaveRows.
 
  Interactivity inventory (06 §4.1 — every affordance → one sink, no dead closures):
-   - "+" add (addAffordanceRow, wallet.add)   → `showsAddSheet` @State → presents AddToWalletSheet.
+   - "+" add (scaffold trailingAction, wallet.add) → `showsAddSheet` @State → presents AddToWalletSheet.
    - filter chips (walletfilter.byday|…)      → `filter` @State (the presenter re-derives the grouping).
    - BookingRow tap (bookingrow.<id>)         → store.push(BookingDetailRoute(id:)).
    - OrphanPromptCard "Pin to Day N" (orphan.pin)   → await store.placeOrphan(bookingID:onDay:) (the write).
@@ -56,7 +55,17 @@ struct WalletView: View {
     var body: some View {
         let p = WalletPresenter(store: store, filter: filter)
 
-        ScreenScaffold(.root(title: "Travel wallet")) {
+        ScreenScaffold(
+            .root(title: "Travel wallet"),
+            scrollDisabled: p.isEmpty,
+            trailingAction: {
+                GlassCircleButton(
+                    systemImage: "plus",
+                    accessibilityLabel: "Add to wallet",
+                    accessibilityID: "wallet.add"
+                ) { showsAddSheet = true }
+            }
+        ) {
             VStack(alignment: .leading, spacing: Spacing.xl) {
                 if let message = writeErrorMessage {
                     errorBanner(message)
@@ -65,9 +74,6 @@ struct WalletView: View {
                 if p.isEmpty {
                     emptyState(p)
                 } else {
-                    // INTERIM (06 §2.6): ScreenScaffold exposes no top-right secondary-control slot, so the
-                    // "+" add affordance is rendered in-content rather than hand-wiring a raw `.toolbar`.
-                    addAffordanceRow
                     heroContext(p)
                     filterChips(p)
                     if !orphanDismissed, let orphan = p.orphan {
@@ -89,30 +95,6 @@ struct WalletView: View {
             AddToWalletSheet()
                 .presentationDetents([.medium, .large])
         }
-    }
-
-    // MARK: - Add affordance (wallet-populated topbar "+")
-
-    /// The "+" add affordance — the mockup's top-right control. INTERIM placement (06 §2.6): the scaffold
-    /// exposes no trailing-secondary-control slot, and a screen must never hand-wire a raw `.toolbar`, so
-    /// this keeps the affordance reachable with its `wallet.add` id and `showsAddSheet` sink intact.
-    private var addAffordanceRow: some View {
-        HStack(spacing: 0) {
-            Spacer(minLength: 0)
-            Button {
-                showsAddSheet = true
-            } label: {
-                Image(systemName: "plus")
-                    .font(Typography.name)
-                    .foregroundStyle(ColorRole.textPrimary)
-                    .frame(width: addHitTarget, height: addHitTarget)
-                    .background(ColorRole.fillTertiary, in: .circle)
-                    .contentShape(.circle)
-            }
-            .accessibilityLabel("Add to wallet")
-            .accessibilityIdentifier("wallet.add")
-        }
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     // MARK: - Hero context (mockup `.wal-sub .ctx`)
@@ -221,6 +203,7 @@ struct WalletView: View {
                     .font(Typography.titleLarge)
                     .foregroundStyle(ColorRole.textPrimary)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(p.emptyBody)
                     .font(Typography.body)
                     .foregroundStyle(ColorRole.textSecondary)
@@ -251,6 +234,8 @@ struct WalletView: View {
 
     private var writeErrorMessage: String? { store.writeError?.bannerMessage }
 
+    // MARK: - Error banner
+
     private func errorBanner(_ message: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: Spacing.sm) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -268,11 +253,6 @@ struct WalletView: View {
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("writeError.banner")
     }
-
-    // MARK: - Scaled metrics (Dynamic-Type-safe)
-
-    /// The "+" add control's tap target — the minimum 44pt target, scaled with Dynamic Type.
-    @ScaledMetric(relativeTo: .body) private var addHitTarget: CGFloat = Sizing.minTapTarget
 }
 
 // MARK: - WalletEmptyGlyph (mockup wallet-empty `.empty .glyph` + accent `.badge`)

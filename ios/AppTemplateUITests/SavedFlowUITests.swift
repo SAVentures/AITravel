@@ -253,12 +253,12 @@ final class SavedFlowUITests: XCTestCase {
             "savedlist.emptyState must exist when savedEmpty is seeded (0 places)"
         )
 
-        // savedlist.add must NOT be present — the empty state replaces the populated layout.
-        // (addAffordanceRow is only rendered in non-empty states in SavedListView.swift.)
+        // savedlist.add must be present — it is now a persistent floating GlassCircleButton in
+        // ScreenScaffold's trailing-action overlay, visible in ALL states including empty.
         let addButton = app.buttons["savedlist.add"]
         XCTAssertTrue(
-            addButton.waitForNonExistence(timeout: 3),
-            "savedlist.add must NOT exist in the empty state (addAffordanceRow not rendered)"
+            addButton.waitForExistence(timeout: 3),
+            "savedlist.add must exist in the empty state (persistent floating '+' is always present)"
         )
 
         let emptyShot = XCTAttachment(screenshot: app.screenshot())

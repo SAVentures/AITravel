@@ -101,7 +101,7 @@ struct RootView: View {
             description: Text("Coming soon")
         )
         .accessibilityIdentifier("tab.\(tab.rawValue).comingSoon")
-        .scrollBounceBehavior(.basedOnSize)
+        .scrollDisabled(true)
     }
 
     // UI tests inject a launch scenario / start step; the live app does not, so it lands on the tabs.
