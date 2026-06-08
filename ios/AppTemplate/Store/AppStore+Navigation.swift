@@ -33,10 +33,10 @@ extension AppStore {
     /// Apply a mutation to whichever tab's path is currently selected.
     private func mutateActivePath(_ change: (inout NavigationPath) -> Void) {
         switch selectedTab {
-        case .trip:  change(&tripPath)
-        case .map:   change(&mapPath)
-        case .saved: change(&savedPath)
-        case .you:   change(&youPath)
+        case .saved:  change(&savedPath)
+        case .wallet: change(&walletPath)
+        case .home:   change(&homePath)
+        case .you:    change(&youPath)
         }
     }
 }

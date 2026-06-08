@@ -424,3 +424,23 @@ mockup's `accent-700`. The card already spends its earned accent on the wash gro
 Pin primary; an accent-700 eyebrow ink would push the card to a fourth accent touch and read as
 accent-as-room rather than accent-as-presence (J-2.4 / J-6.4). Keeping the eyebrow neutral concentrates
 the accent into the dot + action. A deliberate, restrained departure from the mockup's literal ink.
+
+---
+
+## 2026-06-07 — Tab IA reworked to Saved · Wallet · Home · You — SUPERSEDES Wallet OD-1 (Trip-entry interim)
+
+**Decision.** Per user direction, the root `TabView` (`AppTab`) is now **Saved · Wallet · Home · You**
+(dropped `Trip` and `Map`). **Wallet is a real top-level tab** — `WalletView` is the Wallet tab's root
+(`ScreenScaffold(.root(title: "Travel wallet"))`, large collapsing title, no back), and
+`BookingDetailRoute` registers on the Wallet tab's `NavigationStack(path: $store.walletPath)`. `Home` and
+`You` are coming-soon placeholders. `AppStore` per-tab paths are now `savedPath`/`walletPath`/`homePath`/
+`youPath`; `selectedTab` default stays `.saved`.
+
+**This SUPERSEDES the Wallet OD-1 decision** ("Travel wallet" affordance on the Trip placeholder pushing
+`WalletRoute`). That interim is removed: `RootView.tripHome`, the `trip.openWallet` entry, the
+`WalletRoute` push, and `WalletRoute.swift` itself are deleted (Wallet is reached by selecting its tab,
+not pushed). The L4 `WalletFlowUITests.navigateToWallet` now taps `tab.wallet` directly. WalletView
+screen snapshots re-recorded for the `.root` chrome.
+
+**Note.** `Home` has no screen yet (placeholder) — a real home/trip dashboard is a future feature; when
+it lands it becomes the Home tab's root.
